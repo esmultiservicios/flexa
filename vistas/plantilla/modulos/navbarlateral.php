@@ -293,19 +293,6 @@
                 </nav>
             </div>
 
-            <a href="https://new.izzycloud.app/" target="_blank" class="nav-link izzy-promo">
-                <div class="sb-nav-link-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-                <div class="izzy-promo-content">
-                    <span class="izzy-promo-text">NUEVA<br>VERSIÓN</span>
-                    <div class="izzy-promo-badge-container">
-                        <div class="izzy-promo-badge">
-                            <span class="badge-text">PRUEBA YA</span>
-                            <span class="soon-text">LANZAMIENTO</span>
-                        </div>
-                    </div>
-                </div>
-            </a>
-
             <br />
             <br />
             <br />
