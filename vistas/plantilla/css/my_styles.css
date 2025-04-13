@@ -1,0 +1,1675 @@
+/* ========== VARIABLES Y ESTILOS BASE ========== */
+:root {
+    /* Colores principales (tendencia 2025) */
+    --primary-color: #4361ee; /* Azul vibrante */
+    --primary-dark: #3a56d4;
+    --secondary-color: #7209b7; /* Morado moderno */
+    --accent-color: #f72585; /* Rosa neón */
+    --success-color: #4cc9f0; /* Turquesa */
+    --warning-color: #f8961e;
+    --danger-color: #ef233c;
+    
+    /* Escala de grises */
+    --dark-color: #2b2d42;
+    --medium-color: #8d99ae;
+    --light-color: #edf2f4;
+    --lighter-color: #f8f9fa;
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.1);
+    
+    /* Bordes */
+    --border-radius: 8px;
+    --border-radius-sm: 4px;
+    --border-color: #e9ecef;
+    
+    /* Transiciones */
+    --transition-fast: all 0.15s ease;
+    --transition-normal: all 0.3s ease;
+    --transition-slow: all 0.5s ease;
+    
+    /* Espaciado */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    
+    /* Tipografía */
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-monospace: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  
+  /* ========== ESTILOS BASE ========== */
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    font-family: var(--font-main);
+    line-height: 1.6;
+    color: var(--dark-color);
+    background-color: var(--lighter-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: var(--space-md);
+  }
+  
+  a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: var(--transition-fast);
+  }
+  
+  a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+  }
+  
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+/* ========== AJUSTES FINALES DE POSICIONAMIENTO ========== */
+/* Agregar esto al FINAL de tu archivo CSS */
+
+/* Ajustes generales de layout */
+body.sb-nav-fixed {
+    padding-top: 0 !important;
+}
+
+#layoutSidenav {
+    padding-top: 56px;
+    margin-top: -56px;
+}
+
+#layoutSidenav_content {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+main {
+    padding-top: 0.5rem !important;
+    padding-bottom: 1rem;
+}
+
+/* Ajustes para mensajes del sistema */
+body:has(.prueba-sistema) #layoutSidenav {
+    padding-top: 56px;
+    margin-top: -56px;
+}
+
+body:has(.prueba-sistema) #layoutSidenav_content {
+    padding-top: 30px !important;
+}
+
+body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
+    padding-top: 60px !important;
+}
+
+/* Corrección para el logo (por si acaso) */
+.navbar-brand .logo {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+    mix-blend-mode: normal !important;
+}
+/* Ajustes para mensajes del sistema */
+.prueba-sistema {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1040;
+    height: 30px;
+    line-height: 30px;
+}
+
+.modo_soporte {
+    position: fixed;
+    top: 30px; /* Debajo de prueba-sistema si existe */
+    left: 0;
+    right: 0;
+    z-index: 1039;
+    height: 30px;
+    line-height: 30px;
+}
+
+
+/* ========== NAVBAR SUPERIOR PROFESIONAL ========== */
+.sb-topnav {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1039;
+    height: 56px;
+    box-shadow: var(--shadow-sm);
+    background: #2b2d42 !important; /* Color oscuro profesional */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+}
+
+/* ========== LOGO ORIGINAL EN NAVBAR - VERSIÓN CORRECTA ========== */
+.navbar-brand .logo {
+    height: 48px;
+    object-fit: contain;
+    /* Eliminamos completamente cualquier filtro que afecte el color */
+    filter: none !important;
+    transition: var(--transition-fast);
+    padding: 0;
+    /* Aseguramos que no haya otras propiedades que afecten el color */
+    -webkit-filter: none !important;
+    opacity: 1 !important;
+}
+
+/* Eliminamos cualquier otra declaración duplicada del logo */
+
+/* Efecto hover sutil */
+.navbar-brand .logo:hover {
+    opacity: 0.9;
+    transform: scale(1.03);
+}
+
+/* Botón del menú hamburguesa */
+#sidebarToggle {
+    color: white !important;
+    margin-right: 1rem;
+    font-size: 1.25rem;
+    background: transparent;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: var(--transition-fast);
+}
+
+#sidebarToggle:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Menú principal */
+.navbar-nav {
+    display: flex;
+    margin-left: 1rem;
+}
+
+.nav-item {
+    margin-right: 0.25rem;
+}
+
+.nav-link {
+    padding: 0.5rem 1rem !important;
+    color: white !important;
+    font-weight: 500;
+    display: flex !important;
+    align-items: center;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+}
+
+.nav-link:hover, 
+.nav-link.active {
+    color: white !important;
+    background-color: var(--primary-color) !important;
+}
+
+/* Íconos */
+.sb-nav-link-icon,
+.nav-link i {
+    color: white !important;
+    margin-right: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Menú usuario */
+.navbar-nav-user .nav-link {
+    color: white !important;
+    display: flex;
+    align-items: center;
+}
+
+.navbar-nav-user .nav-link i {
+    color: white !important;
+    margin-right: 0.5rem;
+}
+
+.dropdown-menu {
+    border: none;
+    box-shadow: var(--shadow-md);
+    background: white;
+}
+
+.dropdown-item {
+    color: var(--dark-color) !important;
+    padding: 0.5rem 1.25rem;
+}
+
+.dropdown-item:hover {
+    background-color: var(--lighter-color);
+    color: var(--primary-color) !important;
+}
+
+/* Menú rápido móvil */
+.dropdown.d-md-none .btn {
+    color: white !important;
+    background: rgba(255,255,255,0.1);
+    border: none;
+}
+
+.dropdown.d-md-none .btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+ 
+  
+  /* ========== NAVBAR LATERAL PROFESIONAL ========== */
+.sb-sidenav {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex-wrap: nowrap;
+    background: #2b2d42; /* Mismo color que el navbar superior */
+    border-right: none;
+    transition: var(--transition-normal);
+}
+
+.sb-sidenav .sb-sidenav-menu {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1rem 0;
+}
+
+.sb-sidenav .sb-sidenav-menu .nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+
+/* Items del menú */
+.sb-sidenav .sb-sidenav-menu .nav .nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    color: rgba(255,255,255,0.8);
+    transition: var(--transition-fast);
+    margin: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+}
+
+.sb-sidenav .sb-sidenav-menu .nav .nav-link:hover {
+    color: white;
+    background-color: rgba(255,255,255,0.1);
+}
+
+.sb-sidenav .sb-sidenav-menu .nav .nav-link.active {
+    color: white;
+    background-color: var(--primary-color);
+}
+
+/* Íconos */
+.sb-sidenav .sb-sidenav-menu .nav .nav-link .sb-nav-link-icon {
+    margin-right: 0.75rem;
+    color: rgba(255,255,255,0.6);
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+    transition: var(--transition-fast);
+}
+
+.sb-sidenav .sb-sidenav-menu .nav .nav-link:hover .sb-nav-link-icon,
+.sb-sidenav .sb-sidenav-menu .nav .nav-link.active .sb-nav-link-icon {
+    color: white;
+}
+
+/* Flecha desplegable */
+.sb-sidenav .sb-sidenav-menu .nav .sb-sidenav-collapse-arrow {
+    margin-left: auto;
+    transition: transform 0.15s ease;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.9rem;
+}
+
+.sb-sidenav .sb-sidenav-menu .nav .nav-link.collapsed .sb-sidenav-collapse-arrow {
+    transform: rotate(-90deg);
+}
+
+/* Submenú */
+.sb-sidenav .sb-sidenav-menu .nav .sb-sidenav-menu-nested {
+    margin-left: 2rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Footer del sidenav */
+.sb-sidenav-footer {
+    padding: 1rem;
+    background-color: rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.6);
+}
+
+/* Tamaño de fuente en navbar top */
+.navbar-nav .nav-link {
+    font-size: 0.85rem; /* Reducido ligeramente */
+    padding: 0.5rem 0.8rem !important; /* Ajuste proporcional */
+}
+
+/* Tamaño de íconos en navbar top */
+.sb-nav-link-icon,
+.nav-link i {
+    font-size: 0.85rem; /* Reducido para coincidir con texto */
+}
+
+/* Ajuste para menú usuario */
+.navbar-nav-user .nav-link {
+    font-size: 0.85rem;
+}
+
+/* Botón hamburguesa - tamaño consistente */
+#sidebarToggle {
+    font-size: 1.1rem; /* Ligera reducción */
+}
+
+
+/* ========== AJUSTES NAVBAR LATERAL ========== */
+/* Texto más pequeño */
+.sb-sidenav .sb-sidenav-menu .nav .nav-link {
+    font-size: 0.85rem; /* Reducido de ~1rem */
+    padding: 0.6rem 1.25rem; /* Ajustado de 0.75rem 1.5rem */
+}
+
+/* Íconos más pequeños pero proporcionales */
+.sb-sidenav .sb-sidenav-menu .nav .nav-link .sb-nav-link-icon {
+    font-size: 0.9rem; /* Reducido de 1rem */
+    width: 18px; /* Reducido de 20px */
+    margin-right: 0.6rem; /* Ajustado de 0.75rem */
+}
+
+/* Flecha desplegable más pequeña */
+.sb-sidenav .sb-sidenav-menu .nav .sb-sidenav-collapse-arrow {
+    font-size: 0.8rem; /* Reducido de 0.9rem */
+}
+
+/* Submenú con menos margen */
+.sb-sidenav .sb-sidenav-menu .nav .sb-sidenav-menu-nested {
+    margin-left: 1.5rem; /* Reducido de 2rem */
+}
+
+/* Footer más compacto */
+.sb-sidenav-footer {
+    padding: 0.75rem; /* Reducido de 1rem */
+    font-size: 0.7rem; /* Reducido de 0.75rem */
+}
+
+
+/* ========== ESTILOS MEJORADOS PARA TABLAS ========== */
+/* Contenedor de tabla responsive */
+.table-responsive {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+/* Estilo base de tablas */
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: var(--dark-color);
+    border-collapse: collapse;
+}
+
+/* Cabecera de tabla profesional */
+.table thead th {
+    background-color: #f8f9fa; /* Fondo claro profesional */
+    color: var(--dark-color);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* Celdas de tabla */
+.table td {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    vertical-align: middle;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Efecto hover para filas */
+.table-hover tbody tr:hover {
+    background-color: rgba(67, 97, 238, 0.03);
+}
+
+/* Íconos en tablas */
+.table td i {
+    font-size: 1rem; /* Tamaño adecuado para íconos */
+    color: var(--medium-color);
+    transition: var(--transition-fast);
+    margin: 0 0.25rem;
+}
+
+.table td i:hover {
+    color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+/* Footer de tabla */
+.table tfoot {
+    background-color: #f8f9fa !important; /* Fondo claro */
+    color: var(--dark-color) !important;
+    font-weight: 600;
+}
+
+.table tfoot td {
+    border-top: 2px solid var(--border-color);
+    border-bottom: none;
+}
+
+/* Selector de paginación */
+.custom-select.custom-select-sm.form-control-sm {
+    font-size: 0.8rem;
+    padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+    color: var(--dark-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    background-color: white;
+    height: calc(1.5em + 0.5rem + 2px);
+}
+
+/* Efecto hover para selects */
+.custom-select:hover {
+    border-color: var(--primary-color);
+}
+
+/* Opciones del select */
+.custom-select option {
+    font-size: 0.85rem;
+    padding: 0.25rem;
+}
+
+
+/* ========== ESTILOS MEJORADOS PARA BOTONES EN TABLAS ========== */
+/* Botones base en tablas */
+.table .btn {
+    min-width: 32px; /* Ancho mínimo consistente */
+    height: 32px; /* Altura fija */
+    padding: 0.25rem 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+}
+
+/* Botones oscuros */
+.table .btn-dark {
+    background-color: var(--dark-color);
+    border-color: var(--dark-color);
+}
+
+.table .btn-dark:hover {
+    background-color: #1e1f2e;
+    transform: translateY(-1px);
+}
+
+/* Tamaño de íconos en botones */
+.table .btn .fa-lg {
+    font-size: 1.1rem; /* Tamaño aumentado */
+    margin: 0;
+}
+
+/* Efecto hover para todos los botones */
+.table .btn:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+/* Botones de acción específicos */
+.table_editar, 
+.table_anular, 
+.table_imprimir {
+    margin: 0 2px;
+}
+
+/* Ajuste para grupos de botones */
+.btn-group .btn {
+    margin-right: 0;
+}
+
+  /* ========== FOOTERS ========== */
+  .footer, .footer1 {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    z-index: 1020;
+  }
+  
+  .footer1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .footer .form-row, .footer1 .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -15px;
+    margin-left: -15px;
+  }
+  
+  .footer .col, .footer1 .col {
+    position: relative;
+    width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+  
+  .footer textarea.form-control {
+    background-color: var(--lighter-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    resize: none;
+  }
+  
+  .footer .input-group-text {
+    background-color: var(--lighter-color);
+    border: 1px solid var(--border-color);
+    color: var(--medium-color);
+    font-weight: 600;
+  }
+  
+  /* ========== COMPONENTES GENERALES ========== */
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: white;
+    background-clip: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-md);
+    transition: var(--transition-normal);
+  }
+  
+  .card:hover {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .card-header {
+    padding: 1rem 1.25rem;
+    margin-bottom: 0;
+    background-color: white;
+    border-bottom: 1px solid var(--border-color);
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+  }
+  
+  .card-body {
+    flex: 1 1 auto;
+    padding: 1.25rem;
+  }
+  
+  .card-title {
+    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
+  }
+  
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    user-select: none;
+    border: 1px solid transparent;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: var(--border-radius);
+    transition: var(--transition-fast);
+    cursor: pointer;
+  }
+  
+  .btn-primary {
+    color: white;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+  }
+  
+  .btn-secondary {
+    color: white;
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+  }
+  
+  .btn-secondary:hover {
+    background-color: #5f0b9b;
+    border-color: #5f0b9b;
+  }
+  
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: var(--border-radius-sm);
+  }
+  
+  /* ========== FORMULARIOS ========== */
+  .form-control {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--dark-color);
+    background-color: white;
+    background-clip: padding-box;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    transition: var(--transition-fast);
+  }
+  
+  .form-control:focus {
+    color: var(--dark-color);
+    background-color: white;
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+  }
+  
+  .input-group {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    width: 100%;
+  }
+  
+  .input-group-prepend {
+    margin-right: -1px;
+    display: flex;
+  }
+  
+  .input-group-append {
+    margin-left: -1px;
+    display: flex;
+  }
+  
+  .input-group-text {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--medium-color);
+    text-align: center;
+    white-space: nowrap;
+    background-color: var(--lighter-color);
+    border: 1px solid var(--border-color);
+  }
+  
+  .input-group-text:first-child {
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+  }
+  
+  .input-group-text:last-child {
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+  }
+  
+  /* ========== UTILIDADES ========== */
+  .text-center {
+    text-align: center;
+  }
+  
+  .text-right {
+    text-align: right;
+  }
+  
+  .text-left {
+    text-align: left;
+  }
+  
+  .small {
+    font-size: 0.875rem;
+  }
+  
+  .smaller {
+    font-size: 0.75rem;
+  }
+  
+  .mb-3 {
+    margin-bottom: 1rem;
+  }
+  
+  .mt-3 {
+    margin-top: 1rem;
+  }
+  
+  .p-3 {
+    padding: 1rem;
+  }
+  
+  .rounded {
+    border-radius: var(--border-radius);
+  }
+  
+  .shadow {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* ========== ANIMACIONES ========== */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  /* ========== RESPONSIVE ADJUSTMENTS ========== */
+  @media (max-width: 767.98px) {
+    .footer, .footer1 {
+      position: static;
+      margin-top: var(--space-lg);
+    }
+    
+    .footer .form-row, .footer1 .form-row {
+      flex-direction: column;
+    }
+    
+    .footer .col, .footer1 .col {
+      margin-bottom: var(--space-sm);
+    }
+    
+    .footer textarea.form-control {
+      font-size: 1rem;
+    }
+  }
+  
+  /* ========== ESTILOS ESPECÍFICOS PARA EL SISTEMA ========== */
+  .prueba-sistema {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1040;
+    padding: 0.5rem;
+    background-color: var(--danger-color);
+    color: white;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  .modo_soporte {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    z-index: 1039;
+    padding: 0.5rem;
+    background-color: var(--warning-color);
+    color: white;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  .float-ws {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #25D366;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 30px;
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-normal);
+  }
+  
+  .float-ws:hover {
+    transform: scale(1.1);
+    color: white;
+  }
+  
+  .my-float-ws {
+    margin-top: 5px;
+  }
+  
+  /* ========== ESTILOS PARA LOS FOOTERS ESPECÍFICOS ========== */
+  .footer textarea {
+    font-size: 1.25rem;
+    height: auto;
+    min-height: 60px;
+  }
+  
+  .footer label {
+    font-size: 1rem;
+    color: var(--medium-color);
+    font-weight: 500;
+  }
+  
+  /* ========== ESTILOS PARA EL LOGIN ========== */
+  .login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+    padding: 1rem;
+  }
+  
+  #logreg-forms {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    padding: 2rem;
+    animation: fadeIn 0.5s ease;
+  }
+  
+  #logreg-forms h1 {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  #logreg-forms img {
+    display: block;
+    margin: 0 auto 1.5rem;
+    max-width: 150px;
+  }
+  
+  #logreg-forms .input-group {
+    margin-bottom: 1rem;
+  }
+  
+  #logreg-forms input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    transition: var(--transition-fast);
+  }
+  
+  #logreg-forms input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+  }
+  
+  #logreg-forms button {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    margin-top: 1rem;
+    transition: var(--transition-fast);
+  }
+  
+  #logreg-forms button:hover {
+    background: var(--primary-dark);
+  }
+  
+  #logreg-forms a {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--medium-color);
+  }
+  
+  #logreg-forms a:hover {
+    color: var(--primary-color);
+  }
+  
+  #logreg-forms hr {
+    border: none;
+    height: 1px;
+    background: var(--border-color);
+    margin: 1.5rem 0;
+  }
+  
+  .footer-copyright {
+    margin-top: 1.5rem;
+    font-size: 0.75rem;
+    color: var(--medium-color);
+    text-align: center;
+  }
+
+  
+  /* ========== CARDS DE ESTADÍSTICAS MINIMALISTAS ========== */
+.stati.card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: white;
+    transition: var(--transition-fast);
+    margin-bottom: var(--space-md);
+    box-shadow: none;
+    height: 100%;
+    overflow: hidden;
+}
+
+.stati.card:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+
+.stati.card .card-block {
+    padding: 1.5rem;
+    position: relative;
+}
+
+.stati.card h6 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.75rem;
+    color: var(--medium-color);
+    font-weight: 500;
+}
+
+.stati.card h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+}
+
+.stati.card h2 i {
+    font-size: 1.25rem;
+    margin-right: var(--space-sm);
+    color: var(--primary-color);
+}
+
+.stati.card p {
+    font-size: 0.75rem;
+    color: var(--medium-color);
+    margin-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Efecto de acento sutil */
+.stati.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+/* Colores de acento para cada card */
+.bg-c-blue::before { background-color: var(--primary-color); }
+.bg-c-green::before { background-color: #2ecc71; }
+.bg-c-yellow::before { background-color: #f39c12; }
+.bg-c-pink::before { background-color: var(--accent-color); }
+
+/* ========== GRÁFICOS PROFESIONALES ========== */
+.card-graph {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: white;
+    margin-bottom: var(--space-md);
+    overflow: hidden;
+}
+
+.card-graph .card-header {
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+}
+
+.card-graph .card-header i {
+    color: var(--primary-color);
+    margin-right: var(--space-sm);
+    font-size: 1rem;
+}
+
+.card-graph .card-body {
+    padding: 1rem;
+    position: relative;
+}
+
+.card-graph canvas {
+    width: 100% !important;
+    height: 250px !important;
+}
+
+/* Leyenda de gráficos personalizada */
+.graph-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: var(--space-sm);
+    font-size: 0.75rem;
+}
+
+.graph-legend-item {
+    display: flex;
+    align-items: center;
+    margin: 0 var(--space-sm) var(--space-xs);
+}
+
+.graph-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: var(--space-xs);
+}
+
+/* ========== TABLA DOCUMENTOS FISCALES ========== */
+#dataTableSecuenciaDashboard {
+    width: 100% !important;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#dataTableSecuenciaDashboard thead th {
+    background-color: white;
+    color: var(--dark-color);
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 2px solid var(--border-color);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#dataTableSecuenciaDashboard tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.875rem;
+}
+
+#dataTableSecuenciaDashboard tbody tr:last-child td {
+    border-bottom: none;
+}
+
+#dataTableSecuenciaDashboard tbody tr:hover {
+    background-color: rgba(67, 97, 238, 0.03);
+}
+
+/* ========== BREADCRUMB MINIMALISTA ========== */
+.breadcrumb {
+    background: transparent;
+    padding: 0.5rem 0;
+    margin: 0;
+}
+
+.breadcrumb-item {
+    font-size: 0.75rem;
+    color: var(--medium-color);
+}
+
+.breadcrumb-item.active {
+    color: var(--dark-color);
+    font-weight: 500;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: '/';
+    color: var(--medium-color);
+    padding: 0 0.5rem;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 767.98px) {
+    .stati.card h2 {
+        font-size: 1.5rem;
+    }
+    
+    .card-graph canvas {
+        height: 200px !important;
+    }
+    
+    #dataTableSecuenciaDashboard thead th,
+    #dataTableSecuenciaDashboard tbody td {
+        padding: 0.5rem;
+    }
+}
+
+/* ============================================= */
+/* ========== ESTILOS PARA FOOTER DE FACTURAS === */
+/* ============================================= */
+
+/* Contenedor principal del footer de factura */
+.footer1.sb-sidenav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 15px;
+    border-top: 2px solid var(--border-color);
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+    z-index: 1020;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    height: auto;
+}
+
+/* Fila del formulario */
+.footer1 .form-row {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 auto;
+    justify-content: space-between;
+}
+
+/* Columnas individuales (Subtotal, Descuento, ISV, Total) */
+.footer1 .col-md-3 {
+    flex: 0 0 24%;
+    max-width: 24%;
+    margin-bottom: 0;
+}
+
+/* Labels de los campos */
+.footer1 label {
+    font-size: 24px !important;
+    text-align: center !important;
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+/* Grupos de input */
+.footer1 .input-group {
+    width: 100%;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+/* Texto de prefijo (L) */
+.footer1 .input-group-text {
+    font-size: 24px !important;
+    height: 100%;
+    background-color: var(--lighter-color);
+    border-color: var(--border-color);
+    color: var(--dark-color);
+    padding: 0 15px;
+}
+
+/* Campos de texto (textarea) */
+.footer1 .form-control {
+    font-size: 24px !important;
+    text-align: center !important;
+    height: auto;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    resize: none;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+/* Mensaje de facturas */
+#mensajeFacturas {
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+    font-size: 16px;
+}
+
+/* Responsive para pantallas medianas */
+@media (max-width: 1200px) {
+    .footer1 .col-md-3 {
+        flex: 0 0 48%;
+        max-width: 48%;
+        margin-bottom: 15px;
+    }
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .footer1.sb-sidenav {
+        padding: 10px;
+    }
+    
+    .footer1 .col-md-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .footer1 label,
+    .footer1 .input-group-text,
+    .footer1 .form-control {
+        font-size: 20px !important;
+    }
+}
+
+/* ============================================= */
+/* ========== BOTÓN FLOTANTE WHATSAPP ========== */
+/* ============================================= */
+
+.float-ws {
+    position: fixed;
+    bottom: 80px; /* Subido 20px desde la posición original */
+    right: 30px;
+    width: 70px; /* Aumentado ligeramente */
+    height: 70px;
+    background-color: #25D366;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 36px; /* Tamaño aumentado */
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: pulse 2s infinite;
+    border: 2px solid white;
+    overflow: hidden;
+}
+
+/* Efecto hover más llamativo */
+.float-ws:hover {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+    background-color: #128C7E;
+    animation: none; /* Detiene la animación al hacer hover */
+}
+
+/* Ícono dentro del botón */
+.float-ws i {
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+/* Efecto hover para el ícono */
+.float-ws:hover i {
+    transform: scale(1.2);
+}
+
+/* Efecto de onda al hacer clic */
+.float-ws:active:after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    animation: ripple 1s ease-out;
+}
+
+/* Animación de pulso */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(37, 211, 102, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+    }
+}
+
+/* Animación de onda al hacer clic */
+@keyframes ripple {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Efecto de notificación */
+.float-ws::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background-color: #FF3B30;
+    border-radius: 50%;
+    top: 8px;
+    right: 8px;
+    border: 2px solid white;
+    animation: ping 1.5s infinite;
+    z-index: 3;
+}
+
+/* Animación de ping para la notificación */
+@keyframes ping {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+    }
+    70% {
+        transform: scale(1.3);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .float-ws {
+        width: 60px;
+        height: 60px;
+        font-size: 30px;
+        bottom: 70px;
+        right: 20px;
+    }
+    
+    .float-ws::before {
+        width: 14px;
+        height: 14px;
+        top: 6px;
+        right: 6px;
+    }
+}
+
+/* RESET PARA LAS TABLAS */
+#invoiceItem, #QuoteItem {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* CABECERAS */
+#invoiceItem thead tr, #QuoteItem thead tr {
+    display: table-row !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+}
+
+#invoiceItem th, #QuoteItem th {
+    display: table-cell !important;
+    padding: 12px 8px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+/* FILAS Y CELDAS */
+#invoiceItem tbody tr, #QuoteItem tbody tr {
+    display: table-row !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+}
+
+#invoiceItem td, #QuoteItem td {
+    display: table-cell !important;
+    padding: 10px 8px !important;
+    vertical-align: middle !important;
+    text-align: center !important;
+    border-bottom: 1px solid #e9ecef !important;
+    white-space: nowrap !important; /* Evita saltos de línea */
+}
+
+/* ANCHOS ESPECÍFICOS POR COLUMNA */
+#invoiceItem th:nth-child(1), #invoiceItem td:nth-child(1),
+#QuoteItem th:nth-child(1), #QuoteItem td:nth-child(1) {
+    width: 3% !important; /* Checkbox */
+}
+
+#invoiceItem th:nth-child(2), #invoiceItem td:nth-child(2),
+#QuoteItem th:nth-child(2), #QuoteItem td:nth-child(2) {
+    width: 15% !important; /* Código */
+    text-align: left !important;
+    padding-left: 15px !important;
+}
+
+#invoiceItem th:nth-child(3), #invoiceItem td:nth-child(3),
+#QuoteItem th:nth-child(3), #QuoteItem td:nth-child(3) {
+    width: 25% !important; /* Descripción */
+    text-align: left !important;
+}
+
+#invoiceItem th:nth-child(4), #invoiceItem td:nth-child(4),
+#QuoteItem th:nth-child(4), #QuoteItem td:nth-child(4) {
+    width: 8% !important; /* Cantidad */
+}
+
+#invoiceItem th:nth-child(5), #invoiceItem td:nth-child(5) {
+    width: 8% !important; /* Medida (solo factura) */
+}
+
+#invoiceItem th:nth-child(6), #invoiceItem td:nth-child(6),
+#QuoteItem th:nth-child(5), #QuoteItem td:nth-child(5) {
+    width: 12% !important; /* Precio */
+}
+
+#invoiceItem th:nth-child(7), #invoiceItem td:nth-child(7),
+#QuoteItem th:nth-child(6), #QuoteItem td:nth-child(6) {
+    width: 12% !important; /* Descuento */
+}
+
+#invoiceItem th:nth-child(8), #invoiceItem td:nth-child(8),
+#QuoteItem th:nth-child(7), #QuoteItem td:nth-child(7) {
+    width: 12% !important; /* Total */
+}
+
+/* CONTENEDORES DE ÍCONOS - AJUSTE CLAVE */
+#invoiceItem .input-group-append, 
+#QuoteItem .input-group-append,
+#invoiceItem .input-group-prepend,
+#QuoteItem .input-group-prepend {
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+}
+
+/* GRUPOS DE INPUT - AJUSTE PARA ÍCONOS */
+#invoiceItem .input-group, #QuoteItem .input-group {
+    display: flex !important;
+    width: 100% !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important; /* Evita saltos de línea */
+}
+
+#invoiceItem .form-control, #QuoteItem .form-control {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 8px 10px !important;
+    display: inline-block !important;
+}
+
+/* ÍCONOS - AJUSTES ESPECÍFICOS */
+#invoiceItem .fa-lg, #QuoteItem .fa-lg {
+    font-size: 1.1rem !important;
+    margin: 0 4px !important; /* Espaciado reducido */
+    display: inline-flex !important;
+    vertical-align: middle !important;
+    width: auto !important; /* Ancho natural */
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* BOTONES CON ÍCONOS */
+#invoiceItem .btn, #QuoteItem .btn {
+    padding: 6px 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+}
+
+/* CHECKBOXES */
+#invoiceItem .itemRow, #QuoteItem .itemRowQuote {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 auto !important;
+    display: block !important;
+}
+
+/* FORZAR ALINEACIÓN */
+.tableFixHead {
+    overflow: hidden !important;
+}
+
+.tableFixHead thead th {
+    position: sticky !important;
+    top: 0 !important;
+    background-color: #f8f9fa !important;
+    z-index: 10 !important;
+}
+
+/* EVITAR DESBORDAMIENTO EN CELDAS */
+#invoiceItem td, #QuoteItem td {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Contenedor principal de la tabla - Scroll horizontal forzado */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Mejor scroll en móviles */
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+/* Estilo para todas las tablas dentro del contenedor */
+.table-responsive > .table {
+    width: auto !important;
+    min-width: 100%;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+/* Cabeceras de tabla */
+.table-responsive > .table thead th {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 10;
+    white-space: nowrap;
+    padding: 12px 15px;
+    vertical-align: middle;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Celdas de tabla */
+.table-responsive > .table tbody td {
+    padding: 10px 15px;
+    vertical-align: middle;
+    white-space: nowrap;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Columnas de acción centradas */
+.table-responsive > .table th.sistema,
+.table-responsive > .table td.sistema,
+.table-responsive > .table th.generar,
+.table-responsive > .table td.generar {
+    text-align: center;
+}
+
+/* Efecto hover para filas */
+.table-responsive > .table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Scrollbar personalizado (opcional) */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Ajuste para tablas con clase table-striped */
+.table-responsive > .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Ajuste para tablas con clase table-hover */
+.table-responsive > .table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Ajuste para tablas con clase table-condensed */
+.table-responsive > .table-condensed thead th,
+.table-responsive > .table-condensed tbody td {
+    padding: 8px 12px;
+}

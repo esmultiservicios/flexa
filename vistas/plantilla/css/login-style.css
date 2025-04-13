@@ -1,0 +1,207 @@
+/* Minimalist Login Style */
+:root {
+    --primary-color: #2c3e50; /* Azul oscuro */
+    --secondary-color: #ecf0f1; /* Gris claro */
+    --accent-color: #e74c3c; /* Rojo */
+    --text-color: #34495e; /* Texto principal */
+    --border-radius: 6px;
+    --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+/* Estructura base */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Contenedor principal */
+#logreg-forms {
+    width: 100%;
+    max-width: 480px;
+    background: var(--secondary-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Encabezados */
+#logreg-forms h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+/* Logo */
+#logreg-forms img {
+    max-width: 140px;
+    height: auto;
+    margin-bottom: 1.5rem;
+}
+
+/* Inputs y grupos de input */
+#logreg-forms .input-group {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: stretch;
+}
+
+#logreg-forms .form-control {
+    flex: 1 1 auto;
+    width: 1%;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--primary-color);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-color);
+    transition: var(--transition);
+    height: auto;
+    line-height: 1.5;
+}
+
+#logreg-forms .form-control:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.2);
+}
+
+/* Input Groups - Prepend y Append */
+#logreg-forms .input-group-prepend,
+#logreg-forms .input-group-append {
+    display: flex;
+}
+
+#logreg-forms .input-group-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.75rem;
+    background: var(--primary-color);
+    color: #fff;
+    border: 1px solid var(--primary-color);
+    transition: var(--transition);
+    border-radius: 0;
+    min-width: 40px;
+}
+
+/* Estilos específicos para prepend */
+#logreg-forms .input-group-prepend .input-group-text {
+    border-right: none;
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+}
+
+/* Estilos específicos para append */
+#logreg-forms .input-group-append .input-group-text {
+    border-left: none;
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+/* Botones dentro de append */
+#logreg-forms .input-group-append button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    border: 1px solid var(--primary-color);
+    border-left: none;
+    cursor: pointer;
+    padding: 0 0.75rem;
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+#logreg-forms .input-group-append button:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* Alineación de iconos */
+#logreg-forms .input-group-text i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 1rem;
+}
+
+/* Radio correcto para el primer input en grupos especiales */
+#logreg-forms #groupDB .form-control:first-of-type {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Botones principales */
+#logreg-forms .btn-primary {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #fff;
+    background: var(--primary-color);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+#logreg-forms .btn-primary:hover {
+    background: var(--accent-color);
+}
+
+/* Enlaces */
+#logreg-forms a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+
+#logreg-forms a:hover {
+    text-decoration: underline;
+}
+
+/* Separador */
+#logreg-forms hr {
+    border: none;
+    height: 1px;
+    background: var(--primary-color);
+    margin: 1.5rem 0;
+}
+
+/* Footer */
+.footer-copyright {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--text-color);
+}
+
+/* Formularios ocultos */
+#logreg-forms .form-reset,
+#logreg-forms .form-signup {
+    display: none;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    #logreg-forms {
+        padding: 1.5rem;
+    }
+}

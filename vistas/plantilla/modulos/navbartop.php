@@ -1,9 +1,11 @@
 <nav class="sb-topnav navbar navbar-expand navbar-dark bg-color-navarlateral">
     <div class="navbar-brand">
+        <div class="align-center">
         <a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">
-            <center><img src="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>vistas/plantilla/img/logos/logo.svg" width="100%" alt="CLINICARE"
-                    loading="CLINICARE" class="logo"></center>
-        </a>
+           <img src="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>vistas/plantilla/img/logos/logo.svg" width="100%" alt="MULTIFAST"
+                    loading="MULTIFAST" class="logo">
+            </a>
+        </div>
     </div>
 
     <!-- Botón de alternar menú para pantallas pequeñas -->

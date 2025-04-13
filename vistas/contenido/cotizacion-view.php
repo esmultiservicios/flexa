@@ -112,7 +112,7 @@
                         <div class="form-group row table-responsive-xl tableFixHead table table-hover">
                             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
                                 <table id="QuoteItem">
-                                    <thead align="center" class="table-success">
+                                    <thead class="align-center">
                                         <tr>
                                             <th width="2%" scope="col"><input id="checkAllQuote" class="formcontrol"
                                                     type="checkbox"></th>

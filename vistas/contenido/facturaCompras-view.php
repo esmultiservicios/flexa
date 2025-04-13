@@ -91,7 +91,7 @@
                     <div class="form-group row table-responsive-xl tableFixHead table table-hover">
                         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
                             <table class="table table-bordered table-hover" id="purchaseItem">
-                                <thead align="center" class="table-success">
+                                <thead class="align-cener">
                                     <tr>
                                         <th width="2%" scope="col"><input id="checkAllPurchase" class="formcontrol"
                                                 type="checkbox"></th>
