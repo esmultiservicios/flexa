@@ -5,18 +5,18 @@
     </ol>
 	<div class="card mb-4">
 		<div class="card-header">
-				<i class="fas fa-key mr-1"></i>
+				<i class="fas fa-key fa-lg mr-1"></i>
 				Privilegio
 		</div>
 		<div class="card-body"> 
 			<div class="table-responsive">
-				<table id="dataTablePrivilegio" class="table table-striped table-condensed table-hover" style="width:100%">
+				<table id="dataTablePrivilegio" class="table table-header-gradient table-striped table-condensed table-hover" style="width:100%">
 					<thead>
 						<tr>
 							<th>Privilegio</th>
 							<th>Menu</th>
-							<th>Submenu</th>
-							<th>Submenu1</th>
+							<th>Submenu N1</th>
+							<th>Submenu N2</th>
 							<th>Editar</th>	
 							<th>Eliminar</th>
 						</tr>

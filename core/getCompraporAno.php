@@ -5,7 +5,7 @@ require_once 'mainModel.php';
 
 $insMainModel = new mainModel();
 
-$ano = date('Y');
+$ano = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
 $result = $insMainModel->getComprasAnual($ano);
 
 $arreglo = array();
