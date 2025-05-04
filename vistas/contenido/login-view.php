@@ -181,7 +181,6 @@ require_once "././core/configAPP.php";
 
         .form-group {
             margin-bottom: 20px;
-            position: relative;
         }
 
         .form-label {
@@ -192,62 +191,97 @@ require_once "././core/configAPP.php";
             color: var(--text-secondary);
         }
 
-        /* MODIFICACIONES PARA LOS ICONOS */
-        .input-with-icon {
+        /* INPUT GROUPS - REVISADO Y CORREGIDO */
+        .input-group {
             position: relative;
+            display: flex;
+            align-items: stretch;
+            width: 100%;
         }
 
-        .input-icon {
+        .input-group-prepend {
             position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 4;
+            display: flex;
+            align-items: center;
+            padding-left: 12px;
+            pointer-events: none;
+        }
+
+        .input-group-append {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-right: 12px;
+            z-index: 5;
+        }
+        
+        .input-group-icon {
             color: var(--text-tertiary);
             font-size: 16px;
-            pointer-events: none;
+        }
+
+        .input-group-toggle {
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            font-size: 16px;
+            width: 24px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: var(--transition);
-            z-index: 2;
+        }
+
+        .input-group-toggle:hover {
+            color: var(--accent);
         }
 
         .form-control {
             width: 100%;
-            padding: 12px 16px 12px 45px;
+            padding-right: 40px !important;
             font-size: 15px;
             border: 1px solid var(--input-border);
             border-radius: var(--radius-sm);
             background-color: var(--input-bg);
             color: var(--text-primary);
             transition: var(--transition);
+            height: 44px;
             position: relative;
-            z-index: 1;
-        }
-
-        .input-with-toggle .form-control {
-            padding-right: 45px;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-tertiary);
-            background: none;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-            font-size: 16px;
-            transition: var(--transition);
             z-index: 3;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .password-toggle:hover {
-            color: var(--accent);
+        /* Ajustes para inputs con botón de mostrar contraseña */
+        .input-group-toggle + .form-control {
+            padding-right: 40px;
+        }
+
+        .form-control::placeholder {
+            opacity: 1;
+            color: var(--text-tertiary);
+            transition: opacity 0.2s ease;
+        }
+
+        .form-control:focus::placeholder {
+            opacity: 0.5;
+        }
+
+        .form-control:focus {
+            border-color: var(--input-focus-border);
+            background-color: var(--input-focus-bg);
+            outline: 0;
+            box-shadow: 0 0 0 2px rgba(84, 105, 212, 0.1);
         }
 
         /* Cliente/PIN Group */
@@ -256,7 +290,7 @@ require_once "././core/configAPP.php";
             gap: 10px;
         }
 
-        .multi-field-group .input-with-icon {
+        .multi-field-group .input-group {
             flex: 1;
         }
 
@@ -312,11 +346,13 @@ require_once "././core/configAPP.php";
             display: inline-flex;
             align-items: center;
             transition: var(--transition);
+            text-decoration: none;
         }
 
         .link-button:hover {
             color: var(--accent-hover);
             text-decoration: underline;
+            text-decoration: none;
         }
 
         .link-icon {
@@ -483,33 +519,36 @@ require_once "././core/configAPP.php";
                     
                     <div class="form-group">
                         <label class="form-label" for="inputEmail">Correo electrónico</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-envelope input-icon"></i>
+                        <div class="input-group">
                             <input type="email" id="inputEmail" name="inputEmail" class="form-control" placeholder="nombre@empresa.com" required autofocus tabindex="1">
                         </div>
                     </div>
-                    
-                    
+                                        
                     <div class="form-group">
                         <label class="form-label" for="inputPassword">Contraseña</label>
-                        <div class="input-with-icon input-with-toggle">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="inputPassword" name="inputPassword" class="form-control" placeholder="Ingrese su contraseña" required tabindex="2">
-                            <button id="show_password" class="password-toggle" type="button" tabindex="3">
-                                <span id="icon" class="fa fa-eye-slash"></span>
-                            </button>
+                        <div class="input-group">
+                            <input type="password" id="inputPassword" name="inputPassword" class="form-control" placeholder="Ingrese su contraseña" required>
+                            <div class="input-group-append">
+                                <button id="show_password" class="input-group-toggle" type="button">
+                                    <span id="icon" class="fa fa-eye-slash"></span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="form-group" id="groupDB" style="display: none;">
                         <label class="form-label">Información adicional</label>
                         <div class="multi-field-group">
-                            <div class="input-with-icon">
-                                <i class="fas fa-user input-icon"></i>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-icon"><i class="fas fa-user"></i></span>
+                                </div>
                                 <input type="number" class="form-control" value="" placeholder="Cliente" aria-label="Cliente" tabindex="4" id="inputCliente" name="inputCliente">
                             </div>
-                            <div class="input-with-icon">
-                                <i class="fas fa-key input-icon"></i>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-icon"><i class="fas fa-key"></i></span>
+                                </div>
                                 <input type="number" class="form-control" value="" placeholder="PIN" aria-label="PIN" tabindex="5" id="inputPin" name="inputPin">
                             </div>
                         </div>
@@ -543,10 +582,7 @@ require_once "././core/configAPP.php";
                     
                     <div class="form-group">
                         <label class="form-label" for="usu_forgot">Correo electrónico</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-envelope input-icon"></i>
-                            <input type="email" class="form-control" placeholder="nombre@empresa.com" required autofocus name="usu_forgot" id="usu_forgot" tabindex="1">
-                        </div>
+                        <input type="email" class="form-control" placeholder="nombre@empresa.com" required autofocus name="usu_forgot" id="usu_forgot" tabindex="1">
                     </div>
                     
                     <div class="RespuestaAjax"></div>
@@ -571,56 +607,49 @@ require_once "././core/configAPP.php";
                                         
                     <div class="form-group">
                         <label class="form-label" for="user_name">Empresa o Nombre</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-building input-icon"></i>
-                            <input type="text" id="user_name" name="user_name" class="form-control" placeholder="Nombre de su empresa" required autofocus data-toggle="tooltip" data-placement="top" title="Ingrese la empresa o su nombre completo" tabindex="1">
-                        </div>
+                        <input type="text" id="user_name" name="user_name" class="form-control" placeholder="Nombre de su empresa" required autofocus data-toggle="tooltip" data-placement="top" title="Ingrese la empresa o su nombre completo" tabindex="1">
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="user_telefono">Teléfono</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-phone input-icon"></i>
-                            <input type="number" id="user_telefono" name="user_telefono" class="form-control" placeholder="Número de contacto" required tabindex="2">
-                        </div>
+                        <input type="number" id="user_telefono" name="user_telefono" class="form-control" placeholder="Número de contacto" required tabindex="2">
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="mail">Correo Electrónico</label>
-                        <div class="input-with-icon">
-                            <i class="fas fa-at input-icon"></i>
-                            <input type="email" class="form-control" placeholder="nombre@empresa.com" id="mail" name="email" required tabindex="3">
-                        </div>
+                        <input type="email" class="form-control" placeholder="nombre@empresa.com" id="mail" name="email" required tabindex="3">
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label" for="user-pass">Contraseña</label>
-                        <div class="input-with-icon input-with-toggle">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="user-pass" name="user-pass" class="form-control" placeholder="Cree una contraseña segura" required tabindex="4">
-                            <button id="show_password1" class="password-toggle" type="button">
-                                <span id="icon1" class="fa fa-eye-slash"></span>
-                            </button>
+                        <div class="input-group">
+                            <input type="password" id="user-pass" name="user-pass" class="form-control" placeholder="Ingrese su contraseña" required tabindex="4">
+                            <div class="input-group-append">
+                                <button id="show_password1" class="input-group-toggle" type="button" tabindex="5">
+                                    <span id="icon1" class="fa fa-eye-slash"></span>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    
+                                        
                     <div class="form-group">
-                        <label class="form-label" for="user-repeatpass">Confirmar Contraseña</label>
-                        <div class="input-with-icon input-with-toggle">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="user-repeatpass" class="form-control" placeholder="Repita su contraseña" required tabindex="5">
-                            <button id="show_password2" class="password-toggle" type="button">
-                                <span id="icon2" class="fa fa-eye-slash"></span>
-                            </button>
+                        <label class="form-label" for="user-repeatpass">Confirmar contraseña</label>
+                        <div class="input-group">
+                            <input type="password" id="user-repeatpass" name="user-repeatpass" class="form-control" placeholder="Ingrese su contraseña" required tabindex="6">
+                            <div class="input-group-append">
+                                <button id="show_password2" class="input-group-toggle" type="button" tabindex="7">
+                                    <span id="icon2" class="fa fa-eye-slash"></span>
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    </div>                
                     
-                    <button class="btn btn-primary" type="button" id="registrarse" tabindex="6">
+                    <button class="btn btn-primary" type="button" id="registrarse" tabindex="8">
                         <i class="fas fa-user-check btn-icon"></i>Completar registro
                     </button>
                     
                     <div class="action-links">
-                        <button type="button" id="cancel_signup" class="link-button" tabindex="7">
+                        <button type="button" id="cancel_signup" class="link-button" tabindex="9">
                             <i class="fas fa-arrow-left link-icon"></i>Volver al inicio de sesión
                         </button>
                     </div>
@@ -682,11 +711,11 @@ require_once "././core/configAPP.php";
             });
             
             // Toggle ver/ocultar contraseña
-            $('.password-toggle').click(function(e) {
+            $('.input-group-toggle').click(function(e) {
                 e.preventDefault();
                 let button = $(this);
                 let icon = button.find('span');
-                let input = button.parent().find('input');
+                let input = button.closest('.input-group').find('input');
                 
                 if (input.attr('type') === 'password') {
                     input.attr('type', 'text');
@@ -699,9 +728,9 @@ require_once "././core/configAPP.php";
             
             // Efecto focus en inputs
             $('.form-control').focus(function() {
-                $(this).parent().addClass('focused');
+                $(this).closest('.input-group').addClass('focused');
             }).blur(function() {
-                $(this).parent().removeClass('focused');
+                $(this).closest('.input-group').removeClass('focused');
             });
             
             // Inicializar tooltips

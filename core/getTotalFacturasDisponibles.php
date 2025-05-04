@@ -3,71 +3,57 @@ $peticionAjax = true;
 require_once 'configGenerales.php';
 require_once 'mainModel.php';
 
-// Instanciar mainModel
-$insMainModel = new mainModel();
-
-// Validar sesión primero
-$validacion = $insMainModel->validarSesion();
-if($validacion['error']) {
-    return $insMainModel->showNotification([
-        "title" => "Error de sesión",
-        "text" => $validacion['mensaje'],
-        "type" => "error",
-        "funcion" => "window.location.href = '".$validacion['redireccion']."'"
-    ]);
+if (!isset($_SESSION['user_sd'])) {
+	session_start(['name' => 'SD']);
 }
 
 $empresa_id = $_SESSION['empresa_id_sd'];
+$insMainModel = new mainModel();
 
-$resultNumero = $insMainModel->getTotalFacturasDisponiblesDB($empresa_id);
-
+// Inicializar variables
 $ultimoNumeroUsado = 0;
-$numeroMaximo = 0;
-$rango_inicial = 0; // Nuevo: para capturar el rango inicial
+$rango_inicial = 0;
+$rango_final = 0;
 $contador = 0;
 $fecha_limite = 'Sin definir';
 
-// Verificamos si hay registros para el total de facturas disponibles
+// Obtener último número usado
+$resultNumero = $insMainModel->getTotalFacturasDisponiblesDB($empresa_id);
 if ($resultNumero->num_rows > 0) {
-    $consultaNumero = $resultNumero->fetch_assoc();
-    $ultimoNumeroUsado = $consultaNumero['numero'];
+    $row = $resultNumero->fetch_assoc();
+    $ultimoNumeroUsado = (int)$row['numero'];
 }
 
-// Obtenemos el número máximo permitido y el rango inicial
-$resultNumeroMaximo = $insMainModel->getNumeroMaximoPermitido($empresa_id);
-
-if ($resultNumeroMaximo->num_rows > 0) {
-    $consultaNumeroMaximo = $resultNumeroMaximo->fetch_assoc();
-    $numeroMaximo = $consultaNumeroMaximo['numero'];
-    $rango_inicial = $consultaNumeroMaximo['rango_inicial']; // Asumiendo que existe este campo
+// Obtener rango de facturación
+$resultRango = $insMainModel->getNumeroMaximoPermitido($empresa_id);
+if ($resultRango->num_rows > 0) {
+    $row = $resultRango->fetch_assoc();
+    $rango_final = (int)$row['rango_final'];
+    $rango_inicial = (int)$row['rango_inicial'];
 }
 
-// Cálculo CORREGIDO para cualquier rango
-if ($ultimoNumeroUsado == 0 || $ultimoNumeroUsado == $rango_inicial) {
-    // Caso 1: No se ha usado ninguna factura
-    // Caso 2: Estamos en el primer número del rango (ej. 00000001 de 00000001-00000050)
-    $facturasPendientes = $numeroMaximo - $rango_inicial + 1;
+// Calcular facturas pendientes
+if ($ultimoNumeroUsado === 0 || $ultimoNumeroUsado === $rango_inicial) {
+    $facturasPendientes = $rango_final - $rango_inicial + 1;
 } else {
-    // Caso normal: cálculo estándar
-    $facturasPendientes = $numeroMaximo - $ultimoNumeroUsado;
+    $facturasPendientes = max(0, $rango_final - $ultimoNumeroUsado);
 }
 
-// Aseguramos que no sea negativo
-$facturasPendientes = max(0, $facturasPendientes);
-
-// OBTENER LA FECHA LIMITE DE FACTURACION
-$resultNFechaLimite = $insMainModel->getFechaLimiteFactura($empresa_id);
-
-if ($resultNFechaLimite->num_rows > 0) {
-    $consultaFechaLimite = $resultNFechaLimite->fetch_assoc();
-    $contador = $consultaFechaLimite['dias_transcurridos'];
-    $fecha_limite = $consultaFechaLimite['fecha_limite'];
+// Obtener fecha límite
+$resultFecha = $insMainModel->getFechaLimiteFactura($empresa_id);
+if ($resultFecha->num_rows > 0) {
+    $row = $resultFecha->fetch_assoc();
+    $contador = (int)$row['dias_transcurridos'];
+    $fecha_limite = $row['fecha_limite'];
 }
 
-$datos = array(
+// Preparar respuesta
+$datos = [
     'facturasPendientes' => $facturasPendientes,
     'contador' => $contador,
-    'fechaLimite' => $fecha_limite
-);
+    'fechaLimite' => $fecha_limite,
+    'error' => false
+];
 
 echo json_encode($datos);
+exit;
