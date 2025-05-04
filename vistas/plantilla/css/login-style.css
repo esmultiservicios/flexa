@@ -85,7 +85,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 0.75rem;
+    padding: 0 0.5rem; /* Ajustado para mejor centrado */
     background: var(--primary-color);
     color: #fff;
     border: 1px solid var(--primary-color);
@@ -129,13 +129,15 @@ body {
     border-color: var(--accent-color);
 }
 
-/* Alineación de iconos */
+/* Alineación de iconos - Mejorado */
 #logreg-forms .input-group-text i {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     font-size: 1rem;
+    height: 100%; /* Asegura que el icono ocupe toda la altura */
+    line-height: 1; /* Elimina espacio extra vertical */
 }
 
 /* Radio correcto para el primer input en grupos especiales */
