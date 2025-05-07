@@ -527,7 +527,7 @@ require_once "././core/configAPP.php";
                     <div class="form-group">
                         <label class="form-label" for="inputPassword">Contraseña</label>
                         <div class="input-group">
-                            <input type="password" id="inputPassword" name="inputPassword" class="form-control" placeholder="Ingrese su contraseña" required>
+                            <input type="password" id="inputPassword" name="inputPassword" class="form-control" placeholder="Ingrese su contraseña" required tabindex="2">
                             <div class="input-group-append">
                                 <button id="show_password" class="input-group-toggle" type="button">
                                     <span id="icon" class="fa fa-eye-slash"></span>
