@@ -1,4 +1,5 @@
 <?php
+//productosControladores.php
 if ($peticionAjax) {
 	require_once '../modelos/productosModelo.php';
 } else {
