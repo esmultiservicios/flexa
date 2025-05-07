@@ -42,52 +42,52 @@
     --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     --font-monospace: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  }
-  
-  /* ========== ESTILOS BASE ========== */
-  * {
+}
+
+/* ========== ESTILOS BASE ========== */
+* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-  }
-  
-  html {
+}
+
+html {
     font-size: 16px;
     scroll-behavior: smooth;
-  }
-  
-  body {
+}
+
+body {
     font-family: var(--font-main);
     line-height: 1.6;
     color: var(--dark-color);
     background-color: var(--lighter-color);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
+}
+
+h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     font-weight: 600;
     line-height: 1.2;
     margin-bottom: var(--space-md);
-  }
-  
-  a {
+}
+
+a {
     color: var(--primary-color);
     text-decoration: none;
     transition: var(--transition-fast);
-  }
-  
-  a:hover {
+}
+
+a:hover {
     color: var(--primary-dark);
     text-decoration: underline;
-  }
-  
-  img {
+}
+
+img {
     max-width: 100%;
     height: auto;
-  }
-  
+}
+
 /* ========== AJUSTES FINALES DE POSICIONAMIENTO ========== */
 /* Agregar esto al FINAL de tu archivo CSS */
 
@@ -97,8 +97,8 @@ body.sb-nav-fixed {
 }
 
 #layoutSidenav {
-    padding-top: 56px;
-    margin-top: -56px;
+    padding-top: 46px;
+    margin-top: -46px;
 }
 
 #layoutSidenav_content {
@@ -113,8 +113,8 @@ main {
 
 /* Ajustes para mensajes del sistema */
 body:has(.prueba-sistema) #layoutSidenav {
-    padding-top: 56px;
-    margin-top: -56px;
+    padding-top: 46px;
+    margin-top: -46px;
 }
 
 body:has(.prueba-sistema) #layoutSidenav_content {
@@ -281,7 +281,7 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
 }
  
   
-  /* ========== NAVBAR LATERAL PROFESIONAL ========== */
+/* ========== NAVBAR LATERAL PROFESIONAL ========== */
 .sb-sidenav {
     display: flex;
     flex-direction: column;
@@ -510,141 +510,9 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
 }
 
 
-/* ========== ESTILOS MEJORADOS PARA BOTONES EN TABLAS ========== */
-/* Botones base en tablas */
-.table .btn {
-    min-width: 32px; /* Ancho mínimo consistente */
-    height: 32px; /* Altura fija */
-    padding: 0.25rem 0.5rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--border-radius-sm);
-    transition: var(--transition-fast);
-}
-
-/* Botones oscuros */
-.table .btn-dark {
-    background-color: var(--dark-color);
-    border-color: var(--dark-color);
-}
-
-.table .btn-dark:hover {
-    background-color: #1e1f2e;
-    transform: translateY(-1px);
-}
-
-/* Tamaño de íconos en botones */
-.table .btn .fa-lg {
-    font-size: 1.1rem; /* Tamaño aumentado */
-    margin: 0;
-}
-
-/* Efecto hover para todos los botones */
-.table .btn:hover {
-    box-shadow: var(--shadow-sm);
-}
-
-/* Botones de acción específicos */
-.table_editar, 
-.table_anular, 
-.table_imprimir {
-    margin: 0 2px;
-}
-
-/* Ajuste para grupos de botones */
-.btn-group .btn {
-    margin-right: 0;
-}
-
-  /* ========== FOOTERS ========== */
-  .footer, .footer1 {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    padding: 1rem;
-    border-top: 1px solid var(--border-color);
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-    z-index: 1020;
-  }
-  
-  .footer1 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .footer .form-row, .footer1 .form-row {
-    display: flex;
-    flex-wrap: wrap;
-    margin-right: -15px;
-    margin-left: -15px;
-  }
-  
-  .footer .col, .footer1 .col {
-    position: relative;
-    width: 100%;
-    padding-right: 15px;
-    padding-left: 15px;
-  }
-  
-  .footer textarea.form-control {
-    background-color: var(--lighter-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    font-weight: 600;
-    resize: none;
-  }
-  
-  .footer .input-group-text {
-    background-color: var(--lighter-color);
-    border: 1px solid var(--border-color);
-    color: var(--medium-color);
-    font-weight: 600;
-  }
-  
-  /* ========== COMPONENTES GENERALES ========== */
-  .card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    word-wrap: break-word;
-    background-color: white;
-    background-clip: border-box;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: var(--space-md);
-    transition: var(--transition-normal);
-  }
-  
-  .card:hover {
-    box-shadow: var(--shadow-md);
-  }
-  
-  .card-header {
-    padding: 1rem 1.25rem;
-    margin-bottom: 0;
-    background-color: white;
-    border-bottom: 1px solid var(--border-color);
-    border-top-left-radius: var(--border-radius);
-    border-top-right-radius: var(--border-radius);
-  }
-  
-  .card-body {
-    flex: 1 1 auto;
-    padding: 1.25rem;
-  }
-  
-  .card-title {
-    margin-bottom: 0.75rem;
-    font-size: 1.25rem;
-  }
-  
-  .btn {
+/* ========== ESTILOS MEJORADOS PARA BOTONES ========== */
+/* Botones base - Ajuste para mejor espaciado */
+.btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -660,38 +528,292 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     border-radius: var(--border-radius);
     transition: var(--transition-fast);
     cursor: pointer;
-  }
-  
-  .btn-primary {
+    gap: 0.5rem; /* Espacio entre ícono y texto */
+}
+
+/* Botones pequeños - Ajuste de espaciado */
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: var(--border-radius-sm);
+    gap: 0.375rem; /* Espacio reducido para botones pequeños */
+}
+
+/* Botones extra pequeños - Ajuste de espaciado */
+.btn-xs {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6875rem;
+    border-radius: var(--border-radius-sm);
+    gap: 0.25rem; /* Espacio mínimo para botones extra pequeños */
+}
+
+/* Botones en tablas - Ajuste específico */
+.table .btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0.375rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+    gap: 0.375rem; /* Espacio consistente en tablas */
+}
+
+/* Botones con solo íconos */
+.btn-icon {
+    padding: 0.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    justify-content: center;
+}
+
+.btn-sm.btn-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0.375rem;
+}
+
+/* Estilos de color para botones */
+.btn-primary {
     color: white;
     background-color: var(--primary-color);
     border-color: var(--primary-color);
-  }
-  
-  .btn-primary:hover {
+}
+
+.btn-primary:hover {
     background-color: var(--primary-dark);
     border-color: var(--primary-dark);
-  }
-  
-  .btn-secondary {
+}
+
+.btn-secondary {
     color: white;
     background-color: var(--secondary-color);
     border-color: var(--secondary-color);
-  }
-  
-  .btn-secondary:hover {
+}
+
+.btn-secondary:hover {
     background-color: #5f0b9b;
     border-color: #5f0b9b;
-  }
-  
-  .btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
+}
+
+.btn-success {
+    color: white;
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.btn-success:hover {
+    background-color: #3aa8d8;
+    border-color: #3aa8d8;
+}
+
+.btn-danger {
+    color: white;
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.btn-danger:hover {
+    background-color: #d61f34;
+    border-color: #d61f34;
+}
+
+.btn-warning {
+    color: var(--dark-color);
+    background-color: var(--warning-color);
+    border-color: var(--warning-color);
+}
+
+.btn-warning:hover {
+    background-color: #e0871b;
+    border-color: #e0871b;
+}
+
+.btn-info {
+    color: white;
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #138496;
+}
+
+.btn-light {
+    color: var(--dark-color);
+    background-color: var(--light-color);
+    border-color: var(--light-color);
+}
+
+.btn-light:hover {
+    background-color: #d8e0e5;
+    border-color: #d8e0e5;
+}
+
+.btn-dark {
+    color: white;
+    background-color: var(--dark-color);
+    border-color: var(--dark-color);
+}
+
+.btn-dark:hover {
+    background-color: #1e1f2e;
+    border-color: #1e1f2e;
+}
+
+/* Botones outline */
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    background-color: transparent;
+}
+
+.btn-outline-primary:hover {
+    color: white;
+    background-color: var(--primary-color);
+}
+
+.btn-outline-secondary {
+    color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    background-color: transparent;
+}
+
+.btn-outline-secondary:hover {
+    color: white;
+    background-color: var(--secondary-color);
+}
+
+/* Efecto hover para todos los botones */
+.btn:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* Botones de acción específicos en tablas */
+.table_editar, 
+.table_anular, 
+.table_imprimir {
+    margin: 0 2px;
+}
+
+/* Ajuste para grupos de botones */
+.btn-group .btn {
+    margin-right: 0;
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+/* Tamaño de íconos en botones */
+.btn .fa-lg {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.btn-sm .fa-lg {
+    font-size: 0.9rem;
+}
+
+/* ========== FOOTERS ========== */
+.footer, .footer1 {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    z-index: 1020;
+}
+
+.footer1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer .form-row, .footer1 .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+.footer .col, .footer1 .col {
+    position: relative;
+    width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.footer textarea.form-control {
+    background-color: var(--lighter-color);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-  }
-  
-  /* ========== FORMULARIOS ========== */
-  .form-control {
+    font-weight: 600;
+    resize: none;
+}
+
+.footer .input-group-text {
+    background-color: var(--lighter-color);
+    border: 1px solid var(--border-color);
+    color: var(--medium-color);
+    font-weight: 600;
+}
+
+/* ========== COMPONENTES GENERALES ========== */
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: white;
+    background-clip: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--space-md);
+    transition: var(--transition-normal);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-header {
+    padding: 1rem 1.25rem;
+    margin-bottom: 0;
+    background-color: white;
+    border-bottom: 1px solid var(--border-color);
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+}
+
+.card-body {
+    flex: 1 1 auto;
+    padding: 1.25rem;
+}
+
+.card-title {
+    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
+}
+
+/* ========== FORMULARIOS ========== */
+.form-control {
     display: block;
     width: 100%;
     padding: 0.5rem 0.75rem;
@@ -703,35 +825,35 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     transition: var(--transition-fast);
-  }
-  
-  .form-control:focus {
+}
+
+.form-control:focus {
     color: var(--dark-color);
     background-color: white;
     border-color: var(--primary-color);
     outline: 0;
     box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-  }
-  
-  .input-group {
+}
+
+.input-group {
     position: relative;
     display: flex;
     flex-wrap: wrap;
     align-items: stretch;
     width: 100%;
-  }
-  
-  .input-group-prepend {
+}
+
+.input-group-prepend {
     margin-right: -1px;
     display: flex;
-  }
-  
-  .input-group-append {
+}
+
+.input-group-append {
     margin-left: -1px;
     display: flex;
-  }
-  
-  .input-group-text {
+}
+
+.input-group-text {
     display: flex;
     align-items: center;
     padding: 0.5rem 0.75rem;
@@ -744,91 +866,91 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     white-space: nowrap;
     background-color: var(--lighter-color);
     border: 1px solid var(--border-color);
-  }
-  
-  .input-group-text:first-child {
+}
+
+.input-group-text:first-child {
     border-top-left-radius: var(--border-radius);
     border-bottom-left-radius: var(--border-radius);
-  }
-  
-  .input-group-text:last-child {
+}
+
+.input-group-text:last-child {
     border-top-right-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
-  }
-  
-  /* ========== UTILIDADES ========== */
-  .text-center {
+}
+
+/* ========== UTILIDADES ========== */
+.text-center {
     text-align: center;
-  }
-  
-  .text-right {
+}
+
+.text-right {
     text-align: right;
-  }
-  
-  .text-left {
+}
+
+.text-left {
     text-align: left;
-  }
-  
-  .small {
+}
+
+.small {
     font-size: 0.875rem;
-  }
-  
-  .smaller {
+}
+
+.smaller {
     font-size: 0.75rem;
-  }
-  
-  .mb-3 {
+}
+
+.mb-3 {
     margin-bottom: 1rem;
-  }
-  
-  .mt-3 {
+}
+
+.mt-3 {
     margin-top: 1rem;
-  }
-  
-  .p-3 {
+}
+
+.p-3 {
     padding: 1rem;
-  }
-  
-  .rounded {
+}
+
+.rounded {
     border-radius: var(--border-radius);
-  }
-  
-  .shadow {
+}
+
+.shadow {
     box-shadow: var(--shadow-sm);
-  }
-  
-  /* ========== ANIMACIONES ========== */
-  @keyframes fadeIn {
+}
+
+/* ========== ANIMACIONES ========== */
+@keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
-  }
-  
-  .fade-in {
+}
+
+.fade-in {
     animation: fadeIn 0.3s ease-in-out;
-  }
-  
-  /* ========== RESPONSIVE ADJUSTMENTS ========== */
-  @media (max-width: 767.98px) {
+}
+
+/* ========== RESPONSIVE ADJUSTMENTS ========== */
+@media (max-width: 767.98px) {
     .footer, .footer1 {
-      position: static;
-      margin-top: var(--space-lg);
+        position: static;
+        margin-top: var(--space-lg);
     }
     
     .footer .form-row, .footer1 .form-row {
-      flex-direction: column;
+        flex-direction: column;
     }
     
     .footer .col, .footer1 .col {
-      margin-bottom: var(--space-sm);
+        margin-bottom: var(--space-sm);
     }
     
     .footer textarea.form-control {
-      font-size: 1rem;
+        font-size: 1rem;
     }
-  }
-  
-  /* ========== ESTILOS ESPECÍFICOS PARA EL SISTEMA ========== */
-  .prueba-sistema {
+}
+
+/* ========== ESTILOS ESPECÍFICOS PARA EL SISTEMA ========== */
+.prueba-sistema {
     position: fixed;
     top: 0;
     left: 0;
@@ -839,9 +961,9 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     color: white;
     text-align: center;
     font-weight: bold;
-  }
-  
-  .modo_soporte {
+}
+
+.modo_soporte {
     position: fixed;
     top: 56px;
     left: 0;
@@ -852,9 +974,9 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     color: white;
     text-align: center;
     font-weight: bold;
-  }
-  
-  .float-ws {
+}
+
+.float-ws {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -871,41 +993,41 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     align-items: center;
     justify-content: center;
     transition: var(--transition-normal);
-  }
-  
-  .float-ws:hover {
+}
+
+.float-ws:hover {
     transform: scale(1.1);
     color: white;
-  }
-  
-  .my-float-ws {
+}
+
+.my-float-ws {
     margin-top: 5px;
-  }
-  
-  /* ========== ESTILOS PARA LOS FOOTERS ESPECÍFICOS ========== */
-  .footer textarea {
+}
+
+/* ========== ESTILOS PARA LOS FOOTERS ESPECÍFICOS ========== */
+.footer textarea {
     font-size: 1.25rem;
     height: auto;
     min-height: 60px;
-  }
-  
-  .footer label {
+}
+
+.footer label {
     font-size: 1rem;
     color: var(--medium-color);
     font-weight: 500;
-  }
-  
-  /* ========== ESTILOS PARA EL LOGIN ========== */
-  .login-container {
+}
+
+/* ========== ESTILOS PARA EL LOGIN ========== */
+.login-container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
     padding: 1rem;
-  }
-  
-  #logreg-forms {
+}
+
+#logreg-forms {
     width: 100%;
     max-width: 400px;
     background: white;
@@ -913,38 +1035,38 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     box-shadow: var(--shadow-lg);
     padding: 2rem;
     animation: fadeIn 0.5s ease;
-  }
-  
-  #logreg-forms h1 {
+}
+
+#logreg-forms h1 {
     color: var(--primary-color);
     text-align: center;
     margin-bottom: 1.5rem;
-  }
-  
-  #logreg-forms img {
+}
+
+#logreg-forms img {
     display: block;
     margin: 0 auto 1.5rem;
     max-width: 150px;
-  }
-  
-  #logreg-forms .input-group {
+}
+
+#logreg-forms .input-group {
     margin-bottom: 1rem;
-  }
-  
-  #logreg-forms input {
+}
+
+#logreg-forms input {
     width: 100%;
     padding: 0.75rem;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     transition: var(--transition-fast);
-  }
-  
-  #logreg-forms input:focus {
+}
+
+#logreg-forms input:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
-  }
-  
-  #logreg-forms button {
+}
+
+#logreg-forms button {
     width: 100%;
     padding: 0.75rem;
     background: var(--primary-color);
@@ -954,39 +1076,39 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     font-weight: 600;
     margin-top: 2.5rem;
     transition: var(--transition-fast);
-  }
-  
-  #logreg-forms button:hover {
+}
+
+#logreg-forms button:hover {
     background: var(--primary-dark);
-  }
-  
-  #logreg-forms a {
+}
+
+#logreg-forms a {
     display: block;
     text-align: center;
     margin-top: 1rem;
     color: var(--medium-color);
-  }
-  
-  #logreg-forms a:hover {
+}
+
+#logreg-forms a:hover {
     color: var(--primary-color);
-  }
-  
-  #logreg-forms hr {
+}
+
+#logreg-forms hr {
     border: none;
     height: 1px;
     background: var(--border-color);
     margin: 1.5rem 0;
-  }
-  
-  .footer-copyright {
+}
+
+.footer-copyright {
     margin-top: 1.5rem;
     font-size: 0.75rem;
     color: var(--medium-color);
     text-align: center;
-  }
+}
 
-  
-  /* ========== CARDS DE ESTADÍSTICAS MINIMALISTAS ========== */
+
+/* ========== CARDS DE ESTADÍSTICAS MINIMALISTAS ========== */
 .stati.card {
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
@@ -1559,6 +1681,7 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     align-items: center !important;
     justify-content: center !important;
     white-space: nowrap !important;
+    gap: 4px !important; /* Espacio entre ícono y texto */
 }
 
 /* CHECKBOXES */
