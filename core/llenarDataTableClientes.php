@@ -7,8 +7,7 @@
 	$insMainModel = new mainModel();
 	$database = new Database();
 		
-	$estado = (isset($_POST['estado']) && $_POST['estado'] !== '') ? $_POST['estado'] : 1;
-
+	$estado = isset($_POST['estado']) ? $_POST['estado'] : 1;
 	$result = $insMainModel->getClientes($estado);
 	
 	$arreglo = array();

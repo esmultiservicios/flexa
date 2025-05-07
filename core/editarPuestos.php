@@ -13,4 +13,5 @@
 		0 => $valores2['nombre'],
 		1 => $valores2['estado'],					
 	);
-	echo json_encode($datos);	
+	echo json_encode($datos);
+?>	

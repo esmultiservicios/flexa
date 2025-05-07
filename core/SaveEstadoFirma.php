@@ -3,20 +3,12 @@ $peticionAjax = true;
 require_once "configGenerales.php";
 require_once "mainModel.php";
 
-// Instanciar mainModel
-$insMainModel = new mainModel();
-
-// Validar sesión primero
-$validacion = $insMainModel->validarSesion();
-if($validacion['error']) {
-    return $insMainModel->showNotification([
-        "title" => "Error de sesión",
-        "text" => $validacion['mensaje'],
-        "type" => "error",
-        "funcion" => "window.location.href = '".$validacion['redireccion']."'"
-    ]);
+if (!isset($_SESSION['user_sd'])) { 
+    session_start(['name' => 'SD']); 
 }
 
+// Crear una instancia de la clase MainModel
+$insMainModel = new MainModel();
 
 // Crear una conexión mysqli
 $mysqli = $insMainModel->connection();

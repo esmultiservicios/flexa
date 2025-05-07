@@ -29,3 +29,4 @@ if (isset($_POST["searchText"])) {
         echo "<li style='color: red;'>No se encontraron resultados</li>";
     }
 }
+?>

@@ -5,16 +5,13 @@ require_once 'mainModel.php';
 
 $insMainModel = new mainModel();
 
-$months = isset($_GET['months']) ? (int)$_GET['months'] : 3;
-$months = in_array($months, [3, 6]) ? $months : 3; // Solo permitir 3 o 6 meses
+$ano_actual = date('Y'); // Año actual
+$mes_actual = date('n'); // Mes actual
 
-$ano_actual = date('Y');
-$mes_actual = date('n');
-
-// Calcular los meses anteriores
+// Calcular los tres meses anteriores, excluyendo el mes actual
 $meses_anterior = [];
 
-for ($i = 1; $i <= $months; $i++) {
+for ($i = 1; $i <= 3; $i++) {
     $mes_calculado = $mes_actual - $i;
     
     if ($mes_calculado < 1) {
@@ -29,10 +26,10 @@ for ($i = 1; $i <= $months; $i++) {
 
 // Crear el filtro de meses para la consulta
 $meses_in = implode(",", array_map(function($mes_ano) {
-    return "'" . $mes_ano['ano'] . '-' . str_pad($mes_ano['mes'], 2, '0', STR_PAD_LEFT) . "'";
+    return "'" . $mes_ano['ano'] . '-' . str_pad($mes_ano['mes'], 2, '0', STR_PAD_LEFT) . "'"; // Formato 'YYYY-MM'
 }, $meses_anterior));
 
-// Consulta SQL (similar a la que ya tienes)
+// Modificar la consulta SQL
 $sql = "
 SELECT 
     sub.mes,
@@ -76,6 +73,7 @@ $result = $insMainModel->ejecutarConsultaSimple($sql);
 $arreglo = array();
 
 while ($row = $result->fetch_assoc()) {
+    // Si el total vendido es mayor a 0, lo agregamos al arreglo
     $total_vendido = (int)$row['total_vendido'];
     if ($total_vendido > 0) {
         $mes = (int) date('n', strtotime($row['mes']));

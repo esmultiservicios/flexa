@@ -14,8 +14,8 @@ class mainModel
 	/* FUNCTION QUE PERMITE REALIZAR LA CONEXIÓN A LA DB */
 	public function connection()
 	{
-		// Desactiva la conexión persistente removiendo 'p:'
-		$mysqli = new mysqli(SERVER, USER, PASS);
+		// Usamos conexiones persistentes con 'p:'
+		$mysqli = new mysqli('p:' . SERVER, USER, PASS);
 	
 		if ($mysqli->connect_errno) {
 			throw new Exception('Fallo al conectar a MySQL, connection: ' . $mysqli->connect_error);
@@ -30,13 +30,7 @@ class mainModel
 	
 		return $mysqli;
 	}
-
-	// En tu mainModel.php agrega:
-	public static function staticConnection() {
-		$instance = new self();
-		return $instance->connection();
-	}
-		
+	
 	public function connectionLogin()
 	{
 		// Usamos conexiones persistentes con 'p:'
@@ -56,50 +50,6 @@ class mainModel
 		return $mysqliLogin;
 	}
 	
-	public function connectionDBLocal($dblocal)
-	{
-		// Usamos conexiones persistentes con 'p:'
-		$mysqliDBLocal = new mysqli('p:' . SERVER, USER, PASS);
-	
-		if ($mysqliDBLocal->connect_errno) {
-			throw new Exception('Fallo al conectar a MySQL, connectionDBLocal: ' . $mysqliDBLocal->connect_error);
-		}
-	
-		$mysqliDBLocal->set_charset('utf8mb4'); // Usamos utf8mb4 para soporte completo de caracteres
-	
-		// Intenta seleccionar la base de datos
-		if (!$mysqliDBLocal->select_db($dblocal)) {
-			throw new Exception('Error al seleccionar la base de datos desde mainModel.php, connectionDBLocal: ' . $mysqliDBLocal->error);
-		}
-	
-		return $mysqliDBLocal;
-	}	
-
-	public function connectToDatabase($config) {
-		$conn = new mysqli($config['host'], $config['user'], $config['pass'], $config['name']);
-		
-		if ($conn->connect_error) {
-			error_log("Error conectando a DB cliente: " . $conn->connect_error);
-			return false;
-		}
-		
-		$conn->set_charset("utf8");
-		return $conn;
-	}
-
-	public function databaseExists($dbName) {
-		$conn = new mysqli(SERVER, USER, PASS);
-		if ($conn->connect_error) {
-			return false;
-		}
-		
-		$result = $conn->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$dbName'");
-		$exists = ($result->num_rows > 0);
-		$conn->close();
-		
-		return $exists;
-	}
-
 	// En tu mainModel.php agregamos:
 	public static function validarSesion() {
 		// Verificar si la sesión no está iniciada
@@ -140,6 +90,25 @@ class mainModel
 		
 		return ["error" => false];
 	}	
+	
+	public function connectionDBLocal($dblocal)
+	{
+		// Usamos conexiones persistentes con 'p:'
+		$mysqliDBLocal = new mysqli('p:' . SERVER, USER, PASS);
+	
+		if ($mysqliDBLocal->connect_errno) {
+			throw new Exception('Fallo al conectar a MySQL, connectionDBLocal: ' . $mysqliDBLocal->connect_error);
+		}
+	
+		$mysqliDBLocal->set_charset('utf8mb4'); // Usamos utf8mb4 para soporte completo de caracteres
+	
+		// Intenta seleccionar la base de datos
+		if (!$mysqliDBLocal->select_db($dblocal)) {
+			throw new Exception('Error al seleccionar la base de datos desde mainModel.php, connectionDBLocal: ' . $mysqliDBLocal->error);
+		}
+	
+		return $mysqliDBLocal;
+	}	
 
 	public function correlativoLogin($campo_id, $tabla)
 	{
@@ -156,7 +125,6 @@ class mainModel
 
 		return $numero;
 	}
-	
 
 	public function consulta_total_ingreso($query)
 	{
@@ -202,838 +170,7 @@ class mainModel
 
 		return $numero;
 	}
-	
-	public function obtener_planes_id_por_plan_id(){
-		$query = "SELECT planes_id FROM plan"; // ejemplo con ID fijo
-	
-		$result = $this->ejecutar_consulta_simple($query); // sin pasar parámetros
-	
-		if($result && $result->num_rows > 0){
-			$row = $result->fetch_assoc();
-			return $row['planes_id'];
-		}
-		return null;
-	}
-	
-	// Función para generar username único según las reglas especificadas
-	public function generarUsernameUnico($nombre_completo) {
-		// Separar el nombre completo en partes
-		$partes_nombre = explode(' ', trim($nombre_completo));
-		
-		// Obtener primera letra del primer nombre (en minúscula)
-		$primera_letra = strtolower(substr($partes_nombre[0], 0, 1));
-		
-		// Buscar el primer apellido (el siguiente elemento después del primer nombre)
-		$primer_apellido = '';
-		for ($i = 1; $i < count($partes_nombre); $i++) {
-			if (!empty($partes_nombre[$i])) {
-				$primer_apellido = strtolower($partes_nombre[$i]);
-				break;
-			}
-		}
-		
-		// Si no hay apellido, usar solo la primera letra
-		if (empty($primer_apellido)) {
-			$username_base = $primera_letra;
-		} else {
-			$username_base = $primera_letra . $primer_apellido;
-		}
-		
-		// Verificar si el username ya existe
-		$username_final = $username_base;
-		$contador = 1;
-		
-		while (true) {
-			$check = mainModel::ejecutar_consulta_simple("SELECT users_id FROM users WHERE username = '$username_final'");
-			
-			if ($check->num_rows == 0) {
-				break; // Username disponible
-			}
-			
-			// Si existe, agregar número consecutivo
-			$username_final = $username_base . str_pad($contador, 2, '0', STR_PAD_LEFT);
-			$contador++;
-			
-			// Prevención por si acaso (nunca debería llegar a esto)
-			if ($contador > 100) {
-				$username_final = $username_base . uniqid();
-				break;
-			}
-		}
-		
-		return $username_final;
-	}	
 
-	// En tu mainModel.php
-	public function obtener_plan_modelo($plan_id) {
-		$mainModel = new mainModel();
-		$conexion = $mainModel->connection();
-		
-		try {
-			$stmt = $conexion->prepare("SELECT * FROM planes WHERE planes_id = ?");
-			$stmt->bind_param("i", $plan_id);
-			$stmt->execute();
-			
-			$resultado = $stmt->get_result();
-			
-			if($resultado->num_rows == 1) {
-				$plan = $resultado->fetch_assoc();
-				
-				// Limpiar datos de salida
-				$plan['nombre'] = $this->cleanStringConverterCase($plan['nombre']);
-				
-				return [
-					"success" => true,
-					"data" => $plan
-				];
-			} else {
-				return [
-					"success" => false,
-					"error" => "Plan no encontrado"
-				];
-			}
-			
-		} catch(Exception $e) {
-			error_log("Error en obtener_plan_modelo: " . $e->getMessage());
-			return [
-				"success" => false,
-				"error" => $e->getMessage()
-			];
-		} finally {
-			$conexion->close();
-		}
-	}	
-	public function registrar_plan_modelo($datos) {
-		$conexionPrincipal = $this->connection();
-		
-		try {
-			// Iniciar transacción
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Registrar en la base de datos principal
-			$stmt = $conexionPrincipal->prepare("INSERT INTO planes (
-											  nombre,
-											  estado,
-											  fecha_registro,
-											  configuraciones
-											  ) VALUES (?, ?, ?, ?)");
-			
-			$stmt->bind_param("siss", 
-				$datos['nombre'],
-				$datos['estado'],
-				$datos['fecha_registro'],
-				$datos['configuraciones']
-			);
-			
-			$stmt->execute();
-			$insertId = $stmt->insert_id;
-			
-			// 2. Registrar en todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				// Verificar si la base de datos existe
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						// Verificar si la tabla planes existe
-						$tableExists = $connCliente->query("SHOW TABLES LIKE 'planes'");
-						
-						if ($tableExists->num_rows > 0) {
-							// Insertar en la base de datos del cliente
-							$stmtCliente = $connCliente->prepare("INSERT INTO planes (
-															  planes_id,
-															  nombre,
-															  estado,
-															  fecha_registro,
-															  configuraciones
-															  ) VALUES (?, ?, ?, ?, ?)");
-							
-							$stmtCliente->bind_param("isiss", 
-								$insertId,
-								$datos['nombre'],
-								$datos['estado'],
-								$datos['fecha_registro'],
-								$datos['configuraciones']
-							);
-							
-							$stmtCliente->execute();
-							$stmtCliente->close();
-						}
-						$connCliente->close();
-					}
-				}
-			}
-			
-			// Confirmar transacción
-			$conexionPrincipal->commit();
-			
-			return [
-				'success' => true,
-				'insert_id' => $insertId,
-				'affected_rows' => $stmt->affected_rows,
-				'message' => 'Plan registrado correctamente en todas las bases de datos'
-			];
-			
-		} catch (Exception $e) {
-			// Revertir transacción en caso de error
-			$conexionPrincipal->rollback();
-			
-			return [
-				'success' => false,
-				'error' => $e->getMessage()
-			];
-		} finally {
-			if(isset($stmt)) $stmt->close();
-			$conexionPrincipal->autocommit(true);
-			$conexionPrincipal->close();
-		}
-	}
-
-	public function actualizar_plan_modelo($datos) {
-		$conexionPrincipal = $this->connection();
-		
-		try {
-			// Iniciar transacción
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Actualizar en la base de datos principal
-			$stmt = $conexionPrincipal->prepare("UPDATE planes SET 
-											  nombre = ?,
-											  estado = ?,
-											  configuraciones = ?
-											  WHERE planes_id = ?");
-			
-			$stmt->bind_param("sisi", 
-				$datos['nombre'],
-				$datos['estado'],
-				$datos['configuraciones'],
-				$datos['plan_id']
-			);
-			
-			$stmt->execute();
-			$affectedRows = $stmt->affected_rows;
-			
-			// 2. Actualizar en todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				// Verificar si la base de datos existe
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						// Verificar si la tabla planes existe
-						$tableExists = $connCliente->query("SHOW TABLES LIKE 'planes'");
-						
-						if ($tableExists->num_rows > 0) {
-							// Verificar si el plan existe en el cliente
-							$planExists = $connCliente->query("SELECT 1 FROM planes WHERE planes_id = " . $datos['plan_id']);
-							
-							if ($planExists->num_rows > 0) {
-								// Actualizar en la base de datos del cliente
-								$stmtCliente = $connCliente->prepare("UPDATE planes SET 
-																  nombre = ?,
-																  estado = ?,
-																  configuraciones = ?
-																  WHERE planes_id = ?");
-								
-								$stmtCliente->bind_param("sisi", 
-									$datos['nombre'],
-									$datos['estado'],
-									$datos['configuraciones'],
-									$datos['plan_id']
-								);
-								
-								$stmtCliente->execute();
-							} else {
-								// Insertar si no existe
-								$stmtCliente = $connCliente->prepare("INSERT INTO planes (
-																  planes_id,
-																  nombre,
-																  estado,
-																  fecha_registro,
-																  configuraciones
-																  ) VALUES (?, ?, ?, NOW(), ?)");
-								
-								$stmtCliente->bind_param("isss", 
-									$datos['plan_id'],
-									$datos['nombre'],
-									$datos['estado'],
-									$datos['configuraciones']
-								);
-								
-								$stmtCliente->execute();
-							}
-							$stmtCliente->close();
-						}
-						$connCliente->close();
-					}
-				}
-			}
-			
-			// Confirmar transacción
-			$conexionPrincipal->commit();
-			
-			return [
-				'success' => true,
-				'affected_rows' => $affectedRows,
-				'message' => 'Plan actualizado correctamente en todas las bases de datos'
-			];
-			
-		} catch (Exception $e) {
-			// Revertir transacción en caso de error
-			$conexionPrincipal->rollback();
-			
-			return [
-				'success' => false,
-				'error' => $e->getMessage()
-			];
-		} finally {
-			if(isset($stmt)) $stmt->close();
-			$conexionPrincipal->autocommit(true);
-			$conexionPrincipal->close();
-		}
-	}
-
-	public function eliminar_plan_modelo($planId) {
-		$response = [
-			'success' => false,
-			'message' => ''
-		];
-	
-		try {
-			// Obtener conexión principal
-			$conexionPrincipal = $this->connection();
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Verificar si el plan tiene relaciones en tablas de permisos
-			$tieneRelaciones = false;
-			
-			// Verificar en menu_plan
-			$checkMenuPlan = $conexionPrincipal->query("SELECT 1 FROM menu_plan WHERE plan_id = '$planId' LIMIT 1");
-			if ($checkMenuPlan->num_rows > 0) {
-				$tieneRelaciones = true;
-			}
-			
-			// Verificar en submenu_plan (si no se encontró en la anterior)
-			if (!$tieneRelaciones) {
-				$checkSubmenuPlan = $conexionPrincipal->query("SELECT 1 FROM submenu_plan WHERE plan_id = '$planId' LIMIT 1");
-				if ($checkSubmenuPlan->num_rows > 0) {
-					$tieneRelaciones = true;
-				}
-			}
-			
-			// Verificar en submenu1_plan (si no se encontró en las anteriores)
-			if (!$tieneRelaciones) {
-				$checkSubmenu1Plan = $conexionPrincipal->query("SELECT 1 FROM submenu1_plan WHERE plan_id = '$planId' LIMIT 1");
-				if ($checkSubmenu1Plan->num_rows > 0) {
-					$tieneRelaciones = true;
-				}
-			}
-	
-			if ($tieneRelaciones) {
-				$conexionPrincipal->rollback();
-				return [
-					'success' => false,
-					'message' => 'No se puede eliminar el plan porque tiene permisos asignados'
-				];
-			}
-	
-			// 2. Eliminar de la base principal
-			$deletePrincipal = $conexionPrincipal->query("DELETE FROM planes WHERE plan_id = '$planId'");
-			
-			if (!$deletePrincipal) {
-				$conexionPrincipal->rollback();
-				return [
-					'success' => false,
-					'message' => 'Error al eliminar el plan de la base principal'
-				];
-			}
-	
-			// 3. Eliminar de todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			$erroresClientes = [];
-	
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						try {
-							// Verificar si la tabla planes existe
-							$tableExists = $connCliente->query("SHOW TABLES LIKE 'planes'");
-							
-							if ($tableExists->num_rows > 0) {
-								// Verificar si el plan existe en el cliente
-								$planExists = $connCliente->query("SELECT 1 FROM planes WHERE plan_id = '$planId'");
-								
-								if ($planExists->num_rows > 0) {
-									// Eliminar de la base del cliente
-									$deleteCliente = $connCliente->query("DELETE FROM planes WHERE plan_id = '$planId'");
-									
-									if (!$deleteCliente) {
-										$erroresClientes[] = "Error al eliminar de $dbName: " . $connCliente->error;
-									}
-								}
-							}
-						} catch (Exception $e) {
-							$erroresClientes[] = "Error en $dbName: " . $e->getMessage();
-						} finally {
-							$connCliente->close();
-						}
-					}
-				}
-			}
-	
-			// Confirmar transacción principal
-			$conexionPrincipal->commit();
-	
-			$response = [
-				'success' => true,
-				'message' => 'Plan eliminado correctamente'
-			];
-	
-			if (!empty($erroresClientes)) {
-				$response['warnings'] = $erroresClientes;
-			}
-	
-			return $response;
-	
-		} catch (Exception $e) {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->rollback();
-			}
-			
-			return [
-				'success' => false,
-				'message' => 'Error en el servidor: ' . $e->getMessage()
-			];
-		} finally {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->autocommit(true);
-				$conexionPrincipal->close();
-			}
-		}
-	}
-		
-	public function getPlanConfiguracionMainModel(){
-        $query = "SELECT pp.configuraciones 
-		FROM planes pp
-		INNER JOIN plan p ON p.planes_id = pp.planes_id";
-        
-        $sql = mainModel::connection()->query($query) or die(mainModel::connection()->error);
-        
-        if($sql->num_rows > 0){
-            $row = $sql->fetch_assoc();
-            return json_decode($row['configuraciones'], true);
-        }
-        
-        return [];
-    }
-
-	public function guardar_o_actualizar_modulo_lista_blanca($nombre_config, $moduloNuevo) {
-		$response = [
-			'success' => false,
-			'message' => ''
-		];
-	
-		try {
-			// Obtener conexión principal
-			$conexionPrincipal = $this->connection();
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Actualizar en la base principal
-			$stmt = $conexionPrincipal->prepare("SELECT modulos FROM config_lista_blanca WHERE nombre_config = ?");
-			$stmt->bind_param("s", $nombre_config);
-			$stmt->execute();
-			$result = $stmt->get_result();
-	
-			if ($result->num_rows > 0) {
-				$row = $result->fetch_assoc();
-				$listaModulos = json_decode($row['modulos'], true);
-	
-				if (!in_array($moduloNuevo, $listaModulos)) {
-					$listaModulos[] = $moduloNuevo;
-					$modulosJson = json_encode(array_values(array_unique($listaModulos)), JSON_UNESCAPED_UNICODE);
-	
-					$stmt = $conexionPrincipal->prepare("UPDATE config_lista_blanca SET modulos = ? WHERE nombre_config = ?");
-					$stmt->bind_param("ss", $modulosJson, $nombre_config);
-					$stmt->execute();
-					
-					if ($stmt->affected_rows <= 0) {
-						throw new Exception("No se actualizó ningún registro en la base principal");
-					}
-				}
-			} else {
-				$modulosJson = json_encode([$moduloNuevo], JSON_UNESCAPED_UNICODE);
-				$stmt = $conexionPrincipal->prepare("INSERT INTO config_lista_blanca (nombre_config, modulos) VALUES (?, ?)");
-				$stmt->bind_param("ss", $nombre_config, $modulosJson);
-				$stmt->execute();
-				
-				if ($stmt->affected_rows <= 0) {
-					throw new Exception("No se insertó ningún registro en la base principal");
-				}
-			}
-	
-			// 2. Actualizar en todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			$erroresClientes = [];
-	
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						try {
-							$connCliente->autocommit(false);
-	
-							// Verificar si la tabla existe
-							$tableExists = $connCliente->query("SHOW TABLES LIKE 'config_lista_blanca'");
-							
-							if ($tableExists->num_rows > 0) {
-								// Verificar si la configuración existe
-								$stmtCliente = $connCliente->prepare("SELECT modulos FROM config_lista_blanca WHERE nombre_config = ?");
-								$stmtCliente->bind_param("s", $nombre_config);
-								$stmtCliente->execute();
-								$resultCliente = $stmtCliente->get_result();
-	
-								if ($resultCliente->num_rows > 0) {
-									$rowCliente = $resultCliente->fetch_assoc();
-									$listaModulosCliente = json_decode($rowCliente['modulos'], true);
-	
-									if (!in_array($moduloNuevo, $listaModulosCliente)) {
-										$listaModulosCliente[] = $moduloNuevo;
-										$modulosJsonCliente = json_encode(array_values(array_unique($listaModulosCliente)), JSON_UNESCAPED_UNICODE);
-	
-										$stmtUpdate = $connCliente->prepare("UPDATE config_lista_blanca SET modulos = ? WHERE nombre_config = ?");
-										$stmtUpdate->bind_param("ss", $modulosJsonCliente, $nombre_config);
-										$stmtUpdate->execute();
-										
-										if ($stmtUpdate->affected_rows <= 0) {
-											throw new Exception("No se actualizó ningún registro en $dbName");
-										}
-									}
-								} else {
-									$modulosJsonCliente = json_encode([$moduloNuevo], JSON_UNESCAPED_UNICODE);
-									$stmtInsert = $connCliente->prepare("INSERT INTO config_lista_blanca (nombre_config, modulos) VALUES (?, ?)");
-									$stmtInsert->bind_param("ss", $nombre_config, $modulosJsonCliente);
-									$stmtInsert->execute();
-									
-									if ($stmtInsert->affected_rows <= 0) {
-										throw new Exception("No se insertó ningún registro en $dbName");
-									}
-								}
-							}
-	
-							$connCliente->commit();
-						} catch (Exception $e) {
-							$connCliente->rollback();
-							$erroresClientes[] = "Error en $dbName: " . $e->getMessage();
-						} finally {
-							$connCliente->autocommit(true);
-							$connCliente->close();
-						}
-					}
-				}
-			}
-	
-			// Confirmar transacción principal
-			$conexionPrincipal->commit();
-	
-			$response = [
-				'success' => true,
-				'message' => 'Módulo actualizado en lista blanca correctamente'
-			];
-	
-			if (!empty($erroresClientes)) {
-				$response['warnings'] = $erroresClientes;
-			}
-	
-			return $response;
-	
-		} catch(Exception $e) {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->rollback();
-			}
-			
-			return [
-				'success' => false,
-				'message' => 'Error: ' . $e->getMessage()
-			];
-		} finally {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->autocommit(true);
-				$conexionPrincipal->close();
-			}
-		}
-	}
-	
-	public function eliminar_modulo_lista_blanca($nombre_config, $moduloEliminar) {
-		$response = [
-			'success' => false,
-			'message' => ''
-		];
-	
-		try {
-			// Obtener conexión principal
-			$conexionPrincipal = $this->connection();
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Eliminar de la base principal
-			$stmt = $conexionPrincipal->prepare("SELECT modulos FROM config_lista_blanca WHERE nombre_config = ?");
-			$stmt->bind_param("s", $nombre_config);
-			$stmt->execute();
-			$result = $stmt->get_result();
-	
-			if ($result->num_rows > 0) {
-				$row = $result->fetch_assoc();
-				$listaModulos = json_decode($row['modulos'], true);
-				
-				$nuevaLista = array_diff($listaModulos, [$moduloEliminar]);
-				
-				if (count($nuevaLista) != count($listaModulos)) {
-					$modulosJson = json_encode(array_values($nuevaLista), JSON_UNESCAPED_UNICODE);
-					$stmt = $conexionPrincipal->prepare("UPDATE config_lista_blanca SET modulos = ? WHERE nombre_config = ?");
-					$stmt->bind_param("ss", $modulosJson, $nombre_config);
-					$stmt->execute();
-					
-					if ($stmt->affected_rows <= 0) {
-						throw new Exception("No se actualizó ningún registro en la base principal");
-					}
-				}
-			} else {
-				$conexionPrincipal->rollback();
-				return [
-					'success' => false,
-					'message' => 'La configuración no existe en la base principal'
-				];
-			}
-	
-			// 2. Actualizar en todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			$erroresClientes = [];
-	
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						try {
-							$connCliente->autocommit(false);
-	
-							// Verificar si la tabla existe
-							$tableExists = $connCliente->query("SHOW TABLES LIKE 'config_lista_blanca'");
-							
-							if ($tableExists->num_rows > 0) {
-								// Verificar si la configuración existe
-								$stmtCliente = $connCliente->prepare("SELECT modulos FROM config_lista_blanca WHERE nombre_config = ?");
-								$stmtCliente->bind_param("s", $nombre_config);
-								$stmtCliente->execute();
-								$resultCliente = $stmtCliente->get_result();
-	
-								if ($resultCliente->num_rows > 0) {
-									$rowCliente = $resultCliente->fetch_assoc();
-									$listaModulosCliente = json_decode($rowCliente['modulos'], true);
-									
-									$nuevaListaCliente = array_diff($listaModulosCliente, [$moduloEliminar]);
-									
-									if (count($nuevaListaCliente) != count($listaModulosCliente)) {
-										$modulosJsonCliente = json_encode(array_values($nuevaListaCliente), JSON_UNESCAPED_UNICODE);
-										$stmtUpdate = $connCliente->prepare("UPDATE config_lista_blanca SET modulos = ? WHERE nombre_config = ?");
-										$stmtUpdate->bind_param("ss", $modulosJsonCliente, $nombre_config);
-										$stmtUpdate->execute();
-										
-										if ($stmtUpdate->affected_rows <= 0) {
-											throw new Exception("No se actualizó ningún registro en $dbName");
-										}
-									}
-								}
-							}
-	
-							$connCliente->commit();
-						} catch (Exception $e) {
-							$connCliente->rollback();
-							$erroresClientes[] = "Error en $dbName: " . $e->getMessage();
-						} finally {
-							$connCliente->autocommit(true);
-							$connCliente->close();
-						}
-					}
-				}
-			}
-	
-			// Confirmar transacción principal
-			$conexionPrincipal->commit();
-	
-			$response = [
-				'success' => true,
-				'message' => 'Módulo eliminado de lista blanca correctamente'
-			];
-	
-			if (!empty($erroresClientes)) {
-				$response['warnings'] = $erroresClientes;
-			}
-	
-			return $response;
-	
-		} catch(Exception $e) {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->rollback();
-			}
-			
-			return [
-				'success' => false,
-				'message' => 'Error: ' . $e->getMessage()
-			];
-		} finally {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->autocommit(true);
-				$conexionPrincipal->close();
-			}
-		}
-	}
-	
-    // Ejecutar consulta simple (SELECT)
-	public static function ejecutar_consulta($query) {
-		// Abrir conexión a la base de datos
-		$conexion = (new self())->connection();
-		
-		// Ejecutar la consulta
-		$resultado = $conexion->query($query);
-		
-		// Verificar si la consulta fue exitosa
-		if (!$resultado) {
-			$error = $conexion->error;
-			$conexion->close();
-			throw new Exception('Error en la consulta: ' . $error);
-		}
-		
-		// Para consultas SELECT, obtener y almacenar los resultados antes de cerrar
-		if (stripos(trim($query), 'SELECT') === 0) {
-			$data = [];
-			while ($row = $resultado->fetch_assoc()) {
-				$data[] = $row;
-			}
-			$resultado->free();
-			$conexion->close();
-			return $data;
-		}
-		
-		// Para otras consultas (INSERT, UPDATE, DELETE)
-		$conexion->close();
-		return $resultado;
-	}
-
-	// Función para generar código único basado en fecha y cliente_id
-	public function generarCodigoUnico($clientes_id) {
-		$fecha = date('Ymd'); // Fecha en formato AAAAMMDD
-		$hash = substr(md5($clientes_id . microtime()), 0, 4); // 4 caracteres únicos
-		$codigo = substr($fecha . $hash, 0, 8); // Combinación de 8 dígitos
-		
-		// Aseguramos que sea numérico
-		return (int)preg_replace('/[^0-9]/', '', $codigo);
-	}
-	
-    // Insertar datos
-    public static function insertar_datos($tabla, $datos) {
-        $campos = implode(", ", array_keys($datos));
-        $valores = "'" . implode("', '", array_values($datos)) . "'";
-        $query = "INSERT INTO $tabla ($campos) VALUES ($valores)";
-
-        $conexion = (new mainModel())->connection();
-        $resultado = $conexion->query($query);
-
-        if (!$resultado) {
-            throw new Exception('Error al insertar datos: ' . $conexion->error);
-        }
-
-        $conexion->close();
-        return $resultado;
-    }
-
-    // Actualizar datos
-    public static function actualizar_datos($tabla, $datos, $condicion) {
-        $updates = [];
-        foreach ($datos as $campo => $valor) {
-            $updates[] = "$campo = '$valor'";
-        }
-        $updates = implode(", ", $updates);
-
-        $query = "UPDATE $tabla SET $updates WHERE $condicion";
-
-        $conexion = (new mainModel())->connection();
-        $resultado = $conexion->query($query);
-
-        if (!$resultado) {
-            throw new Exception('Error al actualizar datos: ' . $conexion->error);
-        }
-
-        $conexion->close();
-        return $resultado;
-    }
-
-    // Eliminar datos
-    public static function eliminar_datos($tabla, $condicion) {
-        $query = "DELETE FROM $tabla WHERE $condicion";
-
-        $conexion = (new mainModel())->connection();
-        $resultado = $conexion->query($query);
-
-        if (!$resultado) {
-            throw new Exception('Error al eliminar datos: ' . $conexion->error);
-        }
-
-        $conexion->close();
-        return $resultado;
-    }
-		
 	protected function guardar_bitacora($datos)
 	{
 		$bitacora_id = self::correlativo('bitacora_id', 'bitacora');
@@ -1086,37 +223,6 @@ class mainModel
 		$sql = mainModel::connection()->query($delete) or die(mainModel::connection()->error);
 
 		return $sql;
-	}
-
-	/**
-	 * Genera nombres de base de datos a partir del nombre de una compañía
-	 * 
-	 * @param string $companyName Nombre de la compañía
-	 * @return array Devuelve un array con ambos formatos requeridos
-	 */
-	function generateDatabaseName($companyName, $sistema) {
-		// Normalizar el nombre: eliminar acentos, caracteres especiales y convertir a minúsculas
-		$cleanName = preg_replace('/[^a-z0-9]/', '', 
-					strtolower(
-						iconv('UTF-8', 'ASCII//TRANSLIT', $companyName)
-					));
-		
-		// Obtener una versión corta del nombre limpio
-		$uniqueId = substr($cleanName, 0, DB_MAX_LENGTH);
-		
-		// Si el nombre queda vacío después de la limpieza, usar un valor aleatorio
-		if(empty($uniqueId)) {
-			$uniqueId = 'cmp' . rand(100, 999);
-		}
-		
-		// Asegurar que el prefijo usado sea el de cPanel (CPANEL_USERNAME)
-		$cpanelPrefix = defined('CPANEL_USERNAME') ? CPANEL_USERNAME : DB_PREFIX;
-		
-		// Devolver ambos formatos requeridos
-		return [
-			'prefixed' => $cpanelPrefix . '_' . $uniqueId . '_' . $sistema ,  // ej: "esmultiservicios_banbuclic_izzy"
-			'unprefixed' => $uniqueId . '_' . $sistema                       // ej: "banbuclic_izzy"
-		];
 	}
 
 	public function updateSalidaAsistenciaColaborador($asistencia_id)
@@ -1225,7 +331,7 @@ class mainModel
 		$nombre_host = self::getRealIP();
 		$fecha = date('Y-m-d H:i:s');
 		$comentario = $comentario_;
-		$usuario = $_SESSION['colaborador_id_sd'] ?? 0;
+		$usuario = $_SESSION['colaborador_id_sd'];
 
 		$historial_acceso_id = self::correlativo('historial_acceso_id ', 'historial_acceso');
 		$insert = "INSERT INTO historial_acceso VALUES('$historial_acceso_id','$fecha','$usuario','$nombre_host','$comentario')";
@@ -1364,7 +470,7 @@ class mainModel
 			sf.siguiente AS 'numero',
 			sf.relleno AS 'relleno',
 			sf.prefijo AS 'prefijo',
-			CONCAT(colaboradores.nombre, ' ', colaboradores.apellido) AS 'usuario'
+			colaboradores.nombre AS 'usuario'
 			FROM pagos
 			LEFT JOIN pagos_detalles ON pagos.pagos_id = pagos_detalles.pagos_id
 			INNER JOIN facturas ON facturas.facturas_id = pagos.facturas_id
@@ -1398,7 +504,7 @@ class mainModel
 			tipo_pago.nombre as tipoPago,
 			pagoscompras_detalles.descripcion1,
 			compras.number AS factura,
-			CONCAT(colaboradores.nombre, ' ', colaboradores.apellido) AS 'usuario'
+			colaboradores.nombre AS 'usuario'
 			FROM compras
 			INNER JOIN pagoscompras ON compras.compras_id = pagoscompras.compras_id
 			INNER JOIN pagoscompras_detalles ON pagoscompras_detalles.pagoscompras_id = pagoscompras.pagoscompras_id
@@ -1475,7 +581,7 @@ class mainModel
 
 	/* Funcion que permite limpiar valores de los string (Inyección SQL) */
 
-	public function cleanString($string)
+	protected function cleanString($string)
 	{
 		// Limpia espacios al inicio y al final
 		$string = trim($string);
@@ -1535,7 +641,7 @@ class mainModel
 		return $string;
 	}
 
-	public function cleanStringConverterCase($string)
+	protected function cleanStringConverterCase($string)
 	{
 		// Limpia espacios al inicio y al final
 		$string = trim($string);
@@ -1741,55 +847,6 @@ class mainModel
 		}
 
 		return $alerta;
-	}
-
-	public function showNotification($alert) {
-		// Valores por defecto
-		$type = $alert['type'] ?? 'error';
-		$title = $alert['title'] ?? 'Notificación';
-		$message = $alert['text'] ?? '';
-		$status = ($type === 'success') ? 'success' : 'error';
-	
-		$scriptParts = [
-			"<script>",
-			"(function() {",
-			"  // Mostrar notificación principal",
-			"  if (typeof showNotify === 'function') {",
-			"    showNotify('{$status}', '" . addslashes($title) . "', '" . addslashes($message) . "');",
-			"  }",
-		];
-	
-		// Resetear formulario si existe
-		if (!empty($alert['form'])) {
-			$scriptParts[] = "  if (typeof jQuery !== 'undefined' && $('#{$alert['form']}').length) {";
-			$scriptParts[] = "    $('#{$alert['form']}')[0].reset();";
-			$scriptParts[] = "  }";
-		}
-	
-		// Ejecutar funciones solo si existen
-		if (!empty($alert['funcion'])) {
-			$functions = explode(';', $alert['funcion']);
-			foreach ($functions as $func) {
-				$func = trim($func);
-				if (!empty($func)) {
-					$scriptParts[] = "  if (typeof {$func} === 'function') {";
-					$scriptParts[] = "    {$func}();";
-					$scriptParts[] = "  }";
-				}
-			}
-		}
-	
-		// Cerrar modales si se solicita
-		if (!empty($alert['closeAllModals'])) {
-			$scriptParts[] = "  if (typeof jQuery !== 'undefined' && typeof jQuery.fn.modal === 'function') {";
-			$scriptParts[] = "    $('.modal').modal('hide');";
-			$scriptParts[] = "  }";
-		}
-	
-		$scriptParts[] = "})();";
-		$scriptParts[] = "</script>";
-	
-		return implode("\n", $scriptParts);
 	}
 
 	function cerrar_sesion()
@@ -2166,23 +1223,7 @@ class mainModel
 			$where = "WHERE c.estado = 1 AND c.colaboradores_id NOT IN(1) AND p.nombre NOT IN($valores)";
 		}
 
-		$query = "SELECT c.colaboradores_id, c.nombre AS 'nombre', c.identidad
-			FROM colaboradores AS c
-			INNER JOIN puestos AS p ON c.puestos_id = p.puestos_id
-			" . $where . '
-			ORDER BY c.nombre;';
-
-		$result = self::connection()->query($query);
-
-		return $result;
-	}
-
-	public function getColaboradoresConsultaAsistencia()
-	{
-		$valores = "'Reseller', 'Clientes'";
-		$where = "WHERE c.estado = 1 AND c.colaboradores_id NOT IN(1) AND p.nombre NOT IN($valores)";
-		
-		$query = "SELECT c.colaboradores_id, c.nombre AS 'nombre', c.identidad
+		$query = "SELECT c.colaboradores_id, c.nombre AS 'nombre'
 			FROM colaboradores AS c
 			INNER JOIN puestos AS p ON c.puestos_id = p.puestos_id
 			" . $where . '
@@ -2265,239 +1306,6 @@ class mainModel
 		return $result;
 	}
 
-	/**
-	 * Obtiene el ID del cliente asociado a una factura específica.
-	 * 
-	 * @param int $factura_id El ID de la factura.
-	 * @return int|false El ID del cliente si se encuentra la factura, o `false` si no se encuentra.
-	 */
-	public function obtenerClientePorFactura($factura_id)
-	{
-		// Consulta SQL para obtener el cliente_id basado en el facturas_id
-		$query = "SELECT f.clientes_id FROM facturas AS f WHERE f.facturas_id = ?";
-		
-		// Preparar la consulta
-		$stmt = self::connection()->prepare($query);
-		
-		// Vincular el parámetro de la consulta (factura_id)
-		$stmt->bind_param("i", $factura_id);
-		
-		// Ejecutar la consulta
-		$stmt->execute();
-		
-		// Obtener el resultado de la consulta
-		$result = $stmt->get_result();
-		
-		// Verificar si se encontró la factura
-		if ($result->num_rows > 0) {
-			// Obtener el cliente_id
-			$row = $result->fetch_assoc();
-			return $row['clientes_id'];  // Retorna el ID del cliente
-		} else {
-			// No se encontró la factura
-			return false;
-		}
-	}
-
-	/**
-	 * Verifica si un cliente tiene habilitado el servicio del Programa de Planes.
-	 * 
-	 * @param int $plan_id El ID del plan del cliente.
-	 * @return bool `true` si el cliente tiene habilitado el servicio, `false` si no.
-	 */
-	public function verificarProgramaPuntos($plan_id)
-	{
-		// Consulta SQL para verificar si el cliente tiene habilitado el servicio
-		$query = "SELECT sp.submenu_id
-				FROM submenu_plan AS sp
-				INNER JOIN plan AS p ON sp.planes_id = p.planes_id
-				INNER JOIN submenu AS s ON s.submenu_id = sp.submenu_id
-				WHERE p.planes_id = ? AND s.name = 'programaPuntos'";
-
-		// Preparar la consulta
-		$stmt = self::connection()->prepare($query);
-		if ($stmt === false) {
-			return false;  // Error en la preparación de la consulta
-		}
-
-		// Vincular el parámetro
-		$stmt->bind_param("i", $plan_id);
-
-		// Ejecutar la consulta
-		$stmt->execute();
-
-		// Obtener el resultado
-		$result = $stmt->get_result();
-
-		// Verificar si hay filas en el resultado
-		if ($result->num_rows > 0) {
-			// Si hay resultados, el cliente tiene habilitado el servicio
-			return true;
-		} else {
-			// Si no hay resultados, el cliente NO tiene habilitado el servicio
-			return false;
-		}
-	}
-
-
-	/**
-	 * Obtiene el programa de puntos activo.
-	 * 
-	 * @return array|false El programa de puntos activo o `false` si no hay un programa activo.
-	 */
-	public function obtenerProgramaPuntosActivo()
-	{
-		$query = "SELECT * FROM programa_puntos WHERE activo = 1 ORDER BY fecha_creacion DESC LIMIT 1";
-		$stmt = self::connection()->prepare($query);
-		$stmt->execute();
-		$result = $stmt->get_result();
-
-		if ($result->num_rows > 0) {
-			return $result->fetch_assoc(); // Retorna el programa de puntos activo
-		} else {
-			return false; // Si no hay programa de puntos activo
-		}
-	}	
-
-	/**
-	 * Acumula puntos para un cliente según el programa de puntos y el monto consumido.
-	 * 
-	 * Este método calcula la cantidad de puntos que debe acumular un cliente dependiendo
-	 * del tipo de cálculo (monto o porcentaje) y luego actualiza la tabla `puntos_cliente`
-	 * con el nuevo total de puntos. También registra el movimiento de acumulación en la 
-	 * tabla `historial_puntos`.
-	 * 
-	 * @param int $cliente_id El ID del cliente al que se le acumularán los puntos.
-	 * @param int $programa_puntos_id El ID del programa de puntos asociado al cliente.
-	 * @param float $monto_consumido El monto total consumido por el cliente, usado para calcular los puntos.
-	 * @return bool Retorna `true` si los puntos se acumularon correctamente, o `false` si hubo un error.
-	 */
-	public function acumularPuntos($cliente_id, $programa_puntos_id, $monto_consumido)
-	{
-		// Primero obtenemos el tipo de cálculo y las condiciones del programa de puntos
-		$query = "SELECT tipo_calculo, monto, porcentaje FROM programa_puntos WHERE id = ?";
-		$stmt = self::connection()->prepare($query);
-		$stmt->bind_param("i", $programa_puntos_id);
-		$stmt->execute();
-		$result = $stmt->get_result();
-		
-		if ($result->num_rows > 0) {
-			$row = $result->fetch_assoc();
-			$tipo_calculo = $row['tipo_calculo'];
-			$monto = $row['monto'];
-			$porcentaje = $row['porcentaje'];
-
-			// Inicializamos las variables para calcular los puntos
-			$puntos = 0;
-
-			// Si el cálculo es por monto
-			if ($tipo_calculo == 'monto') {
-				// Calculamos puntos según el monto
-				$puntos = $monto_consumido / $monto;
-			} elseif ($tipo_calculo == 'porcentaje') {
-				// Calculamos puntos según el porcentaje del monto consumido
-				$puntos = ($monto_consumido * $porcentaje) / 100;
-			}
-
-			// Actualizamos los puntos del cliente
-			// Primero obtenemos los puntos actuales
-			$query = "SELECT total_puntos FROM puntos_cliente WHERE cliente_id = ? AND programa_puntos_id = ?";
-			$stmt = self::connection()->prepare($query);
-			$stmt->bind_param("ii", $cliente_id, $programa_puntos_id);
-			$stmt->execute();
-			$result = $stmt->get_result();
-
-			// Si el cliente ya tiene puntos en este programa
-			if ($result->num_rows > 0) {
-				$row = $result->fetch_assoc();
-				$puntos_actuales = $row['total_puntos'];
-
-				// Sumamos los puntos nuevos a los puntos existentes
-				$nuevo_total_puntos = $puntos_actuales + $puntos;
-
-				// Actualizamos el total de puntos
-				$update_query = "UPDATE puntos_cliente SET total_puntos = ?, fecha_actualizacion = CURRENT_TIMESTAMP WHERE cliente_id = ? AND programa_puntos_id = ?";
-				$stmt = self::connection()->prepare($update_query);
-				$stmt->bind_param("dii", $nuevo_total_puntos, $cliente_id, $programa_puntos_id);
-				$stmt->execute();
-			} else {
-				// Si no tiene puntos en este programa, los insertamos
-				$insert_query = "INSERT INTO puntos_cliente (cliente_id, programa_puntos_id, total_puntos) VALUES (?, ?, ?)";
-				$stmt = self::connection()->prepare($insert_query);
-				$stmt->bind_param("iid", $cliente_id, $programa_puntos_id, $puntos);
-				$stmt->execute();
-			}
-
-			// Registrar el movimiento en el historial
-			$descripcion = "Acumulación de puntos por consumo de Lempiras: $monto_consumido";
-			$insert_historial_query = "INSERT INTO historial_puntos (cliente_id, programa_puntos_id, tipo_movimiento, puntos, descripcion) 
-									VALUES (?, ?, 'acumulacion', ?, ?)";
-			$stmt = self::connection()->prepare($insert_historial_query);
-			$stmt->bind_param("iiis", $cliente_id, $programa_puntos_id, $puntos, $descripcion);
-			$stmt->execute();
-
-			return true;
-		} else {
-			// No se encontró el programa de puntos
-			return false;
-		}
-	}
-
-	/**
-	 * Redime puntos de un cliente según el programa de puntos.
-	 * 
-	 * Este método verifica si el cliente tiene suficientes puntos para redimir. Si es así,
-	 * se actualiza el total de puntos en la tabla `puntos_cliente` y se registra el movimiento
-	 * de redención en la tabla `historial_puntos`.
-	 * 
-	 * @param int $cliente_id El ID del cliente al que se le redimirán los puntos.
-	 * @param int $programa_puntos_id El ID del programa de puntos asociado al cliente.
-	 * @param float $puntos_a_redimir La cantidad de puntos que el cliente desea redimir.
-	 * @return bool Retorna `true` si la redención de puntos se realizó correctamente, o `false` si no tiene suficientes puntos.
-	 */
-	public function redimirPuntos($cliente_id, $programa_puntos_id, $puntos_a_redimir)
-	{
-		// Primero obtenemos los puntos actuales del cliente en el programa de puntos
-		$query = "SELECT total_puntos FROM puntos_cliente WHERE cliente_id = ? AND programa_puntos_id = ?";
-		$stmt = self::connection()->prepare($query);
-		$stmt->bind_param("ii", $cliente_id, $programa_puntos_id);
-		$stmt->execute();
-		$result = $stmt->get_result();
-
-		if ($result->num_rows > 0) {
-			$row = $result->fetch_assoc();
-			$puntos_actuales = $row['total_puntos'];
-
-			// Verificamos si el cliente tiene suficientes puntos para redimir
-			if ($puntos_a_redimir <= $puntos_actuales) {
-				// Restamos los puntos redimidos del total de puntos
-				$nuevo_total_puntos = $puntos_actuales - $puntos_a_redimir;
-
-				// Actualizamos el total de puntos
-				$update_query = "UPDATE puntos_cliente SET total_puntos = ?, fecha_actualizacion = CURRENT_TIMESTAMP WHERE cliente_id = ? AND programa_puntos_id = ?";
-				$stmt = self::connection()->prepare($update_query);
-				$stmt->bind_param("dii", $nuevo_total_puntos, $cliente_id, $programa_puntos_id);
-				$stmt->execute();
-
-				// Registrar el movimiento en el historial
-				$descripcion = "Redención de puntos";
-				$insert_historial_query = "INSERT INTO historial_puntos (cliente_id, programa_puntos_id, tipo_movimiento, puntos, descripcion) 
-										VALUES (?, ?, 'redencion', ?, ?)";
-				$stmt = self::connection()->prepare($insert_historial_query);
-				$stmt->bind_param("iiis", $cliente_id, $programa_puntos_id, $puntos_a_redimir, $descripcion);
-				$stmt->execute();
-
-				return true;
-			} else {
-				// El cliente no tiene suficientes puntos
-				return false;
-			}
-		} else {
-			// No se encontró el cliente en este programa de puntos
-			return false;
-		}
-	}
-
 	public function getSubMenus1Acceso($privilegio_id)
 	{
 		$query = "SELECT sm.submenu_id, sm.name As 'submenu'
@@ -2553,61 +1361,44 @@ class mainModel
 
 	public function getMenuAccesosDataTable($privilegio_id)
 	{
-		$query = "SELECT 
-					am.acceso_menu_id AS 'acceso_menu_id', 
-					m.name AS 'menu', 
-					p.nombre AS 'privilegio', 
-					p.privilegio_id AS 'privilegio_id', 
-					m.menu_id AS 'menu_id',
-					am.estado AS 'estado' 
+		$query = "SELECT am.acceso_menu_id AS 'acceso_menu_id', m.name AS 'menu', p.nombre AS 'privilegio', p.privilegio_id AS 'privilegio_id', m.menu_id AS 'menu_id'
 				FROM acceso_menu AS am
 				INNER JOIN menu AS m ON am.menu_id = m.menu_id
 				INNER JOIN privilegio AS p ON am.privilegio_id = p.privilegio_id
 				WHERE am.privilegio_id = '$privilegio_id'";
-	
-		return self::connection()->query($query);
+
+		$result = self::connection()->query($query);
+
+		return $result;
 	}
-	
 
 	public function getSubMenuAccesosDataTable($privilegio_id)
 	{
-		$query = "SELECT 
-					asm.acceso_submenu_id AS 'acceso_submenu_id', 
-					m.name AS 'menu', 
-					sm.name AS 'submenu', 
-					p.nombre AS 'privilegio', 
-					p.privilegio_id AS 'privilegio_id', 
-					sm.submenu_id AS 'submenu_id',
-					asm.estado AS 'estado'
+		$query = "SELECT asm.acceso_submenu_id AS 'acceso_submenu_id', m.name AS 'menu', sm.name AS 'submenu', p.nombre AS 'privilegio', p.privilegio_id AS 'privilegio_id', sm.submenu_id AS 'submenu_id'
 				FROM acceso_submenu AS asm
 				INNER JOIN submenu AS sm ON asm.submenu_id = sm.submenu_id
 				INNER JOIN menu AS m ON sm.menu_id = m.menu_id
 				INNER JOIN privilegio AS p ON asm.privilegio_id = p.privilegio_id
 				WHERE asm.privilegio_id = '$privilegio_id'";
-	
-		return self::connection()->query($query);
+
+		$result = self::connection()->query($query);
+
+		return $result;
 	}
-	
 
 	public function getSubMenu1AccesosDataTable($privilegio_id)
 	{
-		$query = "SELECT 
-					asm1.acceso_submenu1_id AS 'acceso_submenu_id', 
-					sm1.submenu_id AS 'submenu_id', 
-					sm.name AS 'submenu', 
-					sm1.name AS 'submenu1', 
-					p.nombre AS 'privilegio', 
-					p.privilegio_id AS 'privilegio_id',
-					asm1.estado AS 'estado' 
+		$query = "SELECT asm1.acceso_submenu1_id AS 'acceso_submenu_id', sm1.submenu_id AS 'submenu_id', sm.name AS 'submenu', sm1.name AS 'submenu1', p.nombre AS 'privilegio', p.privilegio_id AS 'privilegio_id'
 				FROM acceso_submenu1 AS asm1
 				INNER JOIN submenu1 AS sm1 ON asm1.submenu1_id = sm1.submenu1_id
 				INNER JOIN submenu AS sm ON sm1.submenu_id = sm.submenu_id
 				INNER JOIN privilegio AS p ON asm1.privilegio_id = p.privilegio_id
 				WHERE asm1.privilegio_id = '$privilegio_id'";
-	
-		return self::connection()->query($query);
+
+		$result = self::connection()->query($query);
+
+		return $result;
 	}
-	
 
 	public function valid_menu_on_submenu_acceso($datos)
 	{
@@ -2900,7 +1691,7 @@ class mainModel
 
 	public function getBitacora($fechai, $fechaf)
 	{
-		$query = "SELECT b.bitacoraCodigo AS 'bitacoraCodigo', DATE_FORMAT(b.bitacoraFecha, '%d/%m/%Y') AS 'bitacoraFecha', b.bitacoraHoraInicio As 'bitacoraHoraInicio', b.bitacoraHoraFinal AS 'bitacoraHoraFinal', tu.nombre AS 'bitacoraTipo', b.bitacoraYear AS 'bitacoraYear', CONCAT(c.nombre,' ',c.apellido) AS 'colaborador'
+		$query = "SELECT b.bitacoraCodigo AS 'bitacoraCodigo', DATE_FORMAT(b.bitacoraFecha, '%d/%m/%Y') AS 'bitacoraFecha', b.bitacoraHoraInicio As 'bitacoraHoraInicio', b.bitacoraHoraFinal AS 'bitacoraHoraFinal', tu.nombre AS 'bitacoraTipo', b.bitacoraYear AS 'bitacoraYear', c.nombre AS 'colaborador'
 				FROM bitacora AS b
 				INNER JOIN tipo_user AS tu
 				ON b.bitacoraTipo = tu.tipo_user_id
@@ -2915,7 +1706,7 @@ class mainModel
 
 	public function getHistorialAccesos($fechai, $fechaf)
 	{
-		$query = "SELECT ha.historial_acceso_id AS 'historial_acceso_id', DATE_FORMAT(ha.fecha, '%d/%m/%Y %H:%i:%s') AS 'fecha',c.nombre As 'colaborador', ha.ip AS 'ip', ha.acceso AS 'acceso'
+		$query = "SELECT ha.historial_acceso_id AS 'historial_acceso_id', DATE_FORMAT(ha.fecha, '%d/%m/%Y %H:%i:%s') AS 'fecha', c.nombre As 'colaborador', ha.ip AS 'ip', ha.acceso AS 'acceso'
 				FROM historial_acceso AS ha
 				INNER JOIN colaboradores AS c
 				ON ha.colaboradores_id = c.colaboradores_id
@@ -2960,8 +1751,8 @@ class mainModel
 				d.nombre AS 'departamento', 
 				m.nombre AS 'municipio', 
 				c.rtn AS 'rtn', 
-				GROUP_CONCAT(DISTINCT  s.sistema_id) AS 'sistema_ids', 
-				GROUP_CONCAT(DISTINCT  si.nombre) AS 'db_values', 
+				GROUP_CONCAT(s.sistema_id) AS 'sistema_ids', 
+				GROUP_CONCAT(si.nombre) AS 'db_values', 
 				c.eslogan, 
 				c.otra_informacion, 
 				c.whatsapp, 
@@ -3389,7 +2180,7 @@ class mainModel
 			$filtro .= " AND c.tipo_empleado_id = '" . $datos['tipo_empleado'] . "'";
 		}
 
-		$query = "SELECT c.contrato_id AS contrato_id,co.nombre AS 'empleado', tc.nombre AS 'tipo_contrato', pp.nombre AS 'pago_planificado', te.nombre AS 'tipo_empleado', c.fecha_inicio AS 'fecha_inicio', c.estado AS 'estado', (CASE WHEN c.estado = '1' THEN 'Activo' ELSE 'Inactivo' END) AS 'estado_nombre', c.salario AS 'salario', c.tipo_contrato_id AS 'tipo_contrato_id', c.pago_planificado_id AS 'pago_planificado_id', c.tipo_empleado_id AS 'tipo_empleado_id', (CASE WHEN c.fecha_fin = '' THEN 'Sin Registro' ELSE c.fecha_fin END) AS 'fecha_fin', c.notas AS 'notas'
+		$query = "SELECT c.contrato_id AS contrato_id, co.nombre AS 'empleado', tc.nombre AS 'tipo_contrato', pp.nombre AS 'pago_planificado', te.nombre AS 'tipo_empleado', c.fecha_inicio AS 'fecha_inicio', c.estado AS 'estado', (CASE WHEN c.estado = '1' THEN 'Activo' ELSE 'Inactivo' END) AS 'estado_nombre', c.salario AS 'salario', c.tipo_contrato_id AS 'tipo_contrato_id', c.pago_planificado_id AS 'pago_planificado_id', c.tipo_empleado_id AS 'tipo_empleado_id', (CASE WHEN c.fecha_fin = '' THEN 'Sin Registro' ELSE c.fecha_fin END) AS 'fecha_fin', c.notas AS 'notas'
 			FROM contrato AS c
 			INNER JOIN colaboradores AS co ON c.colaborador_id = co.colaboradores_id
 			INNER JOIN tipo_contrato AS tc ON c.tipo_contrato_id = tc.tipo_contrato_id
@@ -3403,15 +2194,18 @@ class mainModel
 
 		return $result;
 	}
-	
+
 	public function getNomina($datos)
 	{
-		$tipo_contrato_condicion = "";
+		$pago_planificado_id = '';  // Variable inicializada vacía
 	
+		// Comprobamos si 'pago_planificado' tiene un valor válido diferente a vacío o 0
 		if (isset($datos['tipo_contrato_id']) && $datos['tipo_contrato_id'] != '' && $datos['tipo_contrato_id'] != 0) {
-			$tipo_contrato_condicion = "AND c.tipo_contrato_id = '" . $datos['tipo_contrato_id'] . "'";
+			// Si tiene valor, se agrega la condición para filtrar por 'pago_planificado_id'
+			$pago_planificado_id = "AND n.tipo_contrato_id = '" . $datos['tipo_contrato_id'] . "'";
 		}
 	
+		// Creamos la consulta SQL con el filtro de estado y la posible condición de 'pago_planificado_id'
 		$query = "SELECT n.nomina_id AS 'nomina_id', 
 						 e.nombre AS 'empresa', 
 						 n.fecha_inicio AS 'fecha_inicio', 
@@ -3425,15 +2219,15 @@ class mainModel
 						 n.pago_planificado_id AS 'pago_planificado_id'
 				  FROM nomina AS n
 				  INNER JOIN empresa AS e ON n.empresa_id = e.empresa_id
-				  INNER JOIN nomina_detalles AS nd ON n.nomina_id = nd.nomina_id
-				  INNER JOIN contrato AS c ON nd.colaboradores_id = c.colaborador_id
-				  WHERE n.estado = '" . $datos['estado'] . "'
-				  $tipo_contrato_condicion
+				  WHERE n.estado = '" . $datos['estado'] . "' 
+				  $pago_planificado_id
 				  ORDER BY n.fecha_registro DESC";
-	
+
+		// Ejecutamos la consulta y retornamos el resultado
 		$result = self::connection()->query($query);
+	
 		return $result;
-	}
+	}	
 
 	public function getImporteNominaDetalles($nomina_id)
 	{
@@ -3467,7 +2261,7 @@ class mainModel
 			$empleado = "AND c.colaboradores_id = '" . $datos['empleado'] . "'";
 		}		
 
-		$query = "SELECT n.nomina_id AS 'nomina_id', nd.nomina_detalles_id AS 'nomina_detalles_id', CONCAT(c.nombre,' ' ,c.apellido) AS 'empleado', nd.salario AS 'salario', nd.hrse25 AS 'horas_25', nd.hrse50 As 'horas_50', nd.hrse75 AS 'horas_75', nd.hrse100 As 'horas_100', nd.retroactivo AS 'retroactivo', nd.bono AS 'bono', nd.deducciones AS 'deducciones', nd.prestamo AS 'prestamo', nd.ihss AS 'ihss', nd.rap AS 'rap', nd.estado AS 'estado', nd.estado AS 'estado', nd.nomina_detalles_id AS 'nomina_detalles_id', (CASE WHEN nd.estado = 1 THEN 'Activo' ELSE 'Inactivo' END) AS 'estado_nombre', nd.colaboradores_id AS 'colaboradores_id', nd.neto_ingresos As 'neto_ingresos', nd.neto_egresos AS 'neto_egresos', nd.neto AS 'neto', nd.notas AS 'notas', tp.nombre AS 'contrato', e.nombre AS 'empresa', n.fecha_inicio, n.fecha_fin
+		$query = "SELECT n.nomina_id AS 'nomina_id', nd.nomina_detalles_id AS 'nomina_detalles_id', c.nombre AS 'empleado', nd.salario AS 'salario', nd.hrse25 AS 'horas_25', nd.hrse50 As 'horas_50', nd.hrse75 AS 'horas_75', nd.hrse100 As 'horas_100', nd.retroactivo AS 'retroactivo', nd.bono AS 'bono', nd.deducciones AS 'deducciones', nd.prestamo AS 'prestamo', nd.ihss AS 'ihss', nd.rap AS 'rap', nd.estado AS 'estado', nd.estado AS 'estado', nd.nomina_detalles_id AS 'nomina_detalles_id', (CASE WHEN nd.estado = 1 THEN 'Activo' ELSE 'Inactivo' END) AS 'estado_nombre', nd.colaboradores_id AS 'colaboradores_id', nd.neto_ingresos As 'neto_ingresos', nd.neto_egresos AS 'neto_egresos', nd.neto AS 'neto', nd.notas AS 'notas', tp.nombre AS 'contrato', e.nombre AS 'empresa', n.fecha_inicio, n.fecha_fin
 				FROM nomina_detalles AS nd
 				INNER JOIN nomina AS n ON nd.nomina_id = n.nomina_id
 				INNER JOIN colaboradores AS c ON nd.colaboradores_id = c.colaboradores_id
@@ -3558,7 +2352,7 @@ class mainModel
 
 	public function getNominaDetallesEdit($nomina_detalles_id)
 	{
-		$query = "SELECT n.nomina_id AS 'nomina_id', nd.nomina_detalles_id AS 'nomina_detalles_id', CONCAT(c.nombre,' ' ,c.apellido) AS 'empleado', nd.salario AS 'salario', nd.hrse25 AS 'horas_25', nd.hrse50 As 'horas_50', nd.hrse75 AS 'horas_75', nd.hrse100 As 'horas_100', nd.retroactivo AS 'retroactivo', nd.bono AS 'bono', nd.deducciones AS 'deducciones', nd.prestamo AS 'prestamo', nd.ihss AS 'ihss', nd.rap AS 'rap', nd.estado AS 'estado', nd.estado AS 'estado', nd.nomina_detalles_id AS 'nomina_detalles_id', (CASE WHEN nd.estado = 1 THEN 'Activo' ELSE 'Inactivo' END) AS 'estado_nombre', nd.colaboradores_id AS 'colaboradores_id', nd.neto_ingresos As 'neto_ingresos', nd.neto_egresos AS 'neto_egresos', nd.neto AS 'neto', nd.notas AS 'notas', tp.nombre AS 'contrato', e.nombre AS 'empresa', n.pago_planificado_id AS 'pago_planificado_id', n.notas AS 'notas', c.identidad AS 'identidad', p.nombre AS 'puesto', co.contrato_id AS 'contrato_id', c.fecha_ingreso AS 'fecha_ingreso', nd.dias_trabajados AS 'dias_trabajados', nd.otros_ingresos AS 'otros_ingresos', nd.isr AS 'isr', nd.incapacidad_ihss AS 'incapacidad_ihss', nd.notas AS 'nota_detalles', nd.vales, e.logotipo, nd.hrse25_valor, nd.hrse50_valor, nd.hrse75_valor, nd.hrse100_valor, n.detalle, nd.salario_mensual, co.tipo_empleado_id
+		$query = "SELECT n.nomina_id AS 'nomina_id', nd.nomina_detalles_id AS 'nomina_detalles_id', c.nombre AS 'empleado', nd.salario AS 'salario', nd.hrse25 AS 'horas_25', nd.hrse50 As 'horas_50', nd.hrse75 AS 'horas_75', nd.hrse100 As 'horas_100', nd.retroactivo AS 'retroactivo', nd.bono AS 'bono', nd.deducciones AS 'deducciones', nd.prestamo AS 'prestamo', nd.ihss AS 'ihss', nd.rap AS 'rap', nd.estado AS 'estado', nd.estado AS 'estado', nd.nomina_detalles_id AS 'nomina_detalles_id', (CASE WHEN nd.estado = 1 THEN 'Activo' ELSE 'Inactivo' END) AS 'estado_nombre', nd.colaboradores_id AS 'colaboradores_id', nd.neto_ingresos As 'neto_ingresos', nd.neto_egresos AS 'neto_egresos', nd.neto AS 'neto', nd.notas AS 'notas', tp.nombre AS 'contrato', e.nombre AS 'empresa', n.pago_planificado_id AS 'pago_planificado_id', n.notas AS 'notas', c.identidad AS 'identidad', p.nombre AS 'puesto', co.contrato_id AS 'contrato_id', c.fecha_ingreso AS 'fecha_ingreso', nd.dias_trabajados AS 'dias_trabajados', nd.otros_ingresos AS 'otros_ingresos', nd.isr AS 'isr', nd.incapacidad_ihss AS 'incapacidad_ihss', nd.notas AS 'nota_detalles', nd.vales, e.logotipo, nd.hrse25_valor, nd.hrse50_valor, nd.hrse75_valor, nd.hrse100_valor, n.detalle, nd.salario_mensual, co.tipo_empleado_id
 				FROM nomina_detalles AS nd
 				INNER JOIN nomina AS n ON nd.nomina_id = n.nomina_id
 				INNER JOIN colaboradores AS c ON nd.colaboradores_id = c.colaboradores_id
@@ -3622,7 +2416,6 @@ class mainModel
 		// Consulta principal sin la lógica de empresa dinámica
 		$query = "SELECT u.users_id AS 'users_id', 
 						 c.nombre AS 'colaborador', 
-						 u.username AS 'username', 
 						 u.email AS 'correo', 
 						 tp.nombre AS 'tipo_usuario',
 						 e.nombre AS 'empresa',						 
@@ -4562,7 +3355,6 @@ class mainModel
 		$query = "SELECT *
 				FROM productos
 				WHERE tipo_producto_id = '$tipo_producto_id'";
-
 		$result = self::connection()->query($query);
 
 		return $result;
@@ -5030,7 +3822,7 @@ class mainModel
 
 	public function getUsersEdit($users_id)
 	{
-		$query = "SELECT u.users_id AS 'users_id', c.colaboradores_id AS 'colaborador_id', c.nombre AS 'colaborador', u.username AS 'username', u.email AS 'correo', u.tipo_user_id AS 'tipo_user_id', u.estado AS 'estado', u.empresa_id AS 'empresa_id', u.privilegio_id AS 'privilegio_id', u.server_customers_id
+		$query = "SELECT u.users_id AS 'users_id', c.colaboradores_id AS 'colaborador_id', c.nombre AS 'colaborador', u.email AS 'correo', u.tipo_user_id AS 'tipo_user_id', u.estado AS 'estado', u.empresa_id AS 'empresa_id', u.privilegio_id AS 'privilegio_id', u.server_customers_id
 				FROM users AS u
 				INNER JOIN colaboradores AS c
 				ON u.colaboradores_id = c.colaboradores_id
@@ -5715,9 +4507,13 @@ class mainModel
 	public function getPrivilegiosAccesoSubMenu($privilegio_id)
 	{
 		$query = "SELECT asm.acceso_submenu_id AS 'acceso_menu_id ', sm.name AS 'submenu', asm.estado AS 'estado'
+
 				FROM acceso_submenu asm
+
 				INNER JOIN submenu AS sm
+
 				ON asm.submenu_id = sm.submenu_id
+
 				WHERE asm.privilegio_id = '$privilegio_id'";
 
 		$result = self::connection()->query($query);
@@ -5728,9 +4524,13 @@ class mainModel
 	public function getPrivilegiosAccesoSubMenu1($privilegio_id)
 	{
 		$query = "SELECT asm.acceso_submenu1_id AS 'acceso_menu_id ', sm.name AS 'submenu1', asm.estado AS 'estado', asm.privilegio_id
+
 				FROM acceso_submenu1 asm
+
 				INNER JOIN submenu1 AS sm
+
 				ON asm.submenu1_id = sm.submenu1_id
+
 				WHERE asm.privilegio_id = '$privilegio_id'";
 
 		$result = self::connection()->query($query);
@@ -5850,9 +4650,12 @@ class mainModel
 
 	public function getTotalFacturasDisponiblesDB($empresa_id)
 	{
-		$query = "SELECT siguiente AS 'numero'
+		$query = "SELECT siguiente AS 'numero', rango_final, rango_inicial
+
 				FROM secuencia_facturacion
+
 				WHERE activo = 1 AND empresa_id = '$empresa_id' AND documento_id = 1
+
 				ORDER BY siguiente DESC LIMIT 1";
 
 		$result = self::connection()->query($query);
@@ -5860,22 +4663,10 @@ class mainModel
 		return $result;
 	}
 
-	// Obtiene el último número de factura usado realmente en la base de datos
-    public function getUltimoNumeroFacturaUsado($empresa_id) {
-        $query = "SELECT MAX(CAST(numero AS UNSIGNED)) as numero 
-                  FROM facturas 
-                  WHERE empresa_id = ? AND estado = 1";
-        $stmt = $this->connection()->prepare($query);
-        $stmt->bind_param("i", $empresa_id);
-        $stmt->execute();
-        return $stmt->get_result();
-    }
-
 	public function getNumeroMaximoPermitido($empresa_id)
 	{
-		$query = "SELECT rango_final AS 'numero', rango_inicial, rango_final
+		$query = "SELECT rango_final AS 'numero', rango_final, rango_inicial
 				FROM secuencia_facturacion
-
 				WHERE activo = 1 AND empresa_id = '$empresa_id' AND documento_id = 1";
 
 		$result = self::connection()->query($query);
@@ -6176,7 +4967,7 @@ class mainModel
 					ELSE 'Crédito' 
 				END AS 'tipo_documento', 
 				co.nombre AS 'vendedor', 
-				co1.nombre, ' ' AS 'facturador',
+				co1.nombre AS 'facturador',
 				-- Cálculo de subtotal, ISV, costo y descuento en una sola consulta
 				(SELECT SUM(fd.cantidad * fd.precio) FROM facturas_detalles AS fd WHERE fd.facturas_id = f.facturas_id) AS 'subtotal',
 				(SELECT SUM(fd.cantidad * p.precio_compra) FROM facturas_detalles AS fd INNER JOIN productos AS p ON fd.productos_id = p.productos_id WHERE fd.facturas_id = f.facturas_id) AS 'subCosto',
@@ -6669,9 +5460,13 @@ class mainModel
 	protected function getMenuAccesoLoginConsulta($privilegio_id, $menu)
 	{
 		$query = "SELECT am.acceso_menu_id AS 'acceso_menu_id', m.name AS 'name'
+
 				FROM acceso_menu AS am
+
 				INNER JOIN menu AS m
+
 				ON am.menu_id = m.menu_id
+
 				WHERE am.privilegio_id = '$privilegio_id' AND m.name = '$menu' AND am.estado = 1";
 
 		$sql = mainModel::connection()->query($query) or die(mainModel::connection()->error);
@@ -6835,7 +5630,7 @@ class mainModel
 
 	function getUserSistema($colaboradores_id)
 	{
-		$query = "SELECT colaboradores_id, nombre AS 'colaborador'
+		$query = "SELECT colaboradores_id, CONCAT(nombre, ' ', apellido) AS 'colaborador'
 				FROM colaboradores
 				WHERE colaboradores_id = '$colaboradores_id'";
 
@@ -6859,7 +5654,7 @@ class mainModel
 
 	function getCajero($colaborador_id_sd)
 	{
-		$query = "SELECT colaboradores_id AS 'colaboradores_id',nombre AS 'colaborador'
+		$query = "SELECT colaboradores_id AS 'colaboradores_id', nombre AS 'colaborador'
 				FROM colaboradores
 				WHERE colaboradores_id = '$colaborador_id_sd'";
 
@@ -7361,7 +6156,7 @@ class mainModel
 	// CONSULTA EN EL SERVIDOR DE KIREDS PARA VALIDAR QUE EL CLIENTE EXISTA
 	function connect_mysqli_main_server()
 	{
-		$mysqli_main = mysqli_connect(SERVER_MAIN, USER, PASS, DB_MAIN);
+		$mysqli_main = mysqli_connect(SERVER_MAIN, USER_MAIN, PASS_MAIN, DB_MAIN);
 
 		$mysqli_main->set_charset('utf8');
 

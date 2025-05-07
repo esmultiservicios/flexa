@@ -44,3 +44,4 @@ if ($diferenciaEnMinutos < $tiempoSesion) {
         echo json_encode(['estado' => 'renew', 'tiempoRestante' => $tiempoRestante, 'tiempoSesion' => $tiempoSesion, 'renovar' => $renovar]);
     }
 }
+?>

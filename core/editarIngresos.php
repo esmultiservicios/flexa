@@ -24,3 +24,4 @@
 		11 => $valores2['recibide'],		
 	);
 	echo json_encode($datos);
+?>

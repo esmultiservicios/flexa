@@ -1,5 +1,4 @@
 <?php
-//productosControladores.php
 if ($peticionAjax) {
 	require_once '../modelos/productosModelo.php';
 } else {
@@ -11,11 +10,7 @@ class productosControlador extends productosModelo
 	public function agregar_productos_controlador()
 	{
 		if (!isset($_SESSION['user_sd'])) {
-			if (session_status() !== PHP_SESSION_ACTIVE) {
-				session_start(['name' => 'SD']);
-			}
-			// Si la sesión está activa pero no tiene 'user_sd'
-			$_SESSION['user_sd'] = null; // O el valor inicial que necesites
+			session_start(['name' => 'SD']);
 		}
 
 		$empresa = $_SESSION['empresa_id_sd'];

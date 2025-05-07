@@ -22,3 +22,4 @@
 		9 => $valores2['salario_mensual']
 	);
 	echo json_encode($datos);
+?>	

@@ -34,3 +34,4 @@
 		21 => SERVERURL."vistas/plantilla/img/products/".$valores2['file_name']
 	);
 	echo json_encode($datos);
+?>	

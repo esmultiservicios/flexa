@@ -28,3 +28,4 @@ if (empty($resultadoEgresos)) {
 }else{
     echo "error-existe: La categoria $categoria, cuenta con información en los gastos, no se puede eliminar"; // Envía 'existe' si registro cuenta con información
 }
+?>

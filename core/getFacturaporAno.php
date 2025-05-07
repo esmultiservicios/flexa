@@ -5,8 +5,7 @@ require_once 'mainModel.php';
 
 $insMainModel = new mainModel();
 
-// getFacturaporAno.php
-$ano = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+$ano = date('Y');
 $result = $insMainModel->getFacturasAnual($ano);
 
 $arreglo = array();
