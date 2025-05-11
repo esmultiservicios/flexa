@@ -3538,57 +3538,6 @@ var generar_clientes_dataTable = function(tbody, table) {
     });
 }
 
-function empresaDB() {
-    var primeros10Digitos = $('#formGenerarSistema #empresa').val().substring(0, 10);
-    var resultado = primeros10Digitos.trim();
-
-    $('#formGenerarSistema #db').val(resultado);
-}
-
-$('#formGenerarSistema #empresa').on('input', function(e) {
-    if ($('#formGenerarSistema #empresa').val() !== "") {
-        empresaDB();
-    }
-});
-
-var sistemaSeleccionadoAnterior = ""; // Variable para almacenar el sistema seleccionado anteriormente
-
-$('#formGenerarSistema #sistema').on('change', function(e) {
-    if ($('#formGenerarSistema #empresa').val() !== "") {
-        empresaDB();
-        var nombreSistemaSeleccionado = $('#formGenerarSistema #sistema option:selected').text().toLowerCase()
-            .substring(0, 10);
-        var valorDb = $('#formGenerarSistema #db').val();
-
-        // Verificar si hay un sistema anterior y eliminarlo
-        if (sistemaSeleccionadoAnterior !== "") {
-            valorDb = valorDb.replace("esmultiservicios_" + sistemaSeleccionadoAnterior, "");
-        }
-
-        // Verificar si ya hay "esmultiservicios_" al principio, de lo contrario, agregarlo
-        if (valorDb.indexOf("esmultiservicios_") !== 0) {
-            valorDb = "esmultiservicios_" + valorDb;
-        }
-
-        // Concatenar el nuevo nombre de sistema seleccionado
-        valorDb = valorDb.replace("esmultiservicios_" + nombreSistemaSeleccionado + "_", "");
-        valorDb = valorDb.replace(/_+/g, "_"); // Eliminar duplicaciones de guiones bajos
-        valorDb = valorDb.replace("esmultiservicios_", ""); // Eliminar cualquier repetición
-
-        // Establecer el valor del campo "db" con el resultado
-        valorDb = "esmultiservicios_" + valorDb + "_" + nombreSistemaSeleccionado;
-
-        // Obtener los primeros 10 dígitos de valorDb
-        var primeros10Digitos = valorDb.substring(0, 10);
-
-        // Establecer el valor del campo "db" con el resultado final
-        $('#formGenerarSistema #db').val(primeros10Digitos + valorDb.substring(10));
-
-        // Actualizar el sistema seleccionado anteriormente
-        sistemaSeleccionadoAnterior = nombreSistemaSeleccionado;
-    }
-});
-
 function getPlanes() {
     var url = '<?php echo SERVERURL;?>core/getPlanes.php';
 

@@ -3327,42 +3327,25 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="col-md-3 mb-3">
-                            <label for="sistema">Sistema <span class="priority">*<span /></label>
-                            <div class="input-group">
-                                <div class="input-group-append">
-                                    <select id="sistema" name="sistema" class="selectpicker" title="Sistema"
-                                        data-width="100%" data-size="5" data-live-search="true" required>
-                                    </select>
-                                </div>
-                            </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="sistema"><i class="fas fa-cube mr-1"></i>Sistema</label>
+                            <select class="selectpicker form-control" id="sistema" name="sistema" data-live-search="true" title="Seleccione Sistema">
+                            </select>
+                            <small class="form-text text-muted">Tipo de sistema a generar</small>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="plan">Plan <span class="priority">*<span /></label>
-                            <div class="input-group">
-                                <div class="input-group-append">
-                                    <select id="plan" name="plan" class="selectpicker" title="Plan" data-size="5"
-                                        data-width="100%" data-live-search="true" required>
-                                    </select>
-                                </div>
-                            </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="plan"><i class="fas fa-layer-group mr-1"></i>Plan</label>
+                            <select class="selectpicker form-control" id="plan" name="plan" data-live-search="true" title="Seleccione Plan">
+                            </select>
+                            <small class="form-text text-muted">Plan de servicio</small>
                         </div>
-                        <div class="col-md-3 mb-4">
-                            <label for="asistencia_empleado">Base de Datos <span class="priority">*<span /></label>
-                            <input type="text" class="form-control" id="db" name="db" placeholder="Base de Datos">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="validar">Validar Facturacón <span class="priority">*<span /></label>
-                            <div class="input-group">
-                                <div class="input-group-append">
-                                    <select id="validar" name="validar" class="selectpicker" title="Validar Facturación"
-                                        data-width="100%" data-size="5" data-live-search="true" required>
-                                    </select>
-                                </div>
-                            </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="validar"><i class="fas fa-check-circle mr-1"></i>Validar Facturación</label>
+                            <select class="selectpicker form-control" id="validar" name="validar" data-live-search="true" title="Seleccione Validación">
+                            </select>
+                            <small class="form-text text-muted">Configuración de validación</small>
                         </div>
                     </div>
-
                     <div class="form-row">
                         <div class="col-md-12">
                             <div class="overflow-auto">
