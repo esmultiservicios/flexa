@@ -90,16 +90,46 @@ require_once "././core/configAPP.php";
             opacity: 0.6;
         }
 
+        .auth-sidebar {
+            flex: 0 0 40%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            position: relative;
+            color: white;
+            text-align: center;
+        }
+
+        .auth-sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.08' fill-rule='evenodd'/%3E%3C/svg%3E");
+            opacity: 0.6;
+        }
+
         .sidebar-content {
             position: relative;
             z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 20px;
         }
 
         .sidebar-logo {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 30px;
+            width: 180px;
+            height: 180px;
+            margin-bottom: 20px;
             filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+            object-fit: contain;
         }
 
         .sidebar-title {
@@ -107,20 +137,79 @@ require_once "././core/configAPP.php";
             font-weight: 700;
             margin-bottom: 16px;
             letter-spacing: -0.5px;
+            text-align: center;
         }
 
         .sidebar-text {
             font-size: 16px;
             margin-bottom: 30px;
             opacity: 0.8;
+            text-align: center;
+            max-width: 80%;
         }
 
         .sidebar-features {
             width: 100%;
             text-align: left;
             padding-left: 20px;
+            margin-top: 20px;
         }
 
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+
+        .feature-icon {
+            margin-right: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+        }
+
+        /* Responsive Design para el sidebar */
+        @media (max-width: 992px) {
+            .auth-sidebar {
+                padding: 30px;
+            }
+            
+            .sidebar-logo {
+                width: 120px;
+                height: 120px;
+                margin-bottom: 15px;
+            }
+            
+            .sidebar-title {
+                font-size: 22px;
+                margin-bottom: 10px;
+            }
+            
+            .sidebar-text {
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .auth-sidebar {
+                padding: 20px;
+            }
+            
+            .sidebar-logo {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 10px;
+            }
+            
+            .sidebar-title {
+                font-size: 20px;
+            }
+            
+            .sidebar-features {
+                display: none;
+            }
+        }
         .feature-item {
             display: flex;
             align-items: center;
@@ -191,41 +280,37 @@ require_once "././core/configAPP.php";
             color: var(--text-secondary);
         }
 
-        /* INPUT GROUPS - REVISADO Y CORREGIDO */
+        /* INPUT GROUPS - VERSIÓN CORREGIDA */
         .input-group {
             position: relative;
             display: flex;
-            align-items: stretch;
+            align-items: center;
             width: 100%;
+            height: 44px; /* Altura fija para mantener consistencia */
         }
 
-        .input-group-prepend {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 4;
-            display: flex;
-            align-items: center;
-            padding-left: 12px;
-            pointer-events: none;
+        .input-group .form-control {
+            width: 100%;
+            padding: 12px 40px 12px 12px; /* Ajustar padding para dejar espacio al botón */
+            font-size: 15px;
+            border: 1px solid var(--input-border);
+            border-radius: var(--radius-sm);
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            transition: var(--transition);
+            box-sizing: border-box; /* Asegurar que el padding no afecte el ancho */
+            height: 100%; /* Hacer que el input ocupe toda la altura del grupo */
         }
 
         .input-group-append {
             position: absolute;
             right: 0;
             top: 0;
-            height: 100%;
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding-right: 12px;
-            z-index: 5;
-        }
-        
-        .input-group-icon {
-            color: var(--text-tertiary);
-            font-size: 16px;
+            padding: 0 12px; /* Ajustar padding para centrar el botón */
+            z-index: 2;
+            height: 100%; /* Hacer que el contenedor ocupe toda la altura */
         }
 
         .input-group-toggle {
@@ -236,35 +321,24 @@ require_once "././core/configAPP.php";
             color: var(--text-tertiary);
             cursor: pointer;
             font-size: 16px;
-            width: 24px;
-            height: 100%;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: var(--transition);
+            height: 100%; /* Hacer que el botón ocupe toda la altura */
+            width: 36px; /* Tamaño fijo para el botón */
         }
 
         .input-group-toggle:hover {
             color: var(--accent);
         }
 
-        .form-control {
-            width: 100%;
-            padding-right: 40px !important;
-            font-size: 15px;
-            border: 1px solid var(--input-border);
-            border-radius: var(--radius-sm);
-            background-color: var(--input-bg);
-            color: var(--text-primary);
-            transition: var(--transition);
-            height: 44px;
-            position: relative;
-            z-index: 3;
-        }
-
-        /* Ajustes para inputs con botón de mostrar contraseña */
-        .input-group-toggle + .form-control {
-            padding-right: 40px;
+        /* Alinear el icono dentro del botón */
+        .input-group-toggle span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%; /* Asegurar que el icono esté centrado verticalmente */
         }
 
         .form-control::placeholder {
@@ -519,21 +593,12 @@ require_once "././core/configAPP.php";
                     
                     <div class="form-group">
                         <label class="form-label" for="inputEmail">Correo electrónico</label>
-                        <div class="input-group">
-                            <input type="email" id="inputEmail" name="inputEmail" class="form-control" placeholder="nombre@empresa.com" required autofocus tabindex="1">
-                        </div>
+                        <input type="email" id="inputEmail" name="inputEmail" class="form-control" placeholder="nombre@empresa.com" required autofocus tabindex="1">
                     </div>
                                         
                     <div class="form-group">
                         <label class="form-label" for="inputPassword">Contraseña</label>
-                        <div class="input-group">
-                            <input type="password" id="inputPassword" name="inputPassword" class="form-control" placeholder="Ingrese su contraseña" required tabindex="2">
-                            <div class="input-group-append">
-                                <button id="show_password" class="input-group-toggle" type="button">
-                                    <span id="icon" class="fa fa-eye-slash"></span>
-                                </button>
-                            </div>
-                        </div>
+                        <input type="password" id="inputPassword" name="inputPassword" class="form-control" placeholder="Ingrese su contraseña" required tabindex="2">
                     </div>
                     
                     <div class="form-group" id="groupDB" style="display: none;">
@@ -622,26 +687,12 @@ require_once "././core/configAPP.php";
                     
                     <div class="form-group">
                         <label class="form-label" for="user-pass">Contraseña</label>
-                        <div class="input-group">
-                            <input type="password" id="user-pass" name="user-pass" class="form-control" placeholder="Ingrese su contraseña" required tabindex="4">
-                            <div class="input-group-append">
-                                <button id="show_password1" class="input-group-toggle" type="button" tabindex="5">
-                                    <span id="icon1" class="fa fa-eye-slash"></span>
-                                </button>
-                            </div>
-                        </div>
+                        <input type="password" id="user-pass" name="user-pass" class="form-control" placeholder="Ingrese su contraseña" required tabindex="4">
                     </div>
                                         
                     <div class="form-group">
                         <label class="form-label" for="user-repeatpass">Confirmar contraseña</label>
-                        <div class="input-group">
-                            <input type="password" id="user-repeatpass" name="user-repeatpass" class="form-control" placeholder="Ingrese su contraseña" required tabindex="6">
-                            <div class="input-group-append">
-                                <button id="show_password2" class="input-group-toggle" type="button" tabindex="7">
-                                    <span id="icon2" class="fa fa-eye-slash"></span>
-                                </button>
-                            </div>
-                        </div>
+                        <input type="password" id="user-repeatpass" name="user-repeatpass" class="form-control" placeholder="Ingrese su contraseña" required tabindex="6">
                     </div>                
                     
                     <button class="btn btn-primary" type="button" id="registrarse" tabindex="8">

@@ -109,6 +109,47 @@ class mainModel
 	
 		return $mysqliDBLocal;
 	}	
+	
+	/**
+	 * Genera nombres de base de datos a partir del nombre de una compañía
+	 * 
+	 * @param string $companyName Nombre de la compañía
+	 * @return array Devuelve un array con ambos formatos requeridos
+	 */
+	function generateDatabaseName($companyName, $sistema) {
+		// Normalizar el nombre: eliminar acentos, caracteres especiales y convertir a minúsculas
+		$cleanName = preg_replace('/[^a-z0-9]/', '', 
+					strtolower(
+						iconv('UTF-8', 'ASCII//TRANSLIT', $companyName)
+					));
+		
+		// Obtener una versión corta del nombre limpio
+		$uniqueId = substr($cleanName, 0, DB_MAX_LENGTH);
+		
+		// Si el nombre queda vacío después de la limpieza, usar un valor aleatorio
+		if(empty($uniqueId)) {
+			$uniqueId = 'cmp' . rand(100, 999);
+		}
+		
+		// Asegurar que el prefijo usado sea el de cPanel (CPANEL_USERNAME)
+		$cpanelPrefix = defined('CPANEL_USERNAME') ? CPANEL_USERNAME : DB_PREFIX;
+		
+		// Devolver ambos formatos requeridos
+		return [
+			'prefixed' => $cpanelPrefix . '_' . $uniqueId . '_' . $sistema ,  // ej: "esmultiservicios_banbuclic_izzy"
+			'unprefixed' => $uniqueId . '_' . $sistema                       // ej: "banbuclic_izzy"
+		];
+	}
+
+	// Función para generar código único basado en fecha y cliente_id
+	public function generarCodigoUnico($clientes_id) {
+		$fecha = date('Ymd'); // Fecha en formato AAAAMMDD
+		$hash = substr(md5($clientes_id . microtime()), 0, 4); // 4 caracteres únicos
+		$codigo = substr($fecha . $hash, 0, 8); // Combinación de 8 dígitos
+		
+		// Aseguramos que sea numérico
+		return (int)preg_replace('/[^0-9]/', '', $codigo);
+	}
 
 	public function correlativoLogin($campo_id, $tabla)
 	{
