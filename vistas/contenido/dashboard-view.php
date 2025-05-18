@@ -1,7 +1,11 @@
 <div class="container-fluid">
-	<ol class="breadcrumb mt-2 mb-4">
-		<li class="breadcrumb-item active">Dashboard</li>
-	</ol>
+	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
+		<div class="container-fluid">
+			<ol class="breadcrumb mb-0">
+				<li class="breadcrumb-item active fw-bold text-primary">Dashboard</li>
+			</ol>
+		</div>
+	</nav>
 	
 	<div class="card mb-4">
 		<div class="card-header">

@@ -1,8 +1,14 @@
 <div class="container-fluid" id="div_top">
-    <ol class="breadcrumb mt-2 mb-4">
-        <li class="breadcrumb-item"><a class="breadcrumb-link" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a></li>
-        <li class="breadcrumb-item active">Administrar Menús</li>
-    </ol>
+	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
+		<div class="container-fluid">
+			<ol class="breadcrumb mb-0">
+				<li class="breadcrumb-item">
+					<a class="text-decoration-none text-primary" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a>
+				</li>
+				<li class="breadcrumb-item active fw-bold">Administrar Menús</li>
+			</ol>
+		</div>
+	</nav>		
 
     <!-- Formulario para registrar/editar elementos -->
     <div class="card mb-4">

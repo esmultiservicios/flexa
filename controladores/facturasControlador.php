@@ -16,7 +16,7 @@
 			$empresa_id = $_SESSION['empresa_id_sd'];		
 			//ENCABEZADO DE FACTURA
 			$clientes_id = $_POST['cliente_id'];
-			$colaborador_id = $_POST['colaborador_id'];			
+			$colaborador_id = $_POST['colaborador_id'];		
 			$tipo_factura = $_POST['facturas_activo'] ?? 2; //1. CONTADO, 2. CREDITO
 			$tipo_documento = $_POST['facturas_proforma'] ?? 0; //0. FACTURA ELECTRONICA, 1. FACTURA PROFORMA
 

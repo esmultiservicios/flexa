@@ -1,8 +1,15 @@
 	<div class="container-fluid">
-    <ol class="breadcrumb mt-2 mb-4">
-        <li class="breadcrumb-item"><a class="breadcrumb-link" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a></li>
-        <li class="breadcrumb-item active">Movimiento de Cuentas</li>
-    </ol>
+	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
+		<div class="container-fluid">
+			<ol class="breadcrumb mb-0">
+				<li class="breadcrumb-item">
+					<a class="text-decoration-none text-primary" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a>
+				</li>
+				<li class="breadcrumb-item active fw-bold">Movimiento de Cuentas</li>
+			</ol>
+		</div>
+	</nav>
+		
     <div class="card mb-4">
         <div class="card-body">
 			<form class="form-inline" id="formMainMovimientosContabilidad" action="" method="POST" data-form="" autocomplete="off" enctype="multipart/form-data">

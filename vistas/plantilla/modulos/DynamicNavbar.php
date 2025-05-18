@@ -113,7 +113,6 @@ class DynamicNavbar {
     // Generar el HTML del navbar dinámicamente
     public function generarNavbar() {
         $html = '<nav class="sb-sidenav accordion bg-color-navarlateral" id="sidenavAccordion">
-                    <br/>
                     <div class="sb-sidenav-menu">
                         <div class="nav">';
         

@@ -8,28 +8,86 @@
             <div class="card-body">
                 <form class="FormularioAjax" id="invoice-form" method="POST" action="" data-form="" autocomplete="off"
                     enctype="multipart/form-data">
-                    <div class="form-group row customer-bill-box-left">
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <span id="rtn-customers-bill"></span> <span id="client-customers-bill"></span>
-                        </div>
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            </span> <span id="vendedor-customers-bill"></span>
-                        </div>
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <span id="comentario-customers-bill"></span>
-                        </div>
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
 
+                    <!-- Invoice Information Section -->
+                    <div class="invoice-header-container">
+                        <!-- Left side customer/vendor info -->
+                        <div class="invoice-info-left">
+                            <div class="invoice-info-title">Información del Cliente</div>
+                            
+                            <!-- Campos RTN y Cliente en una línea -->
+                            <div class="inline-fields">
+                                <div class="invoice-info-row">
+                                    <i class="fas fa-id-card"></i>
+                                    <span id="rtn-customers-bill">999999999</span>
+                                </div>
+                                <div class="invoice-info-row">
+                                    <i class="fas fa-user"></i>
+                                    <span id="client-customers-bill">Consumidor Final</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Campos que se ocultan si están vacíos -->
+                            <div class="invoice-info-row hide-if-empty">
+                                <i class="fas fa-user-tie"></i>
+                                <span id="vendedor-customers-bill"></span>
+                            </div>
+                            <div class="invoice-info-row hide-if-empty">
+                                <i class="fas fa-comment"></i>
+                                <span id="comentario-customers-bill"></span>
+                            </div>
                         </div>
+
+                        <!-- Datos de Exoneración -->
+                        <div class="exoneracion-container">
+                            <div class="exoneracion-title">Datos de Exoneración</div>
+                            <div class="exoneracion-fields">
+                                <div class="exo-field">
+                                    <label for="no-orden">No. Orden</label>
+                                    <input type="text" id="no-orden" name="no-orden">
+                                </div>
+                                <div class="exo-field">
+                                    <label for="constancia">Constancia</label>
+                                    <input type="text" id="constancia" name="constancia">
+                                </div>
+                                <div class="exo-field">
+                                    <label for="identificativo-sag">Identificativo SAG</label>
+                                    <input type="text" id="identificativo-sag" name="identificativo-sag">
+                                </div>
+                                <div class="exo-field">
+                                    <label for="correlativo">Número de orden interno</label>
+                                    <input type="text" id="numero-interno" name="numero-interno">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right side date/time info -->
+                        <div class="invoice-info-right">
+                            <div class="invoice-info-title">Fecha y Hora</div>
+                            <div class="invoice-info-row">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span id="fecha-customers-bill">18/5/2025</span>
+                            </div>
+                            <div class="invoice-info-row">
+                                <i class="fas fa-clock"></i>
+                                <span id="hora-customers-bill">15:15:31</span>
+                            </div>
+                        </div>
+
+                        <!-- Middle invoice counter -->
+                        <div class="invoice-counter">
+                            <div class="invoice-counter-title">
+                                <i class="fas fa-file-invoice"></i> Facturas Disponibles
+                            </div>
+                            <div class="invoice-counter-value badge-warning" id="invoice-status">
+                                25
+                            </div>
+                            <div class="invoice-counter-alert alert-warning" id="mensajeFacturas">
+                                Pronto necesitará solicitar más facturas
+                            </div>
+                        </div>                        
                     </div>
-                    <div class="form-group row customer-bill-box-right">
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <span id="fecha-customers-bill"></span>
-                        </div>
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <span id="hora-customers-bill"></span>
-                        </div>
-                    </div>
+
                     <div class="bill">
                         <div class="form-group row">
                             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
@@ -151,6 +209,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="form-group row table-responsive-xl tableFixHead table table-hover">
                             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
                                 <table id="invoiceItem">
@@ -266,6 +325,7 @@
                                 </table>
                             </div>
                         </div>
+
                         <hr class="line_table" />
                         <div class="form-group row">
                             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
