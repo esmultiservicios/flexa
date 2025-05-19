@@ -30,6 +30,12 @@ class mainModel
 	
 		return $mysqli;
 	}
+
+		// En tu mainModel.php agrega:
+		public static function staticConnection() {
+			$instance = new self();
+			return $instance->connection();
+		}
 	
 	public function connectionLogin()
 	{
@@ -496,6 +502,87 @@ class mainModel
 		// Retorna el array de resultados
 		return $resultados;
 	}
+
+	public function showNotification($alert) {
+		$type = $alert['type'] ?? 'error';
+		$title = $alert['title'] ?? 'Notificación';
+		$message = $alert['text'] ?? '';
+		$status = ($type === 'success') ? 'success' : 'error';
+		
+		// Permitir HTML en el mensaje si se especifica
+		$allowHtml = $alert['allow_html'] ?? false;
+		
+		// Inicializar array de acciones
+		$actions = [];
+		
+		// Notificación principal (siempre primera)
+		$notificationScript = "if (typeof showNotify === 'function') { 
+			showNotify('{$status}', '" . addslashes($title) . "', " . 
+			($allowHtml ? "`{$message}`" : "'" . addslashes($message) . "'") . ", " .
+			($allowHtml ? 'true' : 'false') . "); 
+		}";
+		$actions[] = $notificationScript;
+		
+		// Resetear formulario si se especifica
+		if (!empty($alert['form'])) {
+			$actions[] = "$('#{$alert['form']}')[0].reset();";
+			
+			// Resetear también selects con selectpicker si existen
+			$actions[] = "$('#{$alert['form']}').find('.selectpicker').selectpicker('refresh');";
+		}
+		
+		// Ejecutar funciones adicionales si se especifican
+		if (!empty($alert['funcion'])) {
+			$functions = array_filter(explode(';', $alert['funcion']));
+			foreach ($functions as $func) {
+				$func = trim($func);
+				if (!empty($func)) {
+					$actions[] = "try { 
+						if (typeof " . explode('(', $func)[0] . " === 'function') { 
+							{$func}; 
+						}
+					} catch (e) {
+						console.error('Error al ejecutar función: {$func}', e); 
+					}";
+				}
+			}
+		}
+		
+		// Cerrar modales si se solicita
+		if (!empty($alert['closeAllModals'])) {
+			$actions[] = "$('.modal').modal('hide');";
+		}
+		
+		// Redireccionar si se especifica
+		if (!empty($alert['redirect'])) {
+			$redirectUrl = addslashes($alert['redirect']);
+			$actions[] = "setTimeout(function() {
+				window.location.href = '{$redirectUrl}';
+			}, 1500);";
+		}
+		
+		// Generar UN solo script
+		return "<script>
+			(function() {
+				" . implode("\n", $actions) . "
+			})();
+		</script>";
+	}
+
+	public function getPlanConfiguracionMainModel(){
+        $query = "SELECT pp.configuraciones 
+		FROM planes pp
+		INNER JOIN plan p ON p.planes_id = pp.planes_id";
+        
+        $sql = mainModel::connection()->query($query) or die(mainModel::connection()->error);
+        
+        if($sql->num_rows > 0){
+            $row = $sql->fetch_assoc();
+            return json_decode($row['configuraciones'], true);
+        }
+        
+        return [];
+    }
 
 	public function abonos_cxc_cliente($facturas_id)
 	{

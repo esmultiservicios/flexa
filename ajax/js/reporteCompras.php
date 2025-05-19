@@ -190,9 +190,6 @@ var listar_reporte_compras = function() {
                 targets: 10
             }
         ],
-        "fnRowCallback": function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-            $('td', nRow).addClass(aData['color']);
-        },
         "footerCallback": function(row, data, start, end, display) {
             var api = this.api();
 

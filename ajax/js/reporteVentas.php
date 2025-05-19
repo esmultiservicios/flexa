@@ -203,9 +203,6 @@ var listar_reporte_ventas = function() {
         "bDestroy": true,
         "language": idioma_español, // esta se encuentra en el archivo main.js
         "dom": dom,
-        "fnRowCallback": function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-            $('td', nRow).addClass(aData['color']);
-        },
         "footerCallback": function(row, data, start, end, display) {
             // Aquí puedes calcular los totales y actualizar el footer
             var totalSubtotal = data.reduce(function(acc, row) {
