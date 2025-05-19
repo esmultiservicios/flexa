@@ -202,9 +202,20 @@ class DynamicNavbar {
             }
         }
         
-        $prefixes = array("clinicarehn_", "clientes_");
+        $prefixes = DB_PREFIX . "_";
         $nombre_db_final = str_replace($prefixes, "", $GLOBALS['db']);
         
+        // Variables para WhatsApp
+        $telefono_ws = "50494748379";
+        $mensaje_ws = "Hola FLEXA, nos gustaría que nos puedan brindar asistencia técnica, muchas gracias.";
+        $title = "MULTIFAST";
+        
+        // Codificar mensaje para URL
+        $mensaje_codificado = urlencode($mensaje_ws);
+        
+        // Construir URL de WhatsApp
+        $url_ws = "https://api.whatsapp.com/send?phone={$telefono_ws}&text={$mensaje_codificado}";
+
         $html .= '
             </div>
         </div>
@@ -212,11 +223,10 @@ class DynamicNavbar {
             <center><span class="small-font">' . $nombre_db_final . '</span></center>
         </div>
         
-        <a href="https://api.whatsapp.com/send?phone=50489136844&text=Hola%20ES%20MULTISERVICIOS,%20nos%20gustar%C3%ADa%20que%20nos%20puedan%20brindar%20asistencia%20t%C3%A9cnica,%20muchas%20gracias."
-            class="float-ws" target="_blank" data-toggle="tooltip" data-placement="top" title="Soporte ES MULTISERVICIOS">
-            <i class="fab fa-whatsapp my-float-ws"></i>
+        <a href="' . $url_ws . '" class="float-ws" target="_blank" data-toggle="tooltip" data-placement="top" title="'.$title.'">
+           <i class="fab fa-whatsapp my-float-ws"></i>
         </a>
-        </nav>';
+        </nav>';   
         
         
         return $html;
