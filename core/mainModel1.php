@@ -1,25 +1,21 @@
 <?php
-// core/mainModel.php
-
-// Determinar la ruta base según si es petición Ajax o no
-if (isset($peticionAjax)) {
-    $basePath = dirname(__DIR__) . '/core/';
+if ($peticionAjax) {
+	require_once '../core/configAPP.php';
+	require_once '../core/phpmailer/class.phpmailer.php';
+	require_once '../core/phpmailer/class.smtp.php';
 } else {
-    $basePath = __DIR__ . '/';
+	require_once './core/configAPP.php';
+	require_once './core/phpmailer/class.phpmailer.php';
+	require_once './core/phpmailer/class.smtp.php';
 }
-
-// Incluir archivos de configuración
-require_once $basePath . 'configAPP.php';
-require_once $basePath . 'phpmailer/class.phpmailer.php';
-require_once $basePath . 'phpmailer/class.smtp.php';
 
 class mainModel
 {
 	/* FUNCTION QUE PERMITE REALIZAR LA CONEXIÓN A LA DB */
 	public function connection()
 	{
-		// Desactiva la conexión persistente removiendo 'p:'
-		$mysqli = new mysqli(SERVER, USER, PASS);
+		// Usamos conexiones persistentes con 'p:'
+		$mysqli = new mysqli('p:' . SERVER, USER, PASS);
 	
 		if ($mysqli->connect_errno) {
 			throw new Exception('Fallo al conectar a MySQL, connection: ' . $mysqli->connect_error);
@@ -35,12 +31,12 @@ class mainModel
 		return $mysqli;
 	}
 
-	// En tu mainModel.php agrega:
-	public static function staticConnection() {
-		$instance = new self();
-		return $instance->connection();
-	}
-		
+		// En tu mainModel.php agrega:
+		public static function staticConnection() {
+			$instance = new self();
+			return $instance->connection();
+		}
+	
 	public function connectionLogin()
 	{
 		// Usamos conexiones persistentes con 'p:'
@@ -60,50 +56,6 @@ class mainModel
 		return $mysqliLogin;
 	}
 	
-	public function connectionDBLocal($dblocal)
-	{
-		// Usamos conexiones persistentes con 'p:'
-		$mysqliDBLocal = new mysqli('p:' . SERVER, USER, PASS);
-	
-		if ($mysqliDBLocal->connect_errno) {
-			throw new Exception('Fallo al conectar a MySQL, connectionDBLocal: ' . $mysqliDBLocal->connect_error);
-		}
-	
-		$mysqliDBLocal->set_charset('utf8mb4'); // Usamos utf8mb4 para soporte completo de caracteres
-	
-		// Intenta seleccionar la base de datos
-		if (!$mysqliDBLocal->select_db($dblocal)) {
-			throw new Exception('Error al seleccionar la base de datos desde mainModel.php, connectionDBLocal: ' . $mysqliDBLocal->error);
-		}
-	
-		return $mysqliDBLocal;
-	}	
-
-	public function connectToDatabase($config) {
-		$conn = new mysqli($config['host'], $config['user'], $config['pass'], $config['name']);
-		
-		if ($conn->connect_error) {
-			error_log("Error conectando a DB cliente: " . $conn->connect_error);
-			return false;
-		}
-		
-		$conn->set_charset("utf8");
-		return $conn;
-	}
-
-	public function databaseExists($dbName) {
-		$conn = new mysqli(SERVER, USER, PASS);
-		if ($conn->connect_error) {
-			return false;
-		}
-		
-		$result = $conn->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$dbName'");
-		$exists = ($result->num_rows > 0);
-		$conn->close();
-		
-		return $exists;
-	}
-
 	// En tu mainModel.php agregamos:
 	public static function validarSesion() {
 		// Verificar si la sesión no está iniciada
@@ -144,6 +96,66 @@ class mainModel
 		
 		return ["error" => false];
 	}	
+	
+	public function connectionDBLocal($dblocal)
+	{
+		// Usamos conexiones persistentes con 'p:'
+		$mysqliDBLocal = new mysqli('p:' . SERVER, USER, PASS);
+	
+		if ($mysqliDBLocal->connect_errno) {
+			throw new Exception('Fallo al conectar a MySQL, connectionDBLocal: ' . $mysqliDBLocal->connect_error);
+		}
+	
+		$mysqliDBLocal->set_charset('utf8mb4'); // Usamos utf8mb4 para soporte completo de caracteres
+	
+		// Intenta seleccionar la base de datos
+		if (!$mysqliDBLocal->select_db($dblocal)) {
+			throw new Exception('Error al seleccionar la base de datos desde mainModel.php, connectionDBLocal: ' . $mysqliDBLocal->error);
+		}
+	
+		return $mysqliDBLocal;
+	}	
+	
+	/**
+	 * Genera nombres de base de datos a partir del nombre de una compañía
+	 * 
+	 * @param string $companyName Nombre de la compañía
+	 * @return array Devuelve un array con ambos formatos requeridos
+	 */
+	function generateDatabaseName($companyName, $sistema) {
+		// Normalizar el nombre: eliminar acentos, caracteres especiales y convertir a minúsculas
+		$cleanName = preg_replace('/[^a-z0-9]/', '', 
+					strtolower(
+						iconv('UTF-8', 'ASCII//TRANSLIT', $companyName)
+					));
+		
+		// Obtener una versión corta del nombre limpio
+		$uniqueId = substr($cleanName, 0, DB_MAX_LENGTH);
+		
+		// Si el nombre queda vacío después de la limpieza, usar un valor aleatorio
+		if(empty($uniqueId)) {
+			$uniqueId = 'cmp' . rand(100, 999);
+		}
+		
+		// Asegurar que el prefijo usado sea el de cPanel (CPANEL_USERNAME)
+		$cpanelPrefix = defined('CPANEL_USERNAME') ? CPANEL_USERNAME : DB_PREFIX;
+		
+		// Devolver ambos formatos requeridos
+		return [
+			'prefixed' => $cpanelPrefix . '_' . $uniqueId . '_' . $sistema ,  // ej: "esmultiservicios_banbuclic_izzy"
+			'unprefixed' => $uniqueId . '_' . $sistema                       // ej: "banbuclic_izzy"
+		];
+	}
+
+	// Función para generar código único basado en fecha y cliente_id
+	public function generarCodigoUnico($clientes_id) {
+		$fecha = date('Ymd'); // Fecha en formato AAAAMMDD
+		$hash = substr(md5($clientes_id . microtime()), 0, 4); // 4 caracteres únicos
+		$codigo = substr($fecha . $hash, 0, 8); // Combinación de 8 dígitos
+		
+		// Aseguramos que sea numérico
+		return (int)preg_replace('/[^0-9]/', '', $codigo);
+	}
 
 	public function correlativoLogin($campo_id, $tabla)
 	{
@@ -160,7 +172,6 @@ class mainModel
 
 		return $numero;
 	}
-	
 
 	public function consulta_total_ingreso($query)
 	{
@@ -206,905 +217,50 @@ class mainModel
 
 		return $numero;
 	}
-	
-	public function obtener_planes_id_por_plan_id(){
-		$query = "SELECT planes_id FROM plan"; // ejemplo con ID fijo
-	
-		$result = $this->ejecutar_consulta_simple($query); // sin pasar parámetros
-	
-		if($result && $result->num_rows > 0){
-			$row = $result->fetch_assoc();
-			return $row['planes_id'];
-		}
-		return null;
-	}
-	
-	// Función para generar username único según las reglas especificadas
-	public function generarUsernameUnico($nombre_completo) {
-		// Separar el nombre completo en partes
-		$partes_nombre = explode(' ', trim($nombre_completo));
-		
-		// Obtener primera letra del primer nombre (en minúscula)
-		$primera_letra = strtolower(substr($partes_nombre[0], 0, 1));
-		
-		// Buscar el primer apellido (el siguiente elemento después del primer nombre)
-		$primer_apellido = '';
-		for ($i = 1; $i < count($partes_nombre); $i++) {
-			if (!empty($partes_nombre[$i])) {
-				$primer_apellido = strtolower($partes_nombre[$i]);
-				break;
-			}
-		}
-		
-		// Si no hay apellido, usar solo la primera letra
-		if (empty($primer_apellido)) {
-			$username_base = $primera_letra;
-		} else {
-			$username_base = $primera_letra . $primer_apellido;
-		}
-		
-		// Verificar si el username ya existe
-		$username_final = $username_base;
-		$contador = 1;
-		
-		while (true) {
-			$check = mainModel::ejecutar_consulta_simple("SELECT users_id FROM users WHERE username = '$username_final'");
-			
-			if ($check->num_rows == 0) {
-				break; // Username disponible
-			}
-			
-			// Si existe, agregar número consecutivo
-			$username_final = $username_base . str_pad($contador, 2, '0', STR_PAD_LEFT);
-			$contador++;
-			
-			// Prevención por si acaso (nunca debería llegar a esto)
-			if ($contador > 100) {
-				$username_final = $username_base . uniqid();
-				break;
-			}
-		}
-		
-		return $username_final;
-	}	
 
-	// En tu mainModel.php
-	public function obtener_plan_modelo($plan_id) {
-		$mainModel = new mainModel();
-		$conexion = $mainModel->connection();
-		
-		try {
-			$stmt = $conexion->prepare("SELECT * FROM planes WHERE planes_id = ?");
-			$stmt->bind_param("i", $plan_id);
-			$stmt->execute();
-			
-			$resultado = $stmt->get_result();
-			
-			if($resultado->num_rows == 1) {
-				$plan = $resultado->fetch_assoc();
-				
-				// Limpiar datos de salida
-				$plan['nombre'] = $this->cleanStringConverterCase($plan['nombre']);
-				
-				return [
-					"success" => true,
-					"data" => $plan
-				];
-			} else {
-				return [
-					"success" => false,
-					"error" => "Plan no encontrado"
-				];
-			}
-			
-		} catch(Exception $e) {
-			error_log("Error en obtener_plan_modelo: " . $e->getMessage());
-			return [
-				"success" => false,
-				"error" => $e->getMessage()
-			];
-		} finally {
-			$conexion->close();
-		}
-	}	
-	public function registrar_plan_modelo($datos) {
-		$conexionPrincipal = $this->connection();
-		
-		try {
-			// Iniciar transacción
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Registrar en la base de datos principal
-			$stmt = $conexionPrincipal->prepare("INSERT INTO planes (
-											  nombre,
-											  estado,
-											  fecha_registro,
-											  configuraciones
-											  ) VALUES (?, ?, ?, ?)");
-			
-			$stmt->bind_param("siss", 
-				$datos['nombre'],
-				$datos['estado'],
-				$datos['fecha_registro'],
-				$datos['configuraciones']
-			);
-			
-			$stmt->execute();
-			$insertId = $stmt->insert_id;
-			
-			// 2. Registrar en todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				// Verificar si la base de datos existe
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						// Verificar si la tabla planes existe
-						$tableExists = $connCliente->query("SHOW TABLES LIKE 'planes'");
-						
-						if ($tableExists->num_rows > 0) {
-							// Insertar en la base de datos del cliente
-							$stmtCliente = $connCliente->prepare("INSERT INTO planes (
-															  planes_id,
-															  nombre,
-															  estado,
-															  fecha_registro,
-															  configuraciones
-															  ) VALUES (?, ?, ?, ?, ?)");
-							
-							$stmtCliente->bind_param("isiss", 
-								$insertId,
-								$datos['nombre'],
-								$datos['estado'],
-								$datos['fecha_registro'],
-								$datos['configuraciones']
-							);
-							
-							$stmtCliente->execute();
-							$stmtCliente->close();
-						}
-						$connCliente->close();
-					}
-				}
-			}
-			
-			// Confirmar transacción
-			$conexionPrincipal->commit();
-			
-			return [
-				'success' => true,
-				'insert_id' => $insertId,
-				'affected_rows' => $stmt->affected_rows,
-				'message' => 'Plan registrado correctamente en todas las bases de datos'
-			];
-			
-		} catch (Exception $e) {
-			// Revertir transacción en caso de error
-			$conexionPrincipal->rollback();
-			
-			return [
-				'success' => false,
-				'error' => $e->getMessage()
-			];
-		} finally {
-			if(isset($stmt)) $stmt->close();
-			$conexionPrincipal->autocommit(true);
-			$conexionPrincipal->close();
-		}
+	protected function guardar_bitacora($datos)
+	{
+		$bitacora_id = self::correlativo('bitacora_id', 'bitacora');
+		$bitacoraCodigo = $datos['bitacoraCodigo'];
+		$bitacoraFecha = $datos['bitacoraFecha'];
+		$bitacoraHoraInicio = $datos['bitacoraHoraInicio'];
+		$bitacoraHoraFinal = $datos['bitacoraHoraFinal'];
+		$bitacoraTipo = $datos['bitacoraTipo'];
+		$bitacoraYear = $datos['bitacoraYear'];
+		$user_id = $datos['user_id'];
+		$fecha_registro = date('Y-m-d H:i:s');
+		$insert = "INSERT INTO bitacora
+				VALUES('$bitacora_id','$bitacoraCodigo','$bitacoraFecha','$bitacoraHoraInicio','$bitacoraHoraFinal','$bitacoraTipo','$bitacoraYear','$user_id','$fecha_registro')";
+		$result = self::connection()->query($insert) or die(self::connection()->error);
+
+		return $result;
 	}
 
-	public function actualizar_plan_modelo($datos) {
-		$conexionPrincipal = $this->connection();
-		
-		try {
-			// Iniciar transacción
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Actualizar en la base de datos principal
-			$stmt = $conexionPrincipal->prepare("UPDATE planes SET 
-											  nombre = ?,
-											  estado = ?,
-											  configuraciones = ?
-											  WHERE planes_id = ?");
-			
-			$stmt->bind_param("sisi", 
-				$datos['nombre'],
-				$datos['estado'],
-				$datos['configuraciones'],
-				$datos['plan_id']
-			);
-			
-			$stmt->execute();
-			$affectedRows = $stmt->affected_rows;
-			
-			// 2. Actualizar en todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				// Verificar si la base de datos existe
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						// Verificar si la tabla planes existe
-						$tableExists = $connCliente->query("SHOW TABLES LIKE 'planes'");
-						
-						if ($tableExists->num_rows > 0) {
-							// Verificar si el plan existe en el cliente
-							$planExists = $connCliente->query("SELECT 1 FROM planes WHERE planes_id = " . $datos['plan_id']);
-							
-							if ($planExists->num_rows > 0) {
-								// Actualizar en la base de datos del cliente
-								$stmtCliente = $connCliente->prepare("UPDATE planes SET 
-																  nombre = ?,
-																  estado = ?,
-																  configuraciones = ?
-																  WHERE planes_id = ?");
-								
-								$stmtCliente->bind_param("sisi", 
-									$datos['nombre'],
-									$datos['estado'],
-									$datos['configuraciones'],
-									$datos['plan_id']
-								);
-								
-								$stmtCliente->execute();
-							} else {
-								// Insertar si no existe
-								$stmtCliente = $connCliente->prepare("INSERT INTO planes (
-																  planes_id,
-																  nombre,
-																  estado,
-																  fecha_registro,
-																  configuraciones
-																  ) VALUES (?, ?, ?, NOW(), ?)");
-								
-								$stmtCliente->bind_param("isss", 
-									$datos['plan_id'],
-									$datos['nombre'],
-									$datos['estado'],
-									$datos['configuraciones']
-								);
-								
-								$stmtCliente->execute();
-							}
-							$stmtCliente->close();
-						}
-						$connCliente->close();
-					}
-				}
-			}
-			
-			// Confirmar transacción
-			$conexionPrincipal->commit();
-			
-			return [
-				'success' => true,
-				'affected_rows' => $affectedRows,
-				'message' => 'Plan actualizado correctamente en todas las bases de datos'
-			];
-			
-		} catch (Exception $e) {
-			// Revertir transacción en caso de error
-			$conexionPrincipal->rollback();
-			
-			return [
-				'success' => false,
-				'error' => $e->getMessage()
-			];
-		} finally {
-			if(isset($stmt)) $stmt->close();
-			$conexionPrincipal->autocommit(true);
-			$conexionPrincipal->close();
-		}
+	public function guardarHistorial($datos)
+	{
+		$historial_id = self::correlativo('historial_id', 'historial');
+		$modulo = $datos['modulo'];
+		$colaboradores_id = $datos['colaboradores_id'];
+		$status = $datos['status'];
+		$observacion = $datos['observacion'];
+		$fecha_registro = date('Y-m-d H:i:s');
+		$insert = "INSERT INTO historial
+				VALUES('$historial_id','$modulo','$colaboradores_id','$status','$observacion','$fecha_registro')";
+		$result = self::connection()->query($insert) or die(self::connection()->error);
+
+		return $result;
 	}
 
-	public function eliminar_plan_modelo($planId) {
-		$response = [
-			'success' => false,
-			'message' => ''
-		];
-	
-		try {
-			// Obtener conexión principal
-			$conexionPrincipal = $this->connection();
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Verificar si el plan tiene relaciones en tablas de permisos
-			$tieneRelaciones = false;
-			
-			// Verificar en menu_plan
-			$checkMenuPlan = $conexionPrincipal->query("SELECT 1 FROM menu_plan WHERE plan_id = '$planId' LIMIT 1");
-			if ($checkMenuPlan->num_rows > 0) {
-				$tieneRelaciones = true;
-			}
-			
-			// Verificar en submenu_plan (si no se encontró en la anterior)
-			if (!$tieneRelaciones) {
-				$checkSubmenuPlan = $conexionPrincipal->query("SELECT 1 FROM submenu_plan WHERE plan_id = '$planId' LIMIT 1");
-				if ($checkSubmenuPlan->num_rows > 0) {
-					$tieneRelaciones = true;
-				}
-			}
-			
-			// Verificar en submenu1_plan (si no se encontró en las anteriores)
-			if (!$tieneRelaciones) {
-				$checkSubmenu1Plan = $conexionPrincipal->query("SELECT 1 FROM submenu1_plan WHERE plan_id = '$planId' LIMIT 1");
-				if ($checkSubmenu1Plan->num_rows > 0) {
-					$tieneRelaciones = true;
-				}
-			}
-	
-			if ($tieneRelaciones) {
-				$conexionPrincipal->rollback();
-				return [
-					'success' => false,
-					'message' => 'No se puede eliminar el plan porque tiene permisos asignados'
-				];
-			}
-	
-			// 2. Eliminar de la base principal
-			$deletePrincipal = $conexionPrincipal->query("DELETE FROM planes WHERE plan_id = '$planId'");
-			
-			if (!$deletePrincipal) {
-				$conexionPrincipal->rollback();
-				return [
-					'success' => false,
-					'message' => 'Error al eliminar el plan de la base principal'
-				];
-			}
-	
-			// 3. Eliminar de todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			$erroresClientes = [];
-	
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						try {
-							// Verificar si la tabla planes existe
-							$tableExists = $connCliente->query("SHOW TABLES LIKE 'planes'");
-							
-							if ($tableExists->num_rows > 0) {
-								// Verificar si el plan existe en el cliente
-								$planExists = $connCliente->query("SELECT 1 FROM planes WHERE plan_id = '$planId'");
-								
-								if ($planExists->num_rows > 0) {
-									// Eliminar de la base del cliente
-									$deleteCliente = $connCliente->query("DELETE FROM planes WHERE plan_id = '$planId'");
-									
-									if (!$deleteCliente) {
-										$erroresClientes[] = "Error al eliminar de $dbName: " . $connCliente->error;
-									}
-								}
-							}
-						} catch (Exception $e) {
-							$erroresClientes[] = "Error en $dbName: " . $e->getMessage();
-						} finally {
-							$connCliente->close();
-						}
-					}
-				}
-			}
-	
-			// Confirmar transacción principal
-			$conexionPrincipal->commit();
-	
-			$response = [
-				'success' => true,
-				'message' => 'Plan eliminado correctamente'
-			];
-	
-			if (!empty($erroresClientes)) {
-				$response['warnings'] = $erroresClientes;
-			}
-	
-			return $response;
-	
-		} catch (Exception $e) {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->rollback();
-			}
-			
-			return [
-				'success' => false,
-				'message' => 'Error en el servidor: ' . $e->getMessage()
-			];
-		} finally {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->autocommit(true);
-				$conexionPrincipal->close();
-			}
-		}
-	}
-		
-	public function getPlanConfiguracionMainModel(){
-        $query = "SELECT pp.configuraciones 
-		FROM planes pp
-		INNER JOIN plan p ON p.planes_id = pp.planes_id";
-        
-        $sql = mainModel::connection()->query($query) or die(mainModel::connection()->error);
-        
-        if($sql->num_rows > 0){
-            $row = $sql->fetch_assoc();
-            return json_decode($row['configuraciones'], true);
-        }
-        
-        return [];
-    }
+	public function actualizar_bitacora($bitacoraCodigo, $hora)
+	{
+		$update = "UPDATE bitacora
+				SET
+					bitacoraHoraFinal = '$hora'
+				WHERE bitacoraCodigo = '$bitacoraCodigo'";
 
-	public function guardar_o_actualizar_modulo_lista_blanca($nombre_config, $moduloNuevo) {
-		$response = [
-			'success' => false,
-			'message' => ''
-		];
-	
-		try {
-			// Obtener conexión principal
-			$conexionPrincipal = $this->connection();
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Actualizar en la base principal
-			$stmt = $conexionPrincipal->prepare("SELECT modulos FROM config_lista_blanca WHERE nombre_config = ?");
-			$stmt->bind_param("s", $nombre_config);
-			$stmt->execute();
-			$result = $stmt->get_result();
-	
-			if ($result->num_rows > 0) {
-				$row = $result->fetch_assoc();
-				$listaModulos = json_decode($row['modulos'], true);
-	
-				if (!in_array($moduloNuevo, $listaModulos)) {
-					$listaModulos[] = $moduloNuevo;
-					$modulosJson = json_encode(array_values(array_unique($listaModulos)), JSON_UNESCAPED_UNICODE);
-	
-					$stmt = $conexionPrincipal->prepare("UPDATE config_lista_blanca SET modulos = ? WHERE nombre_config = ?");
-					$stmt->bind_param("ss", $modulosJson, $nombre_config);
-					$stmt->execute();
-					
-					if ($stmt->affected_rows <= 0) {
-						throw new Exception("No se actualizó ningún registro en la base principal");
-					}
-				}
-			} else {
-				$modulosJson = json_encode([$moduloNuevo], JSON_UNESCAPED_UNICODE);
-				$stmt = $conexionPrincipal->prepare("INSERT INTO config_lista_blanca (nombre_config, modulos) VALUES (?, ?)");
-				$stmt->bind_param("ss", $nombre_config, $modulosJson);
-				$stmt->execute();
-				
-				if ($stmt->affected_rows <= 0) {
-					throw new Exception("No se insertó ningún registro en la base principal");
-				}
-			}
-	
-			// 2. Actualizar en todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			$erroresClientes = [];
-	
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						try {
-							$connCliente->autocommit(false);
-	
-							// Verificar si la tabla existe
-							$tableExists = $connCliente->query("SHOW TABLES LIKE 'config_lista_blanca'");
-							
-							if ($tableExists->num_rows > 0) {
-								// Verificar si la configuración existe
-								$stmtCliente = $connCliente->prepare("SELECT modulos FROM config_lista_blanca WHERE nombre_config = ?");
-								$stmtCliente->bind_param("s", $nombre_config);
-								$stmtCliente->execute();
-								$resultCliente = $stmtCliente->get_result();
-	
-								if ($resultCliente->num_rows > 0) {
-									$rowCliente = $resultCliente->fetch_assoc();
-									$listaModulosCliente = json_decode($rowCliente['modulos'], true);
-	
-									if (!in_array($moduloNuevo, $listaModulosCliente)) {
-										$listaModulosCliente[] = $moduloNuevo;
-										$modulosJsonCliente = json_encode(array_values(array_unique($listaModulosCliente)), JSON_UNESCAPED_UNICODE);
-	
-										$stmtUpdate = $connCliente->prepare("UPDATE config_lista_blanca SET modulos = ? WHERE nombre_config = ?");
-										$stmtUpdate->bind_param("ss", $modulosJsonCliente, $nombre_config);
-										$stmtUpdate->execute();
-										
-										if ($stmtUpdate->affected_rows <= 0) {
-											throw new Exception("No se actualizó ningún registro en $dbName");
-										}
-									}
-								} else {
-									$modulosJsonCliente = json_encode([$moduloNuevo], JSON_UNESCAPED_UNICODE);
-									$stmtInsert = $connCliente->prepare("INSERT INTO config_lista_blanca (nombre_config, modulos) VALUES (?, ?)");
-									$stmtInsert->bind_param("ss", $nombre_config, $modulosJsonCliente);
-									$stmtInsert->execute();
-									
-									if ($stmtInsert->affected_rows <= 0) {
-										throw new Exception("No se insertó ningún registro en $dbName");
-									}
-								}
-							}
-	
-							$connCliente->commit();
-						} catch (Exception $e) {
-							$connCliente->rollback();
-							$erroresClientes[] = "Error en $dbName: " . $e->getMessage();
-						} finally {
-							$connCliente->autocommit(true);
-							$connCliente->close();
-						}
-					}
-				}
-			}
-	
-			// Confirmar transacción principal
-			$conexionPrincipal->commit();
-	
-			$response = [
-				'success' => true,
-				'message' => 'Módulo actualizado en lista blanca correctamente'
-			];
-	
-			if (!empty($erroresClientes)) {
-				$response['warnings'] = $erroresClientes;
-			}
-	
-			return $response;
-	
-		} catch(Exception $e) {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->rollback();
-			}
-			
-			return [
-				'success' => false,
-				'message' => 'Error: ' . $e->getMessage()
-			];
-		} finally {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->autocommit(true);
-				$conexionPrincipal->close();
-			}
-		}
-	}
-	
-	public function eliminar_modulo_lista_blanca($nombre_config, $moduloEliminar) {
-		$response = [
-			'success' => false,
-			'message' => ''
-		];
-	
-		try {
-			// Obtener conexión principal
-			$conexionPrincipal = $this->connection();
-			$conexionPrincipal->autocommit(false);
-	
-			// 1. Eliminar de la base principal
-			$stmt = $conexionPrincipal->prepare("SELECT modulos FROM config_lista_blanca WHERE nombre_config = ?");
-			$stmt->bind_param("s", $nombre_config);
-			$stmt->execute();
-			$result = $stmt->get_result();
-	
-			if ($result->num_rows > 0) {
-				$row = $result->fetch_assoc();
-				$listaModulos = json_decode($row['modulos'], true);
-				
-				$nuevaLista = array_diff($listaModulos, [$moduloEliminar]);
-				
-				if (count($nuevaLista) != count($listaModulos)) {
-					$modulosJson = json_encode(array_values($nuevaLista), JSON_UNESCAPED_UNICODE);
-					$stmt = $conexionPrincipal->prepare("UPDATE config_lista_blanca SET modulos = ? WHERE nombre_config = ?");
-					$stmt->bind_param("ss", $modulosJson, $nombre_config);
-					$stmt->execute();
-					
-					if ($stmt->affected_rows <= 0) {
-						throw new Exception("No se actualizó ningún registro en la base principal");
-					}
-				}
-			} else {
-				$conexionPrincipal->rollback();
-				return [
-					'success' => false,
-					'message' => 'La configuración no existe en la base principal'
-				];
-			}
-	
-			// 2. Actualizar en todas las bases de datos de clientes
-			$clientes = $this->ejecutar_consulta("SELECT db FROM server_customers WHERE estado = 1 AND db != ''");
-			$erroresClientes = [];
-	
-			foreach ($clientes as $cliente) {
-				$dbName = $cliente['db'];
-				
-				if ($this->databaseExists($dbName)) {
-					$configCliente = [
-						'host' => SERVER,
-						'user' => USER,
-						'pass' => PASS,
-						'name' => $dbName
-					];
-					
-					$connCliente = $this->connectToDatabase($configCliente);
-					
-					if ($connCliente !== false) {
-						try {
-							$connCliente->autocommit(false);
-	
-							// Verificar si la tabla existe
-							$tableExists = $connCliente->query("SHOW TABLES LIKE 'config_lista_blanca'");
-							
-							if ($tableExists->num_rows > 0) {
-								// Verificar si la configuración existe
-								$stmtCliente = $connCliente->prepare("SELECT modulos FROM config_lista_blanca WHERE nombre_config = ?");
-								$stmtCliente->bind_param("s", $nombre_config);
-								$stmtCliente->execute();
-								$resultCliente = $stmtCliente->get_result();
-	
-								if ($resultCliente->num_rows > 0) {
-									$rowCliente = $resultCliente->fetch_assoc();
-									$listaModulosCliente = json_decode($rowCliente['modulos'], true);
-									
-									$nuevaListaCliente = array_diff($listaModulosCliente, [$moduloEliminar]);
-									
-									if (count($nuevaListaCliente) != count($listaModulosCliente)) {
-										$modulosJsonCliente = json_encode(array_values($nuevaListaCliente), JSON_UNESCAPED_UNICODE);
-										$stmtUpdate = $connCliente->prepare("UPDATE config_lista_blanca SET modulos = ? WHERE nombre_config = ?");
-										$stmtUpdate->bind_param("ss", $modulosJsonCliente, $nombre_config);
-										$stmtUpdate->execute();
-										
-										if ($stmtUpdate->affected_rows <= 0) {
-											throw new Exception("No se actualizó ningún registro en $dbName");
-										}
-									}
-								}
-							}
-	
-							$connCliente->commit();
-						} catch (Exception $e) {
-							$connCliente->rollback();
-							$erroresClientes[] = "Error en $dbName: " . $e->getMessage();
-						} finally {
-							$connCliente->autocommit(true);
-							$connCliente->close();
-						}
-					}
-				}
-			}
-	
-			// Confirmar transacción principal
-			$conexionPrincipal->commit();
-	
-			$response = [
-				'success' => true,
-				'message' => 'Módulo eliminado de lista blanca correctamente'
-			];
-	
-			if (!empty($erroresClientes)) {
-				$response['warnings'] = $erroresClientes;
-			}
-	
-			return $response;
-	
-		} catch(Exception $e) {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->rollback();
-			}
-			
-			return [
-				'success' => false,
-				'message' => 'Error: ' . $e->getMessage()
-			];
-		} finally {
-			if (isset($conexionPrincipal)) {
-				$conexionPrincipal->autocommit(true);
-				$conexionPrincipal->close();
-			}
-		}
-	}
-	
-    // Ejecutar consulta simple (SELECT)
-	public static function ejecutar_consulta($query) {
-		// Abrir conexión a la base de datos
-		$conexion = (new self())->connection();
-		
-		// Ejecutar la consulta
-		$resultado = $conexion->query($query);
-		
-		// Verificar si la consulta fue exitosa
-		if (!$resultado) {
-			$error = $conexion->error;
-			$conexion->close();
-			throw new Exception('Error en la consulta: ' . $error);
-		}
-		
-		// Para consultas SELECT, obtener y almacenar los resultados antes de cerrar
-		if (stripos(trim($query), 'SELECT') === 0) {
-			$data = [];
-			while ($row = $resultado->fetch_assoc()) {
-				$data[] = $row;
-			}
-			$resultado->free();
-			$conexion->close();
-			return $data;
-		}
-		
-		// Para otras consultas (INSERT, UPDATE, DELETE)
-		$conexion->close();
-		return $resultado;
-	}
+		$result = self::connection()->query($update);
 
-	// Función para generar código único basado en fecha y cliente_id
-	public function generarCodigoUnico($clientes_id) {
-		$fecha = date('Ymd'); // Fecha en formato AAAAMMDD
-		$hash = substr(md5($clientes_id . microtime()), 0, 4); // 4 caracteres únicos
-		$codigo = substr($fecha . $hash, 0, 8); // Combinación de 8 dígitos
-		
-		// Aseguramos que sea numérico
-		return (int)preg_replace('/[^0-9]/', '', $codigo);
-	}
-	
-    // Insertar datos
-    public static function insertar_datos($tabla, $datos) {
-        $campos = implode(", ", array_keys($datos));
-        $valores = "'" . implode("', '", array_values($datos)) . "'";
-        $query = "INSERT INTO $tabla ($campos) VALUES ($valores)";
-
-        $conexion = (new mainModel())->connection();
-        $resultado = $conexion->query($query);
-
-        if (!$resultado) {
-            throw new Exception('Error al insertar datos: ' . $conexion->error);
-        }
-
-        $conexion->close();
-        return $resultado;
-    }
-
-    // Actualizar datos
-    public static function actualizar_datos($tabla, $datos, $condicion) {
-        $updates = [];
-        foreach ($datos as $campo => $valor) {
-            $updates[] = "$campo = '$valor'";
-        }
-        $updates = implode(", ", $updates);
-
-        $query = "UPDATE $tabla SET $updates WHERE $condicion";
-
-        $conexion = (new mainModel())->connection();
-        $resultado = $conexion->query($query);
-
-        if (!$resultado) {
-            throw new Exception('Error al actualizar datos: ' . $conexion->error);
-        }
-
-        $conexion->close();
-        return $resultado;
-    }
-
-    // Eliminar datos
-    public static function eliminar_datos($tabla, $condicion) {
-        $query = "DELETE FROM $tabla WHERE $condicion";
-
-        $conexion = (new mainModel())->connection();
-        $resultado = $conexion->query($query);
-
-        if (!$resultado) {
-            throw new Exception('Error al eliminar datos: ' . $conexion->error);
-        }
-
-        $conexion->close();
-        return $resultado;
-    }
-		
-	protected function guardar_bitacora($datos) {
-		try {
-			$bitacora_id = self::correlativo('bitacora_id', 'bitacora');
-			$fecha_registro = date('Y-m-d H:i:s');
-			
-			$query = "INSERT INTO bitacora (bitacora_id, bitacoraCodigo, bitacoraFecha, bitacoraHoraInicio, bitacoraHoraFinal, bitacoraTipo, bitacoraYear, colaboradores_id, fecha_registro) 
-					  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-			
-			$params = [
-				$bitacora_id,
-				$datos['bitacoraCodigo'],
-				$datos['bitacoraFecha'],
-				$datos['bitacoraHoraInicio'],
-				$datos['bitacoraHoraFinal'],
-				$datos['bitacoraTipo'],
-				$datos['bitacoraYear'],
-				$datos['user_id'],
-				$fecha_registro
-			];
-			
-			$result = $this->ejecutar_consulta_simple_preparada($query, "issssisis", $params);
-			
-			return $result;
-		} catch (Exception $e) {
-			error_log("Error en guardar_bitacora: " . $e->getMessage());
-			return false;
-		}
-	}
-
-	public function actualizar_hora_salida_bitacora($codigo_bitacora, $hora_salida) {
-		try {
-			$query = "UPDATE bitacora SET bitacoraHoraFinal = ? WHERE bitacoraCodigo = ?";
-			$params = [$hora_salida, $codigo_bitacora];
-			
-			$result = $this->ejecutar_consulta_simple_preparada($query, "ss", $params);
-			
-			return $result;
-		} catch (Exception $e) {
-			error_log("Error en actualizar_hora_salida_bitacora: " . $e->getMessage());
-			return false;
-		}
-	}
-
-	public function guardarHistorial($datos) {
-		try {
-			$historial_id = self::correlativo('historial_id', 'historial');
-			$fecha_registro = date('Y-m-d H:i:s');
-			
-			$query = "INSERT INTO historial (historial_id, modulo, colaboradores_id, status, observacion, fecha_registro) 
-					 VALUES (?, ?, ?, ?, ?, ?)";
-			
-			$params = [
-				$historial_id,
-				$datos['modulo'],
-				$datos['colaboradores_id'],
-				$datos['status'],
-				$datos['observacion'],
-				$fecha_registro
-			];
-			
-			$result = $this->ejecutar_consulta_simple_preparada($query, "isssss", $params);
-			
-			return $result;
-		} catch (Exception $e) {
-			error_log("Error en guardarHistorial: " . $e->getMessage());
-			return false;
-		}
+		return $result;
 	}
 
 	public function validSalidaAsistenciaColaborador($asistencia_id)
@@ -1114,37 +270,6 @@ class mainModel
 		$sql = mainModel::connection()->query($delete) or die(mainModel::connection()->error);
 
 		return $sql;
-	}
-
-	/**
-	 * Genera nombres de base de datos a partir del nombre de una compañía
-	 * 
-	 * @param string $companyName Nombre de la compañía
-	 * @return array Devuelve un array con ambos formatos requeridos
-	 */
-	function generateDatabaseName($companyName, $sistema) {
-		// Normalizar el nombre: eliminar acentos, caracteres especiales y convertir a minúsculas
-		$cleanName = preg_replace('/[^a-z0-9]/', '', 
-					strtolower(
-						iconv('UTF-8', 'ASCII//TRANSLIT', $companyName)
-					));
-		
-		// Obtener una versión corta del nombre limpio
-		$uniqueId = substr($cleanName, 0, DB_MAX_LENGTH);
-		
-		// Si el nombre queda vacío después de la limpieza, usar un valor aleatorio
-		if(empty($uniqueId)) {
-			$uniqueId = 'cmp' . rand(100, 999);
-		}
-		
-		// Asegurar que el prefijo usado sea el de cPanel (CPANEL_USERNAME)
-		$cpanelPrefix = defined('CPANEL_USERNAME') ? CPANEL_USERNAME : DB_PREFIX;
-		
-		// Devolver ambos formatos requeridos
-		return [
-			'prefixed' => $cpanelPrefix . '_' . $uniqueId . '_' . $sistema ,  // ej: "esmultiservicios_banbuclic_izzy"
-			'unprefixed' => $uniqueId . '_' . $sistema                       // ej: "banbuclic_izzy"
-		];
 	}
 
 	public function updateSalidaAsistenciaColaborador($asistencia_id)
@@ -1253,7 +378,7 @@ class mainModel
 		$nombre_host = self::getRealIP();
 		$fecha = date('Y-m-d H:i:s');
 		$comentario = $comentario_;
-		$usuario = $_SESSION['colaborador_id_sd'] ?? 0;
+		$usuario = $_SESSION['colaborador_id_sd'];
 
 		$historial_acceso_id = self::correlativo('historial_acceso_id ', 'historial_acceso');
 		$insert = "INSERT INTO historial_acceso VALUES('$historial_acceso_id','$fecha','$usuario','$nombre_host','$comentario')";
@@ -1377,6 +502,87 @@ class mainModel
 		// Retorna el array de resultados
 		return $resultados;
 	}
+
+	public function showNotification($alert) {
+		$type = $alert['type'] ?? 'error';
+		$title = $alert['title'] ?? 'Notificación';
+		$message = $alert['text'] ?? '';
+		$status = ($type === 'success') ? 'success' : 'error';
+		
+		// Permitir HTML en el mensaje si se especifica
+		$allowHtml = $alert['allow_html'] ?? false;
+		
+		// Inicializar array de acciones
+		$actions = [];
+		
+		// Notificación principal (siempre primera)
+		$notificationScript = "if (typeof showNotify === 'function') { 
+			showNotify('{$status}', '" . addslashes($title) . "', " . 
+			($allowHtml ? "`{$message}`" : "'" . addslashes($message) . "'") . ", " .
+			($allowHtml ? 'true' : 'false') . "); 
+		}";
+		$actions[] = $notificationScript;
+		
+		// Resetear formulario si se especifica
+		if (!empty($alert['form'])) {
+			$actions[] = "$('#{$alert['form']}')[0].reset();";
+			
+			// Resetear también selects con selectpicker si existen
+			$actions[] = "$('#{$alert['form']}').find('.selectpicker').selectpicker('refresh');";
+		}
+		
+		// Ejecutar funciones adicionales si se especifican
+		if (!empty($alert['funcion'])) {
+			$functions = array_filter(explode(';', $alert['funcion']));
+			foreach ($functions as $func) {
+				$func = trim($func);
+				if (!empty($func)) {
+					$actions[] = "try { 
+						if (typeof " . explode('(', $func)[0] . " === 'function') { 
+							{$func}; 
+						}
+					} catch (e) {
+						console.error('Error al ejecutar función: {$func}', e); 
+					}";
+				}
+			}
+		}
+		
+		// Cerrar modales si se solicita
+		if (!empty($alert['closeAllModals'])) {
+			$actions[] = "$('.modal').modal('hide');";
+		}
+		
+		// Redireccionar si se especifica
+		if (!empty($alert['redirect'])) {
+			$redirectUrl = addslashes($alert['redirect']);
+			$actions[] = "setTimeout(function() {
+				window.location.href = '{$redirectUrl}';
+			}, 1500);";
+		}
+		
+		// Generar UN solo script
+		return "<script>
+			(function() {
+				" . implode("\n", $actions) . "
+			})();
+		</script>";
+	}
+
+	public function getPlanConfiguracionMainModel(){
+        $query = "SELECT pp.configuraciones 
+		FROM planes pp
+		INNER JOIN plan p ON p.planes_id = pp.planes_id";
+        
+        $sql = mainModel::connection()->query($query) or die(mainModel::connection()->error);
+        
+        if($sql->num_rows > 0){
+            $row = $sql->fetch_assoc();
+            return json_decode($row['configuraciones'], true);
+        }
+        
+        return [];
+    }
 
 	public function abonos_cxc_cliente($facturas_id)
 	{
@@ -1503,7 +709,7 @@ class mainModel
 
 	/* Funcion que permite limpiar valores de los string (Inyección SQL) */
 
-	public function cleanString($string)
+	protected function cleanString($string)
 	{
 		// Limpia espacios al inicio y al final
 		$string = trim($string);
@@ -1563,7 +769,7 @@ class mainModel
 		return $string;
 	}
 
-	public function cleanStringConverterCase($string)
+	protected function cleanStringConverterCase($string)
 	{
 		// Limpia espacios al inicio y al final
 		$string = trim($string);
@@ -1771,72 +977,6 @@ class mainModel
 		return $alerta;
 	}
 
-	public function showNotification($alert) {
-		$type = $alert['type'] ?? 'error';
-		$title = $alert['title'] ?? 'Notificación';
-		$message = $alert['text'] ?? '';
-		$status = ($type === 'success') ? 'success' : 'error';
-		
-		// Permitir HTML en el mensaje si se especifica
-		$allowHtml = $alert['allow_html'] ?? false;
-		
-		// Inicializar array de acciones
-		$actions = [];
-		
-		// Notificación principal (siempre primera)
-		$notificationScript = "if (typeof showNotify === 'function') { 
-			showNotify('{$status}', '" . addslashes($title) . "', " . 
-			($allowHtml ? "`{$message}`" : "'" . addslashes($message) . "'") . ", " .
-			($allowHtml ? 'true' : 'false') . "); 
-		}";
-		$actions[] = $notificationScript;
-		
-		// Resetear formulario si se especifica
-		if (!empty($alert['form'])) {
-			$actions[] = "$('#{$alert['form']}')[0].reset();";
-			
-			// Resetear también selects con selectpicker si existen
-			$actions[] = "$('#{$alert['form']}').find('.selectpicker').selectpicker('refresh');";
-		}
-		
-		// Ejecutar funciones adicionales si se especifican
-		if (!empty($alert['funcion'])) {
-			$functions = array_filter(explode(';', $alert['funcion']));
-			foreach ($functions as $func) {
-				$func = trim($func);
-				if (!empty($func)) {
-					$actions[] = "try { 
-						if (typeof " . explode('(', $func)[0] . " === 'function') { 
-							{$func}; 
-						}
-					} catch (e) {
-						console.error('Error al ejecutar función: {$func}', e); 
-					}";
-				}
-			}
-		}
-		
-		// Cerrar modales si se solicita
-		if (!empty($alert['closeAllModals'])) {
-			$actions[] = "$('.modal').modal('hide');";
-		}
-		
-		// Redireccionar si se especifica
-		if (!empty($alert['redirect'])) {
-			$redirectUrl = addslashes($alert['redirect']);
-			$actions[] = "setTimeout(function() {
-				window.location.href = '{$redirectUrl}';
-			}, 1500);";
-		}
-		
-		// Generar UN solo script
-		return "<script>
-			(function() {
-				" . implode("\n", $actions) . "
-			})();
-		</script>";
-	}
-
 	function cerrar_sesion()
 	{
 		if (!isset($_SESSION['user_sd'])) {
@@ -1871,13 +1011,13 @@ class mainModel
 		return $result;
 	}
 
-	public function getCategoriaProductos($estado)
+	public function getCategoriaProductos()
 	{
-		$query = "SELECT categoria_id, nombre, estado
+		$query = 'SELECT categoria_id, nombre
 
 				FROM categoria
 
-				WHERE estado = '$estado'";
+				WHERE estado = 1';
 
 		$result = self::connection()->query($query);
 
@@ -2053,7 +1193,6 @@ class mainModel
 	public function getEmpresa($datos)
 	{
 		$privilegio = $datos['privilegio_colaborador'];
-		$stado = $datos['estado'];
 
 		if ($privilegio === 'Super Administrador' ||
 				$privilegio === 'Administrador' ||
@@ -2062,10 +1201,10 @@ class mainModel
 				$privilegio === 'Regular' ||
 				$privilegio === 'Estandar' ||
 				$privilegio === 'Premium') {
-			$where = "WHERE estado = '$stado'";
+			$where = 'WHERE estado = 1';
 		} else {
 			// $where = "WHERE estado = 1 AND empresa_id = '".$datos['empresa_id']."'";
-			$where = "WHERE estado = '$stado'";
+			$where = 'WHERE estado = 1';
 		}
 
 		$query = "SELECT *
@@ -2212,23 +1351,7 @@ class mainModel
 			$where = "WHERE c.estado = 1 AND c.colaboradores_id NOT IN(1) AND p.nombre NOT IN($valores)";
 		}
 
-		$query = "SELECT c.colaboradores_id, c.nombre AS 'nombre', c.identidad
-			FROM colaboradores AS c
-			INNER JOIN puestos AS p ON c.puestos_id = p.puestos_id
-			" . $where . '
-			ORDER BY c.nombre;';
-
-		$result = self::connection()->query($query);
-
-		return $result;
-	}
-
-	public function getColaboradoresConsultaAsistencia()
-	{
-		$valores = "'Reseller', 'Clientes'";
-		$where = "WHERE c.estado = 1 AND c.colaboradores_id NOT IN(1) AND p.nombre NOT IN($valores)";
-		
-		$query = "SELECT c.colaboradores_id, c.nombre AS 'nombre', c.identidad
+		$query = "SELECT c.colaboradores_id, c.nombre AS 'nombre'
 			FROM colaboradores AS c
 			INNER JOIN puestos AS p ON c.puestos_id = p.puestos_id
 			" . $where . '
@@ -2311,239 +1434,6 @@ class mainModel
 		return $result;
 	}
 
-	/**
-	 * Obtiene el ID del cliente asociado a una factura específica.
-	 * 
-	 * @param int $factura_id El ID de la factura.
-	 * @return int|false El ID del cliente si se encuentra la factura, o `false` si no se encuentra.
-	 */
-	public function obtenerClientePorFactura($factura_id)
-	{
-		// Consulta SQL para obtener el cliente_id basado en el facturas_id
-		$query = "SELECT f.clientes_id FROM facturas AS f WHERE f.facturas_id = ?";
-		
-		// Preparar la consulta
-		$stmt = self::connection()->prepare($query);
-		
-		// Vincular el parámetro de la consulta (factura_id)
-		$stmt->bind_param("i", $factura_id);
-		
-		// Ejecutar la consulta
-		$stmt->execute();
-		
-		// Obtener el resultado de la consulta
-		$result = $stmt->get_result();
-		
-		// Verificar si se encontró la factura
-		if ($result->num_rows > 0) {
-			// Obtener el cliente_id
-			$row = $result->fetch_assoc();
-			return $row['clientes_id'];  // Retorna el ID del cliente
-		} else {
-			// No se encontró la factura
-			return false;
-		}
-	}
-
-	/**
-	 * Verifica si un cliente tiene habilitado el servicio del Programa de Planes.
-	 * 
-	 * @param int $plan_id El ID del plan del cliente.
-	 * @return bool `true` si el cliente tiene habilitado el servicio, `false` si no.
-	 */
-	public function verificarProgramaPuntos($plan_id)
-	{
-		// Consulta SQL para verificar si el cliente tiene habilitado el servicio
-		$query = "SELECT sp.submenu_id
-				FROM submenu_plan AS sp
-				INNER JOIN plan AS p ON sp.planes_id = p.planes_id
-				INNER JOIN submenu AS s ON s.submenu_id = sp.submenu_id
-				WHERE p.planes_id = ? AND s.name = 'programaPuntos'";
-
-		// Preparar la consulta
-		$stmt = self::connection()->prepare($query);
-		if ($stmt === false) {
-			return false;  // Error en la preparación de la consulta
-		}
-
-		// Vincular el parámetro
-		$stmt->bind_param("i", $plan_id);
-
-		// Ejecutar la consulta
-		$stmt->execute();
-
-		// Obtener el resultado
-		$result = $stmt->get_result();
-
-		// Verificar si hay filas en el resultado
-		if ($result->num_rows > 0) {
-			// Si hay resultados, el cliente tiene habilitado el servicio
-			return true;
-		} else {
-			// Si no hay resultados, el cliente NO tiene habilitado el servicio
-			return false;
-		}
-	}
-
-
-	/**
-	 * Obtiene el programa de puntos activo.
-	 * 
-	 * @return array|false El programa de puntos activo o `false` si no hay un programa activo.
-	 */
-	public function obtenerProgramaPuntosActivo()
-	{
-		$query = "SELECT * FROM programa_puntos WHERE activo = 1 ORDER BY fecha_creacion DESC LIMIT 1";
-		$stmt = self::connection()->prepare($query);
-		$stmt->execute();
-		$result = $stmt->get_result();
-
-		if ($result->num_rows > 0) {
-			return $result->fetch_assoc(); // Retorna el programa de puntos activo
-		} else {
-			return false; // Si no hay programa de puntos activo
-		}
-	}	
-
-	/**
-	 * Acumula puntos para un cliente según el programa de puntos y el monto consumido.
-	 * 
-	 * Este método calcula la cantidad de puntos que debe acumular un cliente dependiendo
-	 * del tipo de cálculo (monto o porcentaje) y luego actualiza la tabla `puntos_cliente`
-	 * con el nuevo total de puntos. También registra el movimiento de acumulación en la 
-	 * tabla `historial_puntos`.
-	 * 
-	 * @param int $cliente_id El ID del cliente al que se le acumularán los puntos.
-	 * @param int $programa_puntos_id El ID del programa de puntos asociado al cliente.
-	 * @param float $monto_consumido El monto total consumido por el cliente, usado para calcular los puntos.
-	 * @return bool Retorna `true` si los puntos se acumularon correctamente, o `false` si hubo un error.
-	 */
-	public function acumularPuntos($cliente_id, $programa_puntos_id, $monto_consumido)
-	{
-		// Primero obtenemos el tipo de cálculo y las condiciones del programa de puntos
-		$query = "SELECT tipo_calculo, monto, porcentaje FROM programa_puntos WHERE id = ?";
-		$stmt = self::connection()->prepare($query);
-		$stmt->bind_param("i", $programa_puntos_id);
-		$stmt->execute();
-		$result = $stmt->get_result();
-		
-		if ($result->num_rows > 0) {
-			$row = $result->fetch_assoc();
-			$tipo_calculo = $row['tipo_calculo'];
-			$monto = $row['monto'];
-			$porcentaje = $row['porcentaje'];
-
-			// Inicializamos las variables para calcular los puntos
-			$puntos = 0;
-
-			// Si el cálculo es por monto
-			if ($tipo_calculo == 'monto') {
-				// Calculamos puntos según el monto
-				$puntos = $monto_consumido / $monto;
-			} elseif ($tipo_calculo == 'porcentaje') {
-				// Calculamos puntos según el porcentaje del monto consumido
-				$puntos = ($monto_consumido * $porcentaje) / 100;
-			}
-
-			// Actualizamos los puntos del cliente
-			// Primero obtenemos los puntos actuales
-			$query = "SELECT total_puntos FROM puntos_cliente WHERE cliente_id = ? AND programa_puntos_id = ?";
-			$stmt = self::connection()->prepare($query);
-			$stmt->bind_param("ii", $cliente_id, $programa_puntos_id);
-			$stmt->execute();
-			$result = $stmt->get_result();
-
-			// Si el cliente ya tiene puntos en este programa
-			if ($result->num_rows > 0) {
-				$row = $result->fetch_assoc();
-				$puntos_actuales = $row['total_puntos'];
-
-				// Sumamos los puntos nuevos a los puntos existentes
-				$nuevo_total_puntos = $puntos_actuales + $puntos;
-
-				// Actualizamos el total de puntos
-				$update_query = "UPDATE puntos_cliente SET total_puntos = ?, fecha_actualizacion = CURRENT_TIMESTAMP WHERE cliente_id = ? AND programa_puntos_id = ?";
-				$stmt = self::connection()->prepare($update_query);
-				$stmt->bind_param("dii", $nuevo_total_puntos, $cliente_id, $programa_puntos_id);
-				$stmt->execute();
-			} else {
-				// Si no tiene puntos en este programa, los insertamos
-				$insert_query = "INSERT INTO puntos_cliente (cliente_id, programa_puntos_id, total_puntos) VALUES (?, ?, ?)";
-				$stmt = self::connection()->prepare($insert_query);
-				$stmt->bind_param("iid", $cliente_id, $programa_puntos_id, $puntos);
-				$stmt->execute();
-			}
-
-			// Registrar el movimiento en el historial
-			$descripcion = "Acumulación de puntos por consumo de Lempiras: $monto_consumido";
-			$insert_historial_query = "INSERT INTO historial_puntos (cliente_id, programa_puntos_id, tipo_movimiento, puntos, descripcion) 
-									VALUES (?, ?, 'acumulacion', ?, ?)";
-			$stmt = self::connection()->prepare($insert_historial_query);
-			$stmt->bind_param("iiis", $cliente_id, $programa_puntos_id, $puntos, $descripcion);
-			$stmt->execute();
-
-			return true;
-		} else {
-			// No se encontró el programa de puntos
-			return false;
-		}
-	}
-
-	/**
-	 * Redime puntos de un cliente según el programa de puntos.
-	 * 
-	 * Este método verifica si el cliente tiene suficientes puntos para redimir. Si es así,
-	 * se actualiza el total de puntos en la tabla `puntos_cliente` y se registra el movimiento
-	 * de redención en la tabla `historial_puntos`.
-	 * 
-	 * @param int $cliente_id El ID del cliente al que se le redimirán los puntos.
-	 * @param int $programa_puntos_id El ID del programa de puntos asociado al cliente.
-	 * @param float $puntos_a_redimir La cantidad de puntos que el cliente desea redimir.
-	 * @return bool Retorna `true` si la redención de puntos se realizó correctamente, o `false` si no tiene suficientes puntos.
-	 */
-	public function redimirPuntos($cliente_id, $programa_puntos_id, $puntos_a_redimir)
-	{
-		// Primero obtenemos los puntos actuales del cliente en el programa de puntos
-		$query = "SELECT total_puntos FROM puntos_cliente WHERE cliente_id = ? AND programa_puntos_id = ?";
-		$stmt = self::connection()->prepare($query);
-		$stmt->bind_param("ii", $cliente_id, $programa_puntos_id);
-		$stmt->execute();
-		$result = $stmt->get_result();
-
-		if ($result->num_rows > 0) {
-			$row = $result->fetch_assoc();
-			$puntos_actuales = $row['total_puntos'];
-
-			// Verificamos si el cliente tiene suficientes puntos para redimir
-			if ($puntos_a_redimir <= $puntos_actuales) {
-				// Restamos los puntos redimidos del total de puntos
-				$nuevo_total_puntos = $puntos_actuales - $puntos_a_redimir;
-
-				// Actualizamos el total de puntos
-				$update_query = "UPDATE puntos_cliente SET total_puntos = ?, fecha_actualizacion = CURRENT_TIMESTAMP WHERE cliente_id = ? AND programa_puntos_id = ?";
-				$stmt = self::connection()->prepare($update_query);
-				$stmt->bind_param("dii", $nuevo_total_puntos, $cliente_id, $programa_puntos_id);
-				$stmt->execute();
-
-				// Registrar el movimiento en el historial
-				$descripcion = "Redención de puntos";
-				$insert_historial_query = "INSERT INTO historial_puntos (cliente_id, programa_puntos_id, tipo_movimiento, puntos, descripcion) 
-										VALUES (?, ?, 'redencion', ?, ?)";
-				$stmt = self::connection()->prepare($insert_historial_query);
-				$stmt->bind_param("iiis", $cliente_id, $programa_puntos_id, $puntos_a_redimir, $descripcion);
-				$stmt->execute();
-
-				return true;
-			} else {
-				// El cliente no tiene suficientes puntos
-				return false;
-			}
-		} else {
-			// No se encontró el cliente en este programa de puntos
-			return false;
-		}
-	}
-
 	public function getSubMenus1Acceso($privilegio_id)
 	{
 		$query = "SELECT sm.submenu_id, sm.name As 'submenu'
@@ -2599,61 +1489,44 @@ class mainModel
 
 	public function getMenuAccesosDataTable($privilegio_id)
 	{
-		$query = "SELECT 
-					am.acceso_menu_id AS 'acceso_menu_id', 
-					m.name AS 'menu', 
-					p.nombre AS 'privilegio', 
-					p.privilegio_id AS 'privilegio_id', 
-					m.menu_id AS 'menu_id',
-					am.estado AS 'estado' 
+		$query = "SELECT am.acceso_menu_id AS 'acceso_menu_id', m.name AS 'menu', p.nombre AS 'privilegio', p.privilegio_id AS 'privilegio_id', m.menu_id AS 'menu_id'
 				FROM acceso_menu AS am
 				INNER JOIN menu AS m ON am.menu_id = m.menu_id
 				INNER JOIN privilegio AS p ON am.privilegio_id = p.privilegio_id
 				WHERE am.privilegio_id = '$privilegio_id'";
-	
-		return self::connection()->query($query);
+
+		$result = self::connection()->query($query);
+
+		return $result;
 	}
-	
 
 	public function getSubMenuAccesosDataTable($privilegio_id)
 	{
-		$query = "SELECT 
-					asm.acceso_submenu_id AS 'acceso_submenu_id', 
-					m.name AS 'menu', 
-					sm.name AS 'submenu', 
-					p.nombre AS 'privilegio', 
-					p.privilegio_id AS 'privilegio_id', 
-					sm.submenu_id AS 'submenu_id',
-					asm.estado AS 'estado'
+		$query = "SELECT asm.acceso_submenu_id AS 'acceso_submenu_id', m.name AS 'menu', sm.name AS 'submenu', p.nombre AS 'privilegio', p.privilegio_id AS 'privilegio_id', sm.submenu_id AS 'submenu_id'
 				FROM acceso_submenu AS asm
 				INNER JOIN submenu AS sm ON asm.submenu_id = sm.submenu_id
 				INNER JOIN menu AS m ON sm.menu_id = m.menu_id
 				INNER JOIN privilegio AS p ON asm.privilegio_id = p.privilegio_id
 				WHERE asm.privilegio_id = '$privilegio_id'";
-	
-		return self::connection()->query($query);
+
+		$result = self::connection()->query($query);
+
+		return $result;
 	}
-	
 
 	public function getSubMenu1AccesosDataTable($privilegio_id)
 	{
-		$query = "SELECT 
-					asm1.acceso_submenu1_id AS 'acceso_submenu_id', 
-					sm1.submenu_id AS 'submenu_id', 
-					sm.name AS 'submenu', 
-					sm1.name AS 'submenu1', 
-					p.nombre AS 'privilegio', 
-					p.privilegio_id AS 'privilegio_id',
-					asm1.estado AS 'estado' 
+		$query = "SELECT asm1.acceso_submenu1_id AS 'acceso_submenu_id', sm1.submenu_id AS 'submenu_id', sm.name AS 'submenu', sm1.name AS 'submenu1', p.nombre AS 'privilegio', p.privilegio_id AS 'privilegio_id'
 				FROM acceso_submenu1 AS asm1
 				INNER JOIN submenu1 AS sm1 ON asm1.submenu1_id = sm1.submenu1_id
 				INNER JOIN submenu AS sm ON sm1.submenu_id = sm.submenu_id
 				INNER JOIN privilegio AS p ON asm1.privilegio_id = p.privilegio_id
 				WHERE asm1.privilegio_id = '$privilegio_id'";
-	
-		return self::connection()->query($query);
+
+		$result = self::connection()->query($query);
+
+		return $result;
 	}
-	
 
 	public function valid_menu_on_submenu_acceso($datos)
 	{
@@ -2747,12 +1620,10 @@ class mainModel
 
 	public function getTipoUsuario($datos)
 	{
-		$estado = $datos['estado'] ?? 1;
-
 		if ($datos['db_cliente'] === $GLOBALS['DB_MAIN']) {
-			$where = "WHERE estado = '$estado'";
+			$where = 'WHERE estado = 1';
 		} else {
-			$where = "WHERE estado = '$estado' AND tipo_user_id NOT IN(1,3)";
+			$where = 'WHERE estado = 1 AND tipo_user_id NOT IN(1,3)';
 		}
 
 		$query = 'SELECT *
@@ -2857,35 +1728,25 @@ class mainModel
 
 	public function getSaldoMovimientosCuentasSaldoAnterior($datos)
 	{
-		// Obtener el último día del mes anterior
-		$fecha_inicio_mes_anterior = date('Y-m-01', strtotime('-1 month', strtotime($datos['fechai'])));
-		$fecha_fin_mes_anterior = date('Y-m-t', strtotime('-1 month', strtotime($datos['fechai'])));
-	
 		$query = "SELECT saldo
 				FROM movimientos_cuentas
-				WHERE cuentas_id = '" . $datos['cuentas_id'] . "'
-				AND fecha BETWEEN '" . $fecha_inicio_mes_anterior . "' AND '" . $fecha_fin_mes_anterior . "'
-				ORDER BY fecha DESC, movimientos_cuentas_id DESC LIMIT 1";
-	
+				WHERE MONTH(CAST(fecha AS DATE)) = MONTH(DATE_ADD('" . $datos['fechai'] . "',INTERVAL -1 MONTH)) AND cuentas_id = '" . $datos['cuentas_id'] . "'
+				ORDER BY movimientos_cuentas_id DESC LIMIT 1";
+
 		$result = self::connection()->query($query);
-	
+
 		return $result;
 	}
 
 	public function getSaldoMovimientosCuentasUltimoSaldo($datos)
 	{
-		// Obtener el último día del mes anterior
-		$fecha_inicio_mes_anterior = date('Y-m-01', strtotime('-1 month', strtotime($datos['fechai'])));
-		$fecha_fin_mes_anterior = date('Y-m-t', strtotime('-1 month', strtotime($datos['fechai'])));
-	
 		$query = "SELECT saldo, fecha
 				FROM movimientos_cuentas
-				WHERE cuentas_id = '" . $datos['cuentas_id'] . "'
-				AND fecha BETWEEN '" . $fecha_inicio_mes_anterior . "' AND '" . $fecha_fin_mes_anterior . "'
-				ORDER BY fecha DESC, movimientos_cuentas_id DESC LIMIT 1";
-	
+				WHERE cuentas_id = '" . $datos['cuentas_id'] . "' AND MONTH(fecha) = MONTH(DATE_ADD('" . $datos['fechai'] . "',INTERVAL -1 MONTH))
+				ORDER BY movimientos_cuentas_id DESC LIMIT 1";
+
 		$result = self::connection()->query($query);
-	
+
 		return $result;
 	}
 
@@ -2958,7 +1819,7 @@ class mainModel
 
 	public function getBitacora($fechai, $fechaf)
 	{
-		$query = "SELECT b.bitacoraCodigo AS 'bitacoraCodigo', DATE_FORMAT(b.bitacoraFecha, '%d/%m/%Y') AS 'bitacoraFecha', b.bitacoraHoraInicio As 'bitacoraHoraInicio', b.bitacoraHoraFinal AS 'bitacoraHoraFinal', tu.nombre AS 'bitacoraTipo', b.bitacoraYear AS 'bitacoraYear',c.nombre AS 'colaborador'
+		$query = "SELECT b.bitacoraCodigo AS 'bitacoraCodigo', DATE_FORMAT(b.bitacoraFecha, '%d/%m/%Y') AS 'bitacoraFecha', b.bitacoraHoraInicio As 'bitacoraHoraInicio', b.bitacoraHoraFinal AS 'bitacoraHoraFinal', tu.nombre AS 'bitacoraTipo', b.bitacoraYear AS 'bitacoraYear', c.nombre AS 'colaborador'
 				FROM bitacora AS b
 				INNER JOIN tipo_user AS tu
 				ON b.bitacoraTipo = tu.tipo_user_id
@@ -2973,7 +1834,7 @@ class mainModel
 
 	public function getHistorialAccesos($fechai, $fechaf)
 	{
-		$query = "SELECT ha.historial_acceso_id AS 'historial_acceso_id', DATE_FORMAT(ha.fecha, '%d/%m/%Y %H:%i:%s') AS 'fecha',c.nombre As 'colaborador', ha.ip AS 'ip', ha.acceso AS 'acceso'
+		$query = "SELECT ha.historial_acceso_id AS 'historial_acceso_id', DATE_FORMAT(ha.fecha, '%d/%m/%Y %H:%i:%s') AS 'fecha', c.nombre As 'colaborador', ha.ip AS 'ip', ha.acceso AS 'acceso'
 				FROM historial_acceso AS ha
 				INNER JOIN colaboradores AS c
 				ON ha.colaboradores_id = c.colaboradores_id
@@ -2984,20 +1845,6 @@ class mainModel
 		return $result;
 	}
 
-	public function obtenerPlanUsuario() {
-		// Implementa la lógica para obtener el plan del usuario actual
-		// Ejemplo básico:
-		$consulta = "SELECT planes_id FROM usuarios WHERE usuario_id = ?";
-		$resultado = $this->ejecutar_consulta_simple_preparada($consulta, "i", [$_SESSION['id']]);
-		return $resultado->fetch_assoc()['planes_id'] ?? null;
-	}
-	
-	public function obtenerSubmenuIdPorNombre($nombre) {
-		$consulta = "SELECT submenu_id FROM submenu WHERE name = ?";
-		$resultado = $this->ejecutar_consulta_simple_preparada($consulta, "s", [$nombre]);
-		return $resultado->fetch_assoc()['submenu_id'] ?? null;
-	}
-	
 	public function getClientes($estado)
 	{
 		if (!isset($_SESSION['user_sd'])) {
@@ -3024,90 +1871,41 @@ class mainModel
 		}
 
 		$query = "SELECT c.clientes_id AS 'clientes_id', 
-            c.nombre AS 'cliente', 
-            c.rtn AS 'rtn', 
-            c.localidad AS 'localidad', 
-            c.telefono AS 'telefono', 
-            c.correo AS 'correo', 
-            d.nombre AS 'departamento', 
-            m.nombre AS 'municipio', 
-            c.rtn AS 'rtn', 
-            GROUP_CONCAT(DISTINCT  s.sistema_id) AS 'sistema_ids', 
-            GROUP_CONCAT(DISTINCT  si.nombre) AS 'db_values', 
-            c.eslogan, 
-            c.otra_informacion, 
-            c.whatsapp, 
-            c.empresa,
-            c.colaboradores_id,
-            p.planes_id AS plan_id,
-            c.estado,
-            IFNULL((SELECT SUM(total_puntos) FROM puntos_cliente WHERE cliente_id = c.clientes_id), 0) AS puntos    
+				c.nombre AS 'cliente', 
+				c.rtn AS 'rtn', 
+				c.localidad AS 'localidad', 
+				c.telefono AS 'telefono', 
+				c.correo AS 'correo', 
+				d.nombre AS 'departamento', 
+				m.nombre AS 'municipio', 
+				c.rtn AS 'rtn', 
+				GROUP_CONCAT(s.sistema_id) AS 'sistema_ids', 
+				GROUP_CONCAT(si.nombre) AS 'db_values', 
+				c.eslogan, 
+				c.otra_informacion, 
+				c.whatsapp, 
+				c.empresa,
+				c.colaboradores_id			
 		FROM clientes AS c
 			LEFT JOIN departamentos AS d ON c.departamentos_id = d.departamentos_id
 			LEFT JOIN municipios AS m ON c.municipios_id = m.municipios_id
 			LEFT JOIN server_customers AS s ON c.clientes_id = s.clientes_id
 			LEFT JOIN sistema AS si ON si.sistema_id=s.sistema_id
-			LEFT JOIN plan p ON c.clientes_id = p.plan_id
 			INNER JOIN users AS usr ON c.colaboradores_id = usr.colaboradores_id
 		".$where."
 		GROUP BY 
 			c.clientes_id, c.nombre, c.rtn, c.localidad, c.telefono, c.correo, d.nombre, 
-			m.nombre, c.rtn, c.eslogan, c.otra_informacion, c.whatsapp, c.empresa, p.planes_id;";
+			m.nombre, c.rtn, c.eslogan, c.otra_informacion, c.whatsapp, c.empresa;";
+
 
 		$result = self::connection()->query($query);
 
 		return $result;
 	}
 
-	public function getClienteInfo($cliente_id) {
-		$query = "SELECT nombre FROM clientes WHERE clientes_id = ?";
-		$stmt = self::connection()->prepare($query);
-		$stmt->bind_param("i", $cliente_id);
-		$stmt->execute();
-		$result = $stmt->get_result();
-		return $result->fetch_assoc();
-	}
-	
-	public function getTotalPuntosCliente($cliente_id, $programa_puntos_id) {
-		$query = "SELECT total_puntos FROM puntos_cliente 
-				  WHERE cliente_id = ? AND programa_puntos_id = ?";
-		$stmt = self::connection()->prepare($query);
-		$stmt->bind_param("ii", $cliente_id, $programa_puntos_id);
-		$stmt->execute();
-		$result = $stmt->get_result();
-		
-		if($result->num_rows > 0) {
-			$row = $result->fetch_assoc();
-			return $row['total_puntos'];
-		}
-		return 0;
-	}
-	
-	public function getHistorialPuntos($cliente_id, $programa_puntos_id) {
-		$query = "SELECT 
-					tipo_movimiento AS tipo,
-					puntos,
-					descripcion,
-					DATE_FORMAT(fecha, '%d/%m/%Y %H:%i') AS fecha
-				  FROM historial_puntos
-				  WHERE cliente_id = ? AND programa_puntos_id = ?
-				  ORDER BY fecha DESC";
-				  
-		$stmt = self::connection()->prepare($query);
-		$stmt->bind_param("ii", $cliente_id, $programa_puntos_id);
-		$stmt->execute();
-		$result = $stmt->get_result();
-		
-		$historial = [];
-		while($row = $result->fetch_assoc()) {
-			$historial[] = $row;
-		}
-		return $historial;
-	}
-
 	public function getProveedores($estado)
 	{
-		$query = "SELECT p.proveedores_id AS 'proveedores_id', p.nombre AS 'proveedor', p.rtn AS 'rtn' , p.localidad AS 'localidad', p.telefono AS 'telefono', p.correo AS 'correo', d.nombre AS 'departamento', m.nombre AS 'municipio', p.estado
+		$query = "SELECT p.proveedores_id AS 'proveedores_id', p.nombre AS 'proveedor', p.rtn AS 'rtn' , p.localidad AS 'localidad', p.telefono AS 'telefono', p.correo AS 'correo', d.nombre AS 'departamento', m.nombre AS 'municipio'
 				FROM proveedores AS p
 				LEFT JOIN departamentos AS d
 				ON p.departamentos_id = d.departamentos_id
@@ -3147,23 +1945,16 @@ class mainModel
 
 	public function getColaboradoresTabla($datos)
 	{
-		$estado = $datos["estado"] ?? ''; // No asignamos valor por defecto
-		
 		$where = '';
-	
+
 		if ($GLOBALS['db'] === DB_MAIN) {
-			$where = "WHERE c.colaboradores_id NOT IN(1)";
-			if ($estado !== '') {
-				$where .= " AND c.estado = '$estado'";
-			}
+			$where = 'WHERE c.estado = 1';
 		} else {
-			$where = "WHERE c.colaboradores_id NOT IN(1) AND p.nombre NOT IN('Reseller', 'Clientes') AND e.empresa_id = '" . $datos['empresa_id'] . "'";
-			if ($estado !== '') {
-				$where .= " AND c.estado = '$estado'";
-			}
+			$where = "WHERE c.estado = 1 AND c.colaboradores_id NOT IN(1) AND p.nombre NOT IN('Reseller', 'Clientes') AND e.empresa_id = '" . $datos['empresa_id'] . "'";
 		}
-	
-		$query = "SELECT c.colaboradores_id AS 'colaborador_id', c.nombre AS 'colaborador', c.identidad AS 'identidad', c.estado, c.telefono AS 'telefono', e.nombre AS 'empresa', p.nombre AS 'puesto'
+
+		$query = "SELECT c.colaboradores_id AS 'colaborador_id', c.nombre AS 'colaborador', c.identidad AS 'identidad',
+				CASE WHEN c.estado = 1 THEN 'Activo' ELSE 'Inactivo' END AS 'estado', c.telefono AS 'telefono', e.nombre AS 'empresa', p.nombre AS 'puesto'
 				FROM colaboradores AS c
 				INNER JOIN empresa AS e
 				ON c.empresa_id = e.empresa_id
@@ -3171,7 +1962,7 @@ class mainModel
 				ON c.puestos_id = p.puestos_id
 				" . $where . "
 				ORDER BY c.nombre";
-	
+
 		$result = self::connection()->query($query);
 		return $result;
 	}
@@ -3192,12 +1983,12 @@ class mainModel
 		return $result;
 	}
 
-	public function getPuestos($estado)
+	public function getPuestos()
 	{
-		$query = "SELECT *
+		$query = 'SELECT *
 				FROM puestos
-				WHERE estado = '$estado'
-				ORDER BY nombre";
+				WHERE estado = 1
+				ORDER BY nombre';
 
 		$result = self::connection()->query($query);
 
@@ -3517,7 +2308,7 @@ class mainModel
 			$filtro .= " AND c.tipo_empleado_id = '" . $datos['tipo_empleado'] . "'";
 		}
 
-		$query = "SELECT c.contrato_id AS contrato_id,co.nombre AS 'empleado', tc.nombre AS 'tipo_contrato', pp.nombre AS 'pago_planificado', te.nombre AS 'tipo_empleado', c.fecha_inicio AS 'fecha_inicio', c.estado AS 'estado', (CASE WHEN c.estado = '1' THEN 'Activo' ELSE 'Inactivo' END) AS 'estado_nombre', c.salario AS 'salario', c.tipo_contrato_id AS 'tipo_contrato_id', c.pago_planificado_id AS 'pago_planificado_id', c.tipo_empleado_id AS 'tipo_empleado_id', (CASE WHEN c.fecha_fin = '' THEN 'Sin Registro' ELSE c.fecha_fin END) AS 'fecha_fin', c.notas AS 'notas'
+		$query = "SELECT c.contrato_id AS contrato_id, co.nombre AS 'empleado', tc.nombre AS 'tipo_contrato', pp.nombre AS 'pago_planificado', te.nombre AS 'tipo_empleado', c.fecha_inicio AS 'fecha_inicio', c.estado AS 'estado', (CASE WHEN c.estado = '1' THEN 'Activo' ELSE 'Inactivo' END) AS 'estado_nombre', c.salario AS 'salario', c.tipo_contrato_id AS 'tipo_contrato_id', c.pago_planificado_id AS 'pago_planificado_id', c.tipo_empleado_id AS 'tipo_empleado_id', (CASE WHEN c.fecha_fin = '' THEN 'Sin Registro' ELSE c.fecha_fin END) AS 'fecha_fin', c.notas AS 'notas'
 			FROM contrato AS c
 			INNER JOIN colaboradores AS co ON c.colaborador_id = co.colaboradores_id
 			INNER JOIN tipo_contrato AS tc ON c.tipo_contrato_id = tc.tipo_contrato_id
@@ -3531,15 +2322,18 @@ class mainModel
 
 		return $result;
 	}
-	
+
 	public function getNomina($datos)
 	{
-		$tipo_contrato_condicion = "";
+		$pago_planificado_id = '';  // Variable inicializada vacía
 	
+		// Comprobamos si 'pago_planificado' tiene un valor válido diferente a vacío o 0
 		if (isset($datos['tipo_contrato_id']) && $datos['tipo_contrato_id'] != '' && $datos['tipo_contrato_id'] != 0) {
-			$tipo_contrato_condicion = "AND c.tipo_contrato_id = '" . $datos['tipo_contrato_id'] . "'";
+			// Si tiene valor, se agrega la condición para filtrar por 'pago_planificado_id'
+			$pago_planificado_id = "AND n.tipo_contrato_id = '" . $datos['tipo_contrato_id'] . "'";
 		}
 	
+		// Creamos la consulta SQL con el filtro de estado y la posible condición de 'pago_planificado_id'
 		$query = "SELECT n.nomina_id AS 'nomina_id', 
 						 e.nombre AS 'empresa', 
 						 n.fecha_inicio AS 'fecha_inicio', 
@@ -3553,15 +2347,15 @@ class mainModel
 						 n.pago_planificado_id AS 'pago_planificado_id'
 				  FROM nomina AS n
 				  INNER JOIN empresa AS e ON n.empresa_id = e.empresa_id
-				  LEFT JOIN nomina_detalles AS nd ON n.nomina_id = nd.nomina_id
-				  LEFT JOIN contrato AS c ON nd.colaboradores_id = c.colaborador_id
-				  WHERE n.estado = '" . $datos['estado'] . "'
-				  $tipo_contrato_condicion
+				  WHERE n.estado = '" . $datos['estado'] . "' 
+				  $pago_planificado_id
 				  ORDER BY n.fecha_registro DESC";
-	
+
+		// Ejecutamos la consulta y retornamos el resultado
 		$result = self::connection()->query($query);
+	
 		return $result;
-	}
+	}	
 
 	public function getImporteNominaDetalles($nomina_id)
 	{
@@ -3723,8 +2517,6 @@ class mainModel
 
 	public function getUsuarios($datos)
 	{
-		$estado = $datos['estado'] ?? 1;
-
 		// Consulta para obtener el privilegio del colaborador
 		$privilegioQuery = "SELECT nombre FROM privilegio WHERE privilegio_id = '" . $datos['privilegio_id'] . "'";
 		$privilegioResult = self::connection()->query($privilegioQuery);
@@ -3741,11 +2533,11 @@ class mainModel
 			$where = 'WHERE u.estado = 1';
 		} else {
 			if ($privilegio_colaborador === 'Super Administrador' ) {
-				$where = "WHERE u.estado = '$estado'";
+				$where = 'WHERE u.estado = 1';
 			} else if ($privilegio_colaborador === 'Administrador') {
-				$where = "WHERE u.estado = '$estado' AND u.privilegio_id NOT IN(1)";
+				$where = 'WHERE u.estado = 1 AND u.privilegio_id NOT IN(1)';
 			} else {
-				$where = "WHERE u.estado = '$estado' AND u.privilegio_id NOT IN(1) AND u.empresa_id = '" . $datos['empresa_id'] . "'";
+				$where = "WHERE u.estado = 1 AND u.privilegio_id NOT IN(1) AND u.empresa_id = '" . $datos['empresa_id'] . "'";
 			}
 		}
 	
@@ -3757,8 +2549,7 @@ class mainModel
 						 e.nombre AS 'empresa',						 
 						 CASE WHEN u.estado = 1 THEN 'Activo' ELSE 'Inactivo' END AS 'estado',
 						 u.server_customers_id, 
-						 p.nombre AS 'privilegio',
-						 u.estado
+						 p.nombre AS 'privilegio'
 				  FROM users AS u
 				  INNER JOIN colaboradores AS c ON u.colaboradores_id = c.colaboradores_id
 				  INNER JOIN tipo_user AS tp ON u.tipo_user_id = tp.tipo_user_id
@@ -3774,26 +2565,29 @@ class mainModel
 		while ($row = $result->fetch_assoc()) {
 			// Si server_customers_id no es 0, obtener el nombre de la empresa desde la base de datos correspondiente
 			if ($row['server_customers_id'] != 0) {
-				try {
-					$query_db = "SELECT db FROM server_customers WHERE server_customers_id = ?";
-					$stmt_db = self::connection()->prepare($query_db);
-					$stmt_db->bind_param("i", $row['server_customers_id']);
-					$stmt_db->execute();
-					$result_db = $stmt_db->get_result();
-
-					if ($result_db && $result_db->num_rows > 0) {
-						$db_row = $result_db->fetch_assoc();
-						$db_name = $db_row['db'];
-
-						if (!empty($db_name)) {
-							$query_empresa = "SELECT nombre FROM `".self::connection()->real_escape_string($db_name)."`.empresa WHERE empresa_id = 1";
-							$result_empresa = self::connection()->query($query_empresa);
-							// ... resto del código
+				// Consulta para obtener el nombre de la base de datos desde server_customers
+				$query_db = "SELECT db FROM server_customers WHERE server_customers_id = " . $row['server_customers_id'];
+				$result_db = self::connection()->query($query_db);
+	
+				if ($result_db && $result_db->num_rows > 0) {
+					$db_row = $result_db->fetch_assoc();
+					$db_name = $db_row['db'];
+	
+					// Verificar que el nombre de la base de datos no esté vacío y sea válido
+					if (!empty($db_name)) {
+						// Escapar el nombre de la base de datos para evitar problemas de sintaxis
+						$db_name = self::connection()->real_escape_string($db_name);
+	
+						// Consulta para obtener el nombre de la empresa desde la base de datos especificada
+						$query_empresa = "SELECT nombre FROM `" . $db_name . "`.empresa WHERE empresa_id = 1";
+						$result_empresa = self::connection()->query($query_empresa);
+	
+						if ($result_empresa && $result_empresa->num_rows > 0) {
+							$empresa_row = $result_empresa->fetch_assoc();
+							// Convertir el nombre de la empresa a mayúsculas
+							$row['empresa'] = strtoupper($empresa_row['nombre']); // Convertir a mayúsculas
 						}
 					}
-				} catch (Exception $e) {
-					// Loggear el error o manejar la excepción
-					$row['empresa'] = "No disponible";
 				}
 			}
 	
@@ -3807,21 +2601,20 @@ class mainModel
 	{
 		$privilegio = $datos['privilegio_colaborador'];
 		$empresaId = $datos['empresa_id'];
-		$estado = $datos['estado'] ?? 1;
 
 		$query = "
 			SELECT sf.secuencia_facturacion_id AS 'secuencia_facturacion_id', sf.cai AS 'cai', 
-			   sf.prefijo AS 'prefijo', sf.relleno AS 'relleno', sf.incremento AS 'incremento', 
-			   sf.siguiente AS 'siguiente', sf.rango_inicial AS 'rango_inicial', sf.rango_final AS 'rango_final', 
-			   DATE_FORMAT(sf.fecha_activacion, '%d/%m/%Y') AS 'fecha_activacion', 
-			   DATE_FORMAT(sf.fecha_registro, '%d/%m/%Y') AS 'fecha_registro', 
-			   e.nombre AS 'empresa', 
-			   DATE_FORMAT(sf.fecha_limite, '%d/%m/%Y') AS 'fecha_limite', 
-			   d.nombre AS 'documento', sf.activo AS 'estado'
+			\t   sf.prefijo AS 'prefijo', sf.relleno AS 'relleno', sf.incremento AS 'incremento', 
+			\t   sf.siguiente AS 'siguiente', sf.rango_inicial AS 'rango_inicial', sf.rango_final AS 'rango_final', 
+			\t   DATE_FORMAT(sf.fecha_activacion, '%d/%m/%Y') AS 'fecha_activacion', 
+			\t   DATE_FORMAT(sf.fecha_registro, '%d/%m/%Y') AS 'fecha_registro', 
+			\t   e.nombre AS 'empresa', 
+			\t   DATE_FORMAT(sf.fecha_limite, '%d/%m/%Y') AS 'fecha_limite', 
+			\t   d.nombre AS 'documento'
 			FROM secuencia_facturacion AS sf
 			INNER JOIN empresa AS e ON sf.empresa_id = e.empresa_id
 			INNER JOIN documento AS d ON sf.documento_id = d.documento_id
-			WHERE sf.activo = '$estado'";
+			WHERE sf.activo = 1";
 
 		if ($privilegio !== 'Administrador' && $privilegio !== 'Super Administrador') {
 			$query .= " AND e.empresa_id = '$empresaId'";
@@ -3949,58 +2742,10 @@ class mainModel
 		return $result;
 	}
 
-	public function ejecutar_consulta_simple_preparada($query, $types = "", $params = array()) {
-		$conexion = self::connection();
-		
-		// Preparar la declaración
-		$stmt = $conexion->prepare($query);
-		
-		if (!$stmt) {
-			throw new Exception("Error al preparar la consulta: " . $conexion->error);
-		}
-		
-		// Si hay parámetros para vincular
-		if (!empty($types) && !empty($params)) {
-			// Crear un array con referencias para bind_param
-			$bind_params = array();
-			
-			// El primer elemento es el string de tipos
-			$bind_params[] = &$types;
-			
-			// Agregar referencias de los parámetros
-			foreach ($params as $key => $value) {
-				$bind_params[] = &$params[$key];
-			}
-			
-			// Usar call_user_func_array para vincular los parámetros
-			call_user_func_array(array($stmt, 'bind_param'), $bind_params);
-		}
-		
-		// Ejecutar la consulta
-		if (!$stmt->execute()) {
-			throw new Exception("Error al ejecutar la consulta: " . $stmt->error);
-		}
-		
-		// Obtener el resultado (para SELECT, SHOW, DESCRIBE, EXPLAIN)
-		$result = $stmt->get_result();
-		
-		// Si es una consulta que no devuelve resultados (INSERT, UPDATE, DELETE)
-		if ($result === false) {
-			// Verificar si hay filas afectadas
-			if ($stmt->affected_rows > 0) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		
-		return $result;
-	}
-
 	public function getProductosUnificado($datos)
 	{
 		$empresa_id = $datos['empresa_id_sd'];
-		$estado = $datos['estado'] ?? 1;
+		$estado = $datos['estado'];
 
 		$query = "SELECT 
 					p.barCode AS 'barCode', 
@@ -4013,7 +2758,7 @@ class mainModel
 					a.nombre AS 'almacen', 
 					u.nombre AS 'ubicacion', 
 					e.nombre AS 'empresa',
-					p.estado = '1' THEN 'Activo' ELSE 'Inactivo' END) AS 'estado', 
+					(CASE WHEN p.estado = '1' THEN 'Activo' ELSE 'Inactivo' END) AS 'estado', 
 					(CASE WHEN p.isv_venta = '1' THEN 'Sí' ELSE 'No' END) AS 'isv',
 					tp.tipo_producto_id AS 'tipo_producto_id', 
 					tp.nombre AS 'categoria', 
@@ -4021,7 +2766,7 @@ class mainModel
 					(CASE WHEN p.isv_compra = '1' THEN 'Si' ELSE 'No' END) AS 'isv_compra', 
 					p.file_name AS 'image', 
 					p.porcentaje_venta,
-					COALESCE(SUM(mov.cantidad_entrada) - SUM(mov.cantidad_salida), 0) AS 'saldo',
+					COALESCE(SUM(mov.cantidad_entrada) - SUM(mov.cantidad_salida), 0) AS 'saldo'
 				FROM productos AS p
 				INNER JOIN medida AS m ON p.medida_id = m.medida_id
 				INNER JOIN almacen AS a ON p.almacen_id = a.almacen_id
@@ -4113,17 +2858,6 @@ class mainModel
 		}
 	}	
 
-	public function getProductoInfo($productos_id)
-	{
-		$query = "SELECT cantidad_minima, cantidad_maxima 
-				FROM productos 
-				WHERE productos_id = '$productos_id'";
-
-		$result = self::connection()->query($query);
-
-		return $result;
-	}
-
 	public function getSaldoProductosMovimientos($productos_id)
 	{
 		$query = "SELECT
@@ -4145,7 +2879,7 @@ class mainModel
 	public function getProductos($datos)
 	{
 		$query = "SELECT p.barCode AS 'barCode', p.productos_id AS 'productos_id', p.nombre AS 'nombre', p.descripcion AS 'descripcion', p.precio_compra AS 'precio_compra', p.precio_venta AS 'precio_venta',m.nombre AS 'medida', a.nombre AS 'almacen', u.nombre AS 'ubicacion', e.nombre AS 'empresa',
-				p.estado AS 'estado', (CASE WHEN p.isv_venta = '1' THEN 'Sí' ELSE 'No' END) AS 'isv',
+				(CASE WHEN p.estado = '1' THEN 'Activo' ELSE 'Inactivo' END) AS 'estado', (CASE WHEN p.isv_venta = '1' THEN 'Sí' ELSE 'No' END) AS 'isv',
 				tp.tipo_producto_id AS 'tipo_producto_id', tp.nombre AS 'categoria', (CASE WHEN p.isv_venta = '1' THEN 'Si' ELSE 'No' END) AS 'isv_venta', (CASE WHEN p.isv_compra = '1' THEN 'Si' ELSE 'No' END) AS 'isv_compra', p.file_name AS 'image', p.porcentaje_venta
 					FROM productos AS p
 					INNER JOIN medida AS m
@@ -4180,20 +2914,20 @@ class mainModel
 	{
 		$bodega = '';
 		$barCode = '';
-
+	
 		// Filtro por bodega (solo para productos, no para servicios)
 		if ($datos['bodega'] != '' && $datos['bodega'] != '0') {
-			$bodega = "AND (m.almacen_id = '" . $datos['bodega'] . "' OR m.almacen_id IS NULL OR m.almacen_id = 0)";
+			$bodega = "AND m.almacen_id = '" . $datos['bodega'] . "'";
 		}
-
+	
 		// Filtro por código de barras
 		if ($datos['barcode'] != '') {
 			$barCode = "AND p.barCode = '" . $datos['barcode'] . "'";
 		}
-
-		// Consulta unificada: Productos + Servicios
+	
+		// Consulta unificada
 		$query = "
-			-- Consulta para productos (siempre incluye todos)
+			-- Consulta para productos con inventario
 			SELECT
 				m.almacen_id,
 				m.movimientos_id AS 'movimientos_id',
@@ -4240,7 +2974,11 @@ class mainModel
 				$bodega
 			GROUP BY
 				p.productos_id, m.almacen_id
+			HAVING
+				SUM(m.cantidad_entrada) - SUM(m.cantidad_salida) > 0
+	
 			UNION ALL
+	
 			-- Consulta para servicios
 			SELECT
 				NULL AS 'almacen_id',
@@ -4283,28 +3021,30 @@ class mainModel
 			ORDER BY
 				tipo_producto_id ASC, nombre ASC;
 		";
+	
 		$result = self::connection()->query($query);
+	
 		return $result;
 	}
-	
+
 	public function getProductosConInventarioYServiciosCotizacion($datos)
 	{
 		$bodega = '';
 		$barCode = '';
-
+	
 		// Filtro por bodega (solo para productos, no para servicios)
 		if ($datos['bodega'] != '' && $datos['bodega'] != '0') {
-			$bodega = "AND (m.almacen_id = '" . $datos['bodega'] . "' OR m.almacen_id IS NULL OR m.almacen_id = 0)";
+			$bodega = "AND m.almacen_id = '" . $datos['bodega'] . "'";
 		}
-
+	
 		// Filtro por código de barras
 		if ($datos['barcode'] != '') {
 			$barCode = "AND p.barCode = '" . $datos['barcode'] . "'";
 		}
-
-		// Consulta unificada: Productos + Servicios
+	
+		// Consulta unificada
 		$query = "
-			-- Consulta para productos (siempre incluye todos)
+			-- Consulta para productos con inventario
 			SELECT
 				m.almacen_id,
 				m.movimientos_id AS 'movimientos_id',
@@ -4351,7 +3091,9 @@ class mainModel
 				$bodega
 			GROUP BY
 				p.productos_id, m.almacen_id
+	
 			UNION ALL
+	
 			-- Consulta para servicios
 			SELECT
 				NULL AS 'almacen_id',
@@ -4394,9 +3136,12 @@ class mainModel
 			ORDER BY
 				tipo_producto_id ASC, nombre ASC;
 		";
+	
 		$result = self::connection()->query($query);
+	
 		return $result;
-	}
+	}	
+
 	public function getProductosCantidad($datos)
 	{
 		$bodega = '';
@@ -4738,22 +3483,21 @@ class mainModel
 		$query = "SELECT *
 				FROM productos
 				WHERE tipo_producto_id = '$tipo_producto_id'";
-
 		$result = self::connection()->query($query);
 
 		return $result;
 	}
 
-	public function getMedida($estado)
+	public function getMedida()
 	{
-		$query = "
+		$query = '
 			SELECT
 			*
 			FROM
 			medida
-			WHERE estado = '$estado'
-			ORDER BY medida_id ASC";
-			
+			WHERE estado = 1
+			ORDER BY medida_id ASC
+			';
 		$result = self::connection()->query($query);
 		return $result;
 	}
@@ -4829,15 +3573,13 @@ class mainModel
 
 	public function getAlmacen($datos)
 	{
-		$estado = $datos["estado"] ?? 1;
-
 		if ($datos['privilegio_colaborador'] === 'Super Administrador' && $datos['privilegio_colaborador'] === 'Administrador') {
-			$where = "WHERE a.estado = '$estado'";
+			$where = 'WHERE a.estado = 1';
 		} else {
-			$where = "WHERE a.estado = '$estado'  AND a.empresa_id = '" . $datos['empresa_id'] . "'";
+			$where = "WHERE a.estado = 1  AND a.empresa_id = '" . $datos['empresa_id'] . "'";
 		}
 
-		$query = "SELECT a.almacen_id AS 'almacen_id', a.nombre AS 'almacen', u.nombre AS 'ubicacion', e.nombre AS 'empresa', a.estado,
+		$query = "SELECT a.almacen_id AS 'almacen_id', a.nombre AS 'almacen', u.nombre AS 'ubicacion', e.nombre AS 'empresa',
 				a.facturar_cero
 				FROM almacen AS a
 				INNER JOIN ubicacion AS u
@@ -4852,13 +3594,13 @@ class mainModel
 		return $result;
 	}
 
-	public function getTipoPagoContabilidad($estado)
+	public function getTipoPagoContabilidad()
 	{
-		$query = "SELECT tp.nombre AS 'nombre', c.codigo AS 'codigo', c.nombre AS 'cuenta', tp.tipo_pago_id AS 'tipo_pago_id', tp.estado
+		$query = "SELECT tp.nombre AS 'nombre', c.codigo AS 'codigo', c.nombre AS 'cuenta', tp.tipo_pago_id AS 'tipo_pago_id'
 				FROM tipo_pago AS tp
 				INNER JOIN cuentas As c
 				ON tp.cuentas_id = c.cuentas_id
-				WHERE tp.estado = '$estado'";
+				WHERE tp.estado = 1";
 
 		$result = self::connection()->query($query);
 
@@ -4867,15 +3609,13 @@ class mainModel
 
 	public function getUbicacion($datos)
 	{
-		$estado = $datos['estado'] ?? 1;
-
 		if ($datos['privilegio_colaborador'] === 'Super Administrador' && $datos['privilegio_colaborador'] === 'Administrador') {
-			$where = "WHERE u.estado = '$estado'";
+			$where = 'WHERE u.estado = 1';
 		} else {
-			$where = "WHERE u.estado = '$estado' AND u.empresa_id = '" . $datos['empresa_id'] . "'";
+			$where = "WHERE u.estado = 1 AND u.empresa_id = '" . $datos['empresa_id'] . "'";
 		}
 
-		$query = "SELECT u.ubicacion_id AS 'ubicacion_id', u.nombre AS 'ubicacion', e.nombre AS 'empresa', u.estado
+		$query = "SELECT u.ubicacion_id AS 'ubicacion_id', u.nombre AS 'ubicacion', e.nombre AS 'empresa'
 				FROM ubicacion AS u
 				INNER JOIN empresa AS e
 				ON u.empresa_id = e.empresa_id
@@ -4940,11 +3680,11 @@ class mainModel
 		return $result;
 	}
 
-	public function getCuentasContabilidad($estado)
+	public function getCuentasContabilidad()
 	{
-		$query = "SELECT *
+		$query = 'SELECT *
 				FROM cuentas
-				WHERE estado = '$estado'";
+				WHERE estado = 1';
 
 		$result = self::connection()->query($query);
 
@@ -4955,10 +3695,9 @@ class mainModel
 	{
 		$query = "SELECT sum(total) AS 'ingresos'
 				FROM ingresos
-				WHERE cuentas_id = '" . $datos['cuentas_id'] . "' 
-				AND fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "'";
+				WHERE cuentas_id = '" . $datos['cuentas_id'] . "' AND CAST(fecha_registro AS DATE) BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "'";
 		$result = self::connection()->query($query);
-	
+
 		return $result;
 	}
 
@@ -4966,11 +3705,10 @@ class mainModel
 	{
 		$query = "SELECT sum(total) AS 'egresos'
 				FROM egresos
-				WHERE cuentas_id = '" . $datos['cuentas_id'] . "' 
-				AND fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "'";
-	
+				WHERE cuentas_id = '" . $datos['cuentas_id'] . "' AND CAST(fecha_registro AS DATE) BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "'";
+
 		$result = self::connection()->query($query);
-	
+
 		return $result;
 	}
 
@@ -4991,45 +3729,37 @@ class mainModel
 	public function getIngresosContables($datos)
 	{
 		$query = "SELECT
-					i.ingresos_id,
-					i.fecha,
-					c.codigo,
-					c.nombre,
-					cli.nombre AS cliente,
-					i.factura,
-					i.subtotal,
-					i.impuesto,
-					i.descuento,
-					i.recibide,
-					COALESCE(cli.nombre, i.recibide) AS cliente,
-					i.nc,
-					i.total,
-					i.fecha_registro,
-					i.observacion,
-					CASE i.tipo_ingreso
-						WHEN 1 THEN 'Ingresos por Ventas'
-						WHEN 2 THEN 'Ingresos Manuales'
-						ELSE 'Otro'
-					END AS tipo_ingreso,
-					i.estado
+					i.ingresos_id AS 'ingresos_id',
+					i.fecha AS 'fecha',
+					c.codigo AS 'codigo',
+					c.nombre AS 'nombre',
+					cli.nombre AS 'cliente',
+					i.factura AS 'factura',
+					i.subtotal AS 'subtotal',
+					i.impuesto AS 'impuesto',
+					i.descuento AS 'descuento',
+					i.recibide AS 'recibide',
+					COALESCE(cli.nombre, i.recibide) AS 'cliente',
+					i.nc AS 'nc',
+					i.total AS 'total',
+					i.fecha_registro AS 'fecha_registro',
+					i.observacion AS 'observacion',
+				CASE i.tipo_ingreso
+					WHEN 1 THEN 'Ingresos por Ventas'
+					WHEN 2 THEN 'Ingresos Manuales'
+					ELSE 'Otro'
+				END AS 'tipo_ingreso'
 				FROM
 					ingresos AS i
 				INNER JOIN
 					cuentas AS c ON i.cuentas_id = c.cuentas_id
-				LEFT JOIN
+				INNER JOIN
 					clientes AS cli ON i.clientes_id = cli.clientes_id
 				WHERE 
-					CAST(i.fecha_registro AS DATE) BETWEEN '".$datos['fechai']."' AND '".$datos['fechaf']."' 
-					AND i.estado = ".$datos['estado']."
-				ORDER BY i.fecha_registro DESC";
+					CAST(i.fecha_registro AS DATE) BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "' AND i.estado = '" . $datos['estado'] . "'
+				ORDER BY i.fecha_registro DESC;";
 
 		$result = self::connection()->query($query);
-
-		if(!$result) {
-			// Registrar error si la consulta falla
-			error_log("Error en getIngresosContables: ".self::connection()->error);
-			return false;
-		}
 
 		return $result;
 	}
@@ -5064,7 +3794,7 @@ class mainModel
 
 	public function getEgresosContables($datos)
 	{
-		$query = "SELECT e.egresos_id AS 'egresos_id', e.fecha AS 'fecha', c.codigo as 'codigo', c.nombre AS 'nombre', p.nombre AS 'proveedor', e.factura AS 'factura', e.subtotal as 'subtotal', e.impuesto AS 'impuesto', e.descuento AS 'descuento', e.nc AS 'nc', e.total AS 'total', e.fecha_registro As 'fecha_registro', cg.nombre AS 'categoria', e.observacion, e.estado
+		$query = "SELECT e.egresos_id AS 'egresos_id', e.fecha AS 'fecha', c.codigo as 'codigo', c.nombre AS 'nombre', p.nombre AS 'proveedor', e.factura AS 'factura', e.subtotal as 'subtotal', e.impuesto AS 'impuesto', e.descuento AS 'descuento', e.nc AS 'nc', e.total AS 'total', e.fecha_registro As 'fecha_registro', cg.nombre AS 'categoria', e.observacion
 				FROM egresos AS e
 				INNER JOIN cuentas AS c
 				ON e.cuentas_id = c.cuentas_id
@@ -5164,8 +3894,14 @@ class mainModel
 
 	public function getClientesEdit($clientes_id)
 	{
-		$query = "SELECT * FROM clientes WHERE clientes_id = '$clientes_id'";
+		$query = "SELECT *
+
+				FROM clientes
+
+				WHERE clientes_id = '$clientes_id'";
+
 		$result = self::connection()->query($query);
+
 		return $result;
 	}
 
@@ -5372,10 +4108,10 @@ class mainModel
 	public function getCotizacion($noCotizacion)
 	{
 		$query = "SELECT cl.nombre AS 'cliente', cl.rtn AS 'rtn_cliente', cl.telefono AS 'telefono', cl.localidad AS 'localidad',
-		 e.nombre AS 'empresa', e.ubicacion AS 'direccion_empresa', e.telefono AS 'empresa_telefono', e.celular AS 'empresa_celular',
-		  e.correo AS 'empresa_correo', co.nombre AS 'colaborador_nombre',
-		  DATE_FORMAT(c.fecha, '%d/%m/%Y') AS 'fecha', c.fecha_dolar,
-		   time(c.fecha_registro) AS 'hora',  c.estado AS 'estado', c.number AS 'numero_factura', c.notas AS 'notas', e.otra_informacion As 'otra_informacion', e.eslogan AS 'eslogan', e.celular As 'celular', (CASE WHEN c.tipo_factura = 1 THEN 'Contado' ELSE 'Crédito'END) AS 'tipo_documento', vg.valor AS 'vigencia_cotizacion', e.rtn AS 'rtn_empresa', e.logotipo AS 'logotipo', e.firma_documento AS 'firma_documento', e.MostrarFirma
+		\t e.nombre AS 'empresa', e.ubicacion AS 'direccion_empresa', e.telefono AS 'empresa_telefono', e.celular AS 'empresa_celular',
+		\t  e.correo AS 'empresa_correo', co.nombre AS 'colaborador_nombre',
+		\t   DATE_FORMAT(c.fecha, '%d/%m/%Y') AS 'fecha', c.fecha_dolar,
+		\t    time(c.fecha_registro) AS 'hora',  c.estado AS 'estado', c.number AS 'numero_factura', c.notas AS 'notas', e.otra_informacion As 'otra_informacion', e.eslogan AS 'eslogan', e.celular As 'celular', (CASE WHEN c.tipo_factura = 1 THEN 'Contado' ELSE 'Crédito'END) AS 'tipo_documento', vg.valor AS 'vigencia_cotizacion', e.rtn AS 'rtn_empresa', e.logotipo AS 'logotipo', e.firma_documento AS 'firma_documento', e.MostrarFirma
 				FROM cotizacion AS c
 				INNER JOIN clientes AS cl
 				ON c.clientes_id = cl.clientes_id
@@ -5394,11 +4130,7 @@ class mainModel
 
 	public function getCompra($noCompra)
 	{
-		$query = "SELECT p.nombre AS 'proveedor', p.rtn AS 'rtn_proveedor', p.telefono AS 'telefono', p.localidad AS 'localidad', e.nombre AS 'empresa', e.ubicacion AS 'direccion_empresa', e.telefono AS 'empresa_telefono', e.celular AS 'empresa_celular', e.correo AS 'empresa_correo', co.nombre AS 'colaborador_nombre', DATE_FORMAT(c.fecha, '%d/%m/%Y') AS 'fecha', time(c.fecha_registro) AS 'hora',  c.estado AS 'estado', 					IF(
-						c.number LIKE '%-%',
-						c.number,
-						CONCAT('FAC-', LPAD(c.number, 8, '0'))
-					) AS 'numero_factura', c.notas AS 'notas', e.otra_informacion As 'otra_informacion', e.eslogan AS 'eslogan', e.celular As 'celular', (CASE WHEN c.tipo_compra = 1 THEN 'Contado' ELSE 'Crédito' END) AS 'tipo_documento', e.rtn AS 'rtn_empresa', c.proveedores_id AS 'proveedores_id', e.logotipo AS 'logotipo', e.firma_documento AS 'firma_documento'
+		$query = "SELECT p.nombre AS 'proveedor', p.rtn AS 'rtn_proveedor', p.telefono AS 'telefono', p.localidad AS 'localidad', e.nombre AS 'empresa', e.ubicacion AS 'direccion_empresa', e.telefono AS 'empresa_telefono', e.celular AS 'empresa_celular', e.correo AS 'empresa_correo', co.nombre AS 'colaborador_nombre', DATE_FORMAT(c.fecha, '%d/%m/%Y') AS 'fecha', time(c.fecha_registro) AS 'hora',  c.estado AS 'estado', c.number AS 'numero_factura', c.notas AS 'notas', e.otra_informacion As 'otra_informacion', e.eslogan AS 'eslogan', e.celular As 'celular', (CASE WHEN c.tipo_compra = 1 THEN 'Contado' ELSE 'Crédito' END) AS 'tipo_documento', e.rtn AS 'rtn_empresa', c.proveedores_id AS 'proveedores_id', e.logotipo AS 'logotipo', e.firma_documento AS 'firma_documento'
 				FROM compras AS c
 				INNER JOIN proveedores AS p
 				ON c.proveedores_id = p.proveedores_id
@@ -5805,38 +4537,6 @@ class mainModel
 		return $result;
 	}
 
-	public function consultaCotizacionesReporte($datos)
-	{
-		if ($datos['tipo_cotizacion_reporte'] == 1) {
-			$where = "WHERE c.empresa_id = '" . $datos['empresa_id_sd'] . "' AND c.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "' AND c.estado = 1";
-		} else {
-			$where = "WHERE c.empresa_id = '" . $datos['empresa_id_sd'] . "' AND c.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "' AND c.estado = 2";
-		}
-
-		$query = "SELECT 
-					c.cotizacion_id AS 'cotizacion_id', 
-					DATE_FORMAT(c.fecha, '%d/%m/%Y') AS 'fecha', 
-					cl.nombre AS 'cliente', 
-					CONCAT('COT-', LPAD(c.number, 8, '0')) AS 'numero',
-					c.number AS 'numero_ordenamiento', /* Número base para ordenamiento */
-					c.importe AS 'total', 
-					(CASE WHEN c.tipo_factura = 1 THEN 'Contado' ELSE 'Crédito' END) AS 'tipo_documento',
-					/* Calculamos subtotal, ISV y descuento en una sola consulta */
-					(SELECT SUM(cd.cantidad * cd.precio) FROM cotizacion_detalles AS cd WHERE cd.cotizacion_id = c.cotizacion_id) AS 'subtotal',
-					(SELECT SUM(cd.isv_valor) FROM cotizacion_detalles AS cd WHERE cd.cotizacion_id = c.cotizacion_id) AS 'isv',
-					(SELECT SUM(cd.descuento) FROM cotizacion_detalles AS cd WHERE cd.cotizacion_id = c.cotizacion_id) AS 'descuento'
-				FROM 
-					cotizacion AS c
-				INNER JOIN 
-					clientes AS cl ON c.clientes_id = cl.clientes_id
-				" . $where . "
-				ORDER BY c.number DESC, c.fecha DESC";
-
-		$result = self::connection()->query($query);
-
-		return $result;
-	}
-
 	public function getDetalleCotizaciones($noCotizacion)
 	{
 		$query = "SELECT 
@@ -5935,9 +4635,13 @@ class mainModel
 	public function getPrivilegiosAccesoSubMenu($privilegio_id)
 	{
 		$query = "SELECT asm.acceso_submenu_id AS 'acceso_menu_id ', sm.name AS 'submenu', asm.estado AS 'estado'
+
 				FROM acceso_submenu asm
+
 				INNER JOIN submenu AS sm
+
 				ON asm.submenu_id = sm.submenu_id
+
 				WHERE asm.privilegio_id = '$privilegio_id'";
 
 		$result = self::connection()->query($query);
@@ -5948,9 +4652,13 @@ class mainModel
 	public function getPrivilegiosAccesoSubMenu1($privilegio_id)
 	{
 		$query = "SELECT asm.acceso_submenu1_id AS 'acceso_menu_id ', sm.name AS 'submenu1', asm.estado AS 'estado', asm.privilegio_id
+
 				FROM acceso_submenu1 asm
+
 				INNER JOIN submenu1 AS sm
+
 				ON asm.submenu1_id = sm.submenu1_id
+
 				WHERE asm.privilegio_id = '$privilegio_id'";
 
 		$result = self::connection()->query($query);
@@ -6070,9 +4778,12 @@ class mainModel
 
 	public function getTotalFacturasDisponiblesDB($empresa_id)
 	{
-		$query = "SELECT siguiente AS 'numero'
+		$query = "SELECT siguiente AS 'numero', rango_final, rango_inicial
+
 				FROM secuencia_facturacion
+
 				WHERE activo = 1 AND empresa_id = '$empresa_id' AND documento_id = 1
+
 				ORDER BY siguiente DESC LIMIT 1";
 
 		$result = self::connection()->query($query);
@@ -6080,26 +4791,14 @@ class mainModel
 		return $result;
 	}
 
-	// Obtiene el último número de factura usado realmente en la base de datos
-    public function getUltimoNumeroFacturaUsado($empresa_id) {
-        $query = "SELECT MAX(CAST(numero AS UNSIGNED)) as numero 
-                  FROM facturas 
-                  WHERE empresa_id = ? AND estado = 1";
-        $stmt = $this->connection()->prepare($query);
-        $stmt->bind_param("i", $empresa_id);
-        $stmt->execute();
-        return $stmt->get_result();
-    }
+	public function getNumeroMaximoPermitido($empresa_id)
+	{
+		$query = "SELECT rango_final AS 'numero', rango_final, rango_inicial
+				FROM secuencia_facturacion
+				WHERE activo = 1 AND empresa_id = '$empresa_id' AND documento_id = 1";
 
-	public function getNumeroMaximoPermitido($empresa_id) {
-		$query = "SELECT rango_final AS 'numero', rango_inicial, rango_final
-				  FROM secuencia_facturacion
-				  WHERE activo = 1 
-					AND empresa_id = '$empresa_id' 
-					AND documento_id = 1
-				  LIMIT 1";
-	
 		$result = self::connection()->query($query);
+
 		return $result;
 	}
 
@@ -6364,70 +5063,63 @@ class mainModel
 		$tipo_factura_reporte = '';
 		$facturador = '';
 		$vendedor = '';
-
+	
 		if ($datos['tipo_factura_reporte'] == 1) {
 			$tipo_factura_reporte = 'AND f.estado IN(2,3)';
 		}
-
+	
 		if ($datos['tipo_factura_reporte'] == 2) {
 			$tipo_factura_reporte = 'AND f.estado = 4';
 		}
-
+	
 		if ($datos['facturador'] != '') {
 			$facturador = "AND f.usuario = '" . $datos['facturador'] . "'";
 		}
-
+	
 		if ($datos['vendedor'] != '') {
 			$vendedor = "AND f.colaboradores_id = '" . $datos['vendedor'] . "'";
 		}
-
+	
 		$query = "
-		SELECT 
-			f.facturas_id AS 'facturas_id', 
-			DATE_FORMAT(f.fecha, '%d/%m/%Y') AS 'fecha', 
-			c.nombre AS 'cliente',
-			CASE 
-				WHEN d.documento_id = 4 THEN CONCAT('PROFORMA-', sf.prefijo, LPAD(f.number, sf.relleno, 0)) 
-				ELSE CONCAT(sf.prefijo, '', LPAD(f.number, sf.relleno, 0))
-			END AS 'numero',
-			f.number AS 'number',
-			f.fecha AS 'fecha_orden',
-			f.importe AS 'total',
-			CASE 
-				WHEN f.tipo_factura = 1 THEN 'Contado' 
-				ELSE 'Crédito' 
-			END AS 'tipo_documento', 
-			co.nombre AS 'vendedor', 
-			co1.nombre AS 'facturador',
-			(SELECT SUM(fd.cantidad * fd.precio) FROM facturas_detalles AS fd WHERE fd.facturas_id = f.facturas_id) AS 'subtotal',
-			(SELECT SUM(fd.cantidad * p.precio_compra) FROM facturas_detalles AS fd INNER JOIN productos AS p ON fd.productos_id = p.productos_id WHERE fd.facturas_id = f.facturas_id) AS 'subCosto',
-			(SELECT SUM(fd.isv_valor) FROM facturas_detalles AS fd WHERE fd.facturas_id = f.facturas_id) AS 'isv',
-			(SELECT SUM(fd.descuento) FROM facturas_detalles AS fd WHERE fd.facturas_id = f.facturas_id) AS 'descuento',
-			-- Nueva columna para estado de pago
-			CASE
-				WHEN f.tipo_factura = 1 THEN 'Pagado' -- Facturas al contado siempre están pagadas
-				WHEN (SELECT COUNT(*) FROM pagos WHERE facturas_id = f.facturas_id) > 0 THEN 'Pagado'
-				ELSE 'Pendiente'
-			END AS 'estado_pago',
-			-- Columna auxiliar para saber si es crédito
-			f.tipo_factura AS 'tipo_factura'
-		FROM 
-			facturas AS f
-			INNER JOIN clientes AS c ON f.clientes_id = c.clientes_id
-			INNER JOIN colaboradores AS co ON f.colaboradores_id = co.colaboradores_id
-			INNER JOIN colaboradores AS co1 ON f.usuario = co1.colaboradores_id
-			INNER JOIN secuencia_facturacion AS sf ON f.secuencia_facturacion_id = sf.secuencia_facturacion_id
-			INNER JOIN documento AS d ON sf.documento_id = d.documento_id
-		WHERE 
-			f.empresa_id = '" . $datos['empresa_id_sd'] . "' 
-			AND f.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "' 
-			AND sf.documento_id = '" . $datos['factura'] . "' 
-			$tipo_factura_reporte
-			$facturador
-			$vendedor
-		ORDER BY 
-			f.number DESC, f.fecha DESC";
-				
+			SELECT 
+				f.facturas_id AS 'facturas_id', 
+				DATE_FORMAT(f.fecha, '%d/%m/%Y') AS 'fecha', 
+				c.nombre AS 'cliente',
+				CASE 
+					WHEN d.documento_id = 4 THEN CONCAT('PROFORMA-', sf.prefijo, LPAD(f.number, sf.relleno, 0)) 
+					ELSE CONCAT(sf.prefijo, '', LPAD(f.number, sf.relleno, 0))
+				END AS 'numero', 
+				f.importe AS 'total',
+				CASE 
+					WHEN f.tipo_factura = 1 THEN 'Contado' 
+					ELSE 'Crédito' 
+				END AS 'tipo_documento', 
+				co.nombre AS 'vendedor', 
+				co1.nombre AS 'facturador',
+				-- Cálculo de subtotal, ISV, costo y descuento en una sola consulta
+				(SELECT SUM(fd.cantidad * fd.precio) FROM facturas_detalles AS fd WHERE fd.facturas_id = f.facturas_id) AS 'subtotal',
+				(SELECT SUM(fd.cantidad * p.precio_compra) FROM facturas_detalles AS fd INNER JOIN productos AS p ON fd.productos_id = p.productos_id WHERE fd.facturas_id = f.facturas_id) AS 'subCosto',
+				(SELECT SUM(fd.isv_valor) FROM facturas_detalles AS fd WHERE fd.facturas_id = f.facturas_id) AS 'isv',
+				(SELECT SUM(fd.descuento) FROM facturas_detalles AS fd WHERE fd.facturas_id = f.facturas_id) AS 'descuento',
+				-- Determinar si la factura tiene pagos pendientes
+				(SELECT COUNT(*) FROM cobrar_clientes WHERE facturas_id = f.facturas_id AND estado = 2) AS 'pagos_realizados'
+			FROM 
+				facturas AS f
+				INNER JOIN clientes AS c ON f.clientes_id = c.clientes_id
+				INNER JOIN colaboradores AS co ON f.colaboradores_id = co.colaboradores_id
+				INNER JOIN colaboradores AS co1 ON f.usuario = co1.colaboradores_id
+				INNER JOIN secuencia_facturacion AS sf ON f.secuencia_facturacion_id = sf.secuencia_facturacion_id
+				INNER JOIN documento AS d ON sf.documento_id = d.documento_id
+			WHERE 
+				f.empresa_id = '" . $datos['empresa_id_sd'] . "' 
+				AND f.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "' 
+				AND sf.documento_id = '" . $datos['factura'] . "' 
+				$tipo_factura_reporte
+				$facturador
+				$vendedor
+			ORDER BY 
+				f.number DESC";
+	
 		$result = self::connection()->query($query);
 		if (!$result) {
 			die('Error en la consulta SQL: ' . self::connection()->error);
@@ -6611,9 +5303,9 @@ class mainModel
 		return $result;
 	}
 
-	public function getBanco($estado)
+	public function getBanco()
 	{
-		$query = "SELECT * FROM banco WHERE estado = '$estado'";
+		$query = 'SELECT * FROM banco';
 
 		$result = self::connection()->query($query);
 
@@ -6767,27 +5459,25 @@ class mainModel
 		$clientes_id = '';
 		$fecha_actual = date('Y-m-d');
 		$fecha = '';
-	
+
 		if ($datos['fechai'] != $fecha_actual) {
 			$fecha = "AND cc.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "'";
 		}
-	
+
 		if ($datos['clientes_id'] != 0 && $datos['clientes_id'] != '') {
 			$clientes_id = "AND cc.clientes_id = '" . $datos['clientes_id'] . "'";
 		}
-	
+
 		$query = "SELECT 
 					cc.cobrar_clientes_id AS 'cobrar_clientes_id', 
 					f.facturas_id AS 'facturas_id', 
 					c.nombre AS 'cliente',
 					f.fecha AS 'fecha', 
 					cc.saldo AS 'saldo', 
-					cc.tipo_factura,
 					CASE 
 						WHEN d.documento_id = 4 THEN CONCAT('PROFORMA-', sf.prefijo, LPAD(f.number, sf.relleno, 0)) 
 						ELSE CONCAT(sf.prefijo,'',LPAD(f.number, sf.relleno, 0))
 					END AS 'numero', 
-					f.number AS 'number',
 					cc.estado,
 					f.importe, 
 					co.nombre AS 'vendedor'
@@ -6797,14 +5487,14 @@ class mainModel
 					INNER JOIN facturas AS f ON cc.facturas_id = f.facturas_id
 					INNER JOIN secuencia_facturacion AS sf ON f.secuencia_facturacion_id = sf.secuencia_facturacion_id
 					INNER JOIN colaboradores AS co ON f.colaboradores_id = co.colaboradores_id
-					INNER JOIN documento AS d ON sf.documento_id = d.documento_id            
+					INNER JOIN documento AS d ON sf.documento_id = d.documento_id\t\t
 				WHERE cc.empresa_id = '" . $datos['empresa_id_sd'] . "' AND cc.estado = '" . $datos['estado'] . "'
 				$fecha
 				$clientes_id
-				ORDER BY f.number DESC, cc.fecha DESC";
-	
+				ORDER BY cc.fecha ASC";
+
 		$result = self::connection()->query($query);
-	
+
 		return $result;
 	}
 
@@ -6823,22 +5513,21 @@ class mainModel
 		$proveedores_id = '';
 		$fecha_actual = date('Y-m-d');
 		$fecha = '';
-	
+
 		if ($datos['fechai'] !== $fecha_actual) {
-			$fecha = "AND compras.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "'";
+			$fecha = "AND proveedores.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "'";
 		}
-	
+
 		if (!empty($datos['proveedores_id']) && $datos['proveedores_id'] !== 0) {
 			$proveedores_id = "AND proveedores.proveedores_id = '" . $datos['proveedores_id'] . "'";
 		}
-	
+
 		$query = "SELECT
 			proveedores.nombre AS proveedores,
 			compras.compras_id,
 			compras.number AS factura,
 			compras.importe,
 			compras.fecha,
-			compras.tipo_compra,			
 			pagar_proveedores.saldo,
 			pagar_proveedores.estado
 			FROM
@@ -6848,94 +5537,7 @@ class mainModel
 			WHERE pagar_proveedores.estado = '" . $datos['estado'] . "'
 			$fecha
 			$proveedores_id
-			ORDER BY compras.fecha ASC";
-
-	
-		$result = self::connection()->query($query);
-	
-		return $result;
-	}
-
-	public function consultaComprasCompleta($datos)
-	{
-		if ($datos['tipo_compra_reporte'] == 1) {
-			$where = "WHERE c.empresa_id = '" . $datos['empresa_id_sd'] . "' AND c.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "' AND c.estado IN(2,3)";
-		} else {
-			$where = "WHERE c.empresa_id = '" . $datos['empresa_id_sd'] . "' AND c.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "' AND c.estado = 4";
-		}
-
-		$query = "SELECT 
-					c.compras_id AS 'compras_id', 
-					DATE_FORMAT(c.fecha, '%d/%m/%Y') AS 'fecha', 
-					p.nombre AS 'proveedor', 
-					IF(
-						c.number LIKE '%-%',
-						c.number,
-						CONCAT('FAC-', LPAD(c.number, 8, '0'))
-					) AS 'numero',
-					c.number AS 'numero_ordenamiento',
-					c.importe AS 'total', 
-					(CASE WHEN c.tipo_compra = 1 THEN 'Contado' ELSE 'Crédito' END) AS 'tipo_documento', 
-					ct.nombre AS 'cuenta',
-					(SELECT SUM(cd.cantidad * cd.precio) FROM compras_detalles AS cd WHERE cd.compras_id = c.compras_id) AS 'subtotal',
-					(SELECT SUM(cd.isv_valor) FROM compras_detalles AS cd WHERE cd.compras_id = c.compras_id) AS 'isv',
-					(SELECT SUM(cd.descuento) FROM compras_detalles AS cd WHERE cd.compras_id = c.compras_id) AS 'descuento',
-					(SELECT COUNT(*) FROM pagoscompras WHERE compras_id = c.compras_id) AS 'tiene_pagos'
-				FROM 
-					compras AS c
-				INNER JOIN 
-					proveedores AS p ON c.proveedores_id = p.proveedores_id
-				LEFT JOIN 
-					cuentas AS ct ON c.cuentas_id = ct.cuentas_id
-				" . $where . "
-				ORDER BY c.number DESC";
-
-		$result = self::connection()->query($query);
-
-		return $result;
-	}
-
-	public function consultaCuentasPorPagarCompleta($datos)
-	{
-		$proveedores_id = '';
-		$fecha_actual = date('Y-m-d');
-		$fecha = '';
-
-		if ($datos['fechai'] !== $fecha_actual) {
-			$fecha = "AND compras.fecha BETWEEN '" . $datos['fechai'] . "' AND '" . $datos['fechaf'] . "'";
-		}
-
-		if (!empty($datos['proveedores_id']) && $datos['proveedores_id'] !== 0) {
-			$proveedores_id = "AND proveedores.proveedores_id = '" . $datos['proveedores_id'] . "'";
-		}
-
-		$query = "SELECT
-					proveedores.nombre AS 'proveedores',
-					compras.compras_id,
-					IF(
-						compras.number LIKE '%-%',
-						compras.number,
-						CONCAT('FAC-', LPAD(compras.number, 8, '0'))
-					) AS 'factura',
-					compras.number AS 'numero_ordenamiento',
-					compras.importe,
-					DATE_FORMAT(compras.fecha, '%d/%m/%Y') AS 'fecha',
-					compras.tipo_compra,            
-					pagar_proveedores.saldo,
-					pagar_proveedores.estado,
-					(SELECT SUM(importe) FROM pagoscompras WHERE compras_id = compras.compras_id) AS 'abono'
-				FROM
-					proveedores
-				INNER JOIN 
-					compras ON proveedores.proveedores_id = compras.proveedores_id
-				INNER JOIN 
-					pagar_proveedores ON pagar_proveedores.compras_id = compras.compras_id
-				WHERE 
-					pagar_proveedores.estado = '" . $datos['estado'] . "'
-					$fecha
-					$proveedores_id
-				ORDER BY 
-					compras.number DESC";
+			ORDER BY proveedores.fecha ASC";
 
 		$result = self::connection()->query($query);
 
@@ -6986,9 +5588,13 @@ class mainModel
 	protected function getMenuAccesoLoginConsulta($privilegio_id, $menu)
 	{
 		$query = "SELECT am.acceso_menu_id AS 'acceso_menu_id', m.name AS 'name'
+
 				FROM acceso_menu AS am
+
 				INNER JOIN menu AS m
+
 				ON am.menu_id = m.menu_id
+
 				WHERE am.privilegio_id = '$privilegio_id' AND m.name = '$menu' AND am.estado = 1";
 
 		$sql = mainModel::connection()->query($query) or die(mainModel::connection()->error);
@@ -7152,7 +5758,7 @@ class mainModel
 
 	function getUserSistema($colaboradores_id)
 	{
-		$query = "SELECT colaboradores_id, nombre AS 'colaborador'
+		$query = "SELECT colaboradores_id, CONCAT(nombre, ' ', apellido) AS 'colaborador'
 				FROM colaboradores
 				WHERE colaboradores_id = '$colaboradores_id'";
 
@@ -7230,6 +5836,7 @@ class mainModel
 		return $result;
 	}
 	
+
 	function getFacturasAnual($año)
 	{
 		$query = "SELECT fecha as 'fecha', SUM(importe) as 'total'
@@ -7677,7 +6284,7 @@ class mainModel
 	// CONSULTA EN EL SERVIDOR DE KIREDS PARA VALIDAR QUE EL CLIENTE EXISTA
 	function connect_mysqli_main_server()
 	{
-		$mysqli_main = mysqli_connect(SERVER_MAIN, USER, PASS, DB_MAIN);
+		$mysqli_main = mysqli_connect(SERVER_MAIN, USER_MAIN, PASS_MAIN, DB_MAIN);
 
 		$mysqli_main->set_charset('utf8');
 

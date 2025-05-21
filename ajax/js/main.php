@@ -5210,4 +5210,60 @@ $(function() {
 function formatNumber(number) {
     return $.fn.dataTable.render.number(',', '.', 2, '').display(number);
 }
+
+function cargarContadorFacturasPendientes() {
+    $.ajax({
+        url: '<?php echo SERVERURL; ?>core/contarFacturasPendientesClientes.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            if (response.type === 'success') {
+                const $campana = $('#notification-bell').closest('li');
+                const $contadorCampana = $('#notification-count');
+                const $contadorDropdown = $('#notification-dropdown-count');
+                const $badgeUsuario = $('#badge-facturas-pendientes-dropdown');
+
+                if (response.total_pendientes > 0) {
+                    // Mostrar campana
+                    $campana.show();
+
+                    // Mostrar y actualizar contadores
+                    $contadorCampana.text(response.total_pendientes).show();
+                    $contadorDropdown.text(response.total_pendientes);
+                    $badgeUsuario.text(response.total_pendientes).show();
+
+                    // Efecto visual
+                    $campana.addClass('new-notification');
+                    setTimeout(() => {
+                        $campana.removeClass('new-notification');
+                    }, 2000);
+
+                    // Cambiar icono a campana llena
+                    $('#notification-bell i')
+                        .removeClass('far fa-bell')
+                        .addClass('fas fa-bell text-warning');
+
+                } else {
+                    // Ocultar campana y contadores
+                    $campana.hide();
+                    $contadorCampana.hide();
+                    $badgeUsuario.hide();
+
+                    // Cambiar icono a campana vacía
+                    $('#notification-bell i')
+                        .removeClass('fas fa-bell text-warning')
+                        .addClass('far fa-bell');
+                }
+            }
+        },
+        error: function() {
+
+        }
+    });
+}
+
+$(() => {
+    cargarContadorFacturasPendientes();
+    setInterval(cargarContadorFacturasPendientes, 300000); // cada 5 minutos
+});
 </script>
