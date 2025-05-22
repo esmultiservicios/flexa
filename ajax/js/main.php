@@ -101,12 +101,12 @@ function mostrarNotificacionExpiracion() {
         closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera        
     }).then(() => {
         // Redirigir al usuario a la página de inicio de sesión
-        window.location.href = '<?php echo SERVERURL;?>';
+        window.location.href = '<?php echo SERVERURL; ?>';
     });
 }
 
 async function renovarSesion() {
-    const response = await fetch('<?php echo SERVERURL;?>core/renovar_sesion.php');
+    const response = await fetch('<?php echo SERVERURL; ?>core/renovar_sesion.php');
     const data = await response.json();
 
     console.log('Estado de sesión renovada:', data);
@@ -120,7 +120,7 @@ async function renovarSesion() {
 }
 
 async function validarSesion() {
-    const response = await fetch('<?php echo SERVERURL;?>core/verificar_sesion.php?renovar=' + renovar.toString());
+    const response = await fetch('<?php echo SERVERURL; ?>core/verificar_sesion.php?renovar=' + renovar.toString());
     const data = await response.json();
 
     console.log('Estado de sesión:', data);
@@ -148,7 +148,7 @@ async function validarSesion() {
 
 //IICIO MENUS
 function getPermisosTipoUsuarioAccesosTable(privilegio_id) {
-    var url = '<?php echo SERVERURL;?>core/getTipoUsuarioAccesos.php';
+    var url = '<?php echo SERVERURL; ?>core/getTipoUsuarioAccesos.php';
 
     $.ajax({
         type: 'POST',
@@ -175,7 +175,7 @@ function getPermisosTipoUsuarioAccesosTable(privilegio_id) {
 }
 
 function getPermisosTipoUsuarioAccesosForms(privilegio_id) {
-    var url = '<?php echo SERVERURL;?>core/getTipoUsuarioAccesos.php';
+    var url = '<?php echo SERVERURL; ?>core/getTipoUsuarioAccesos.php';
 
     $.ajax({
         type: 'POST',
@@ -203,7 +203,7 @@ function getPermisosTipoUsuarioAccesosForms(privilegio_id) {
 }
 
 function getPermisosTipoUsuarioAccesosTableAccion(privilegio_id, tipo) {
-    var url = '<?php echo SERVERURL;?>core/getTipoUsuarioAccesos.php';
+    var url = '<?php echo SERVERURL; ?>core/getTipoUsuarioAccesos.php';
 
     $.ajax({
         type: 'POST',
@@ -235,7 +235,7 @@ function getPermisosTipoUsuarioAccesosTableAccion(privilegio_id, tipo) {
 }
 
 function getMenu(privilegio_id) {
-    var url = '<?php echo SERVERURL;?>core/getMenuPrivilegios.php';
+    var url = '<?php echo SERVERURL; ?>core/getMenuPrivilegios.php';
 
     $.ajax({
         type: 'POST',
@@ -261,7 +261,7 @@ function getMenu(privilegio_id) {
 }
 
 function getSubMenu(privilegio_id) {
-    var url = '<?php echo SERVERURL;?>core/getSubMenuPrivilegios.php';
+    var url = '<?php echo SERVERURL; ?>core/getSubMenuPrivilegios.php';
 
     $.ajax({
         type: 'POST',
@@ -290,7 +290,7 @@ function getSubMenu(privilegio_id) {
 }
 
 function getSubMenu1(privilegio_id) {
-    var url = '<?php echo SERVERURL;?>core/getSubMenuPrivilegios1.php';
+    var url = '<?php echo SERVERURL; ?>core/getSubMenuPrivilegios1.php';
 
     $.ajax({
         type: 'POST',
@@ -317,7 +317,7 @@ function getSubMenu1(privilegio_id) {
 }
 
 function getPrivilegioUsuario() {
-    var url = '<?php echo SERVERURL;?>core/getPrivilegioUsuario.php';
+    var url = '<?php echo SERVERURL; ?>core/getPrivilegioUsuario.php';
     var privilegio = null;
 
     $.ajax({
@@ -342,7 +342,7 @@ function getPrivilegioUsuario() {
                     closeOnEsc: false,
                     closeOnClickOutside: false
                 }).then(() => {
-                    window.location.href = "<?php echo SERVERURL;?>login/";
+                    window.location.href = "<?php echo SERVERURL; ?>login/";
                 });
 
                 return;
@@ -373,7 +373,7 @@ function getPrivilegioUsuario() {
 }
 
 function getSessionUser() {
-    var url = '<?php echo SERVERURL;?>core/getSessionUser.php';
+    var url = '<?php echo SERVERURL; ?>core/getSessionUser.php';
     var db_cliente;
 
     $.ajax({
@@ -389,7 +389,7 @@ function getSessionUser() {
 }
 
 function getPrivilegioTipoUsuario() {
-    var url = '<?php echo SERVERURL;?>core/getPrivilegioUsuarioTipo.php';
+    var url = '<?php echo SERVERURL; ?>core/getPrivilegioUsuarioTipo.php';
     var privilegio;
 
     $.ajax({
@@ -407,7 +407,7 @@ function getPrivilegioTipoUsuario() {
 
 //INICIO OBTETNER EL NOMBRE DE USUARIO QUE INICIO SESIÓN
 function getUserSessionStart() {
-    var url = '<?php echo SERVERURL;?>core/getUserSession.php';
+    var url = '<?php echo SERVERURL; ?>core/getUserSession.php';
 
     $.ajax({
         type: "POST",
@@ -604,7 +604,7 @@ var dom = "<'row'<'col-sm-3'l><'col-sm-6 text-center'B><'col-sm-3'f>>" +
 
 //INICIO CONSUMIDOR FINAL PARA COTIZACION Y FACTURACION
 function getConsumidorFinal() {
-    var url = '<?php echo SERVERURL;?>core/getConsumidorFinal.php';
+    var url = '<?php echo SERVERURL; ?>core/getConsumidorFinal.php';
 
     $.ajax({
         type: 'POST',
@@ -626,7 +626,7 @@ function getConsumidorFinal() {
 }
 
 function getCajero() {
-    var url = '<?php echo SERVERURL;?>core/getCajero.php';
+    var url = '<?php echo SERVERURL; ?>core/getCajero.php';
 
     $.ajax({
         type: 'POST',
@@ -647,7 +647,7 @@ function getCajero() {
 }
 
 function getPorcentajeISV(documento) {
-    var url = '<?php echo SERVERURL;?>core/getISV.php';
+    var url = '<?php echo SERVERURL; ?>core/getISV.php';
 
     var isv;
     $.ajax({
@@ -664,7 +664,7 @@ function getPorcentajeISV(documento) {
 }
 
 function validarISV(documento) {
-    var url = '<?php echo SERVERURL;?>core/getISV.php';
+    var url = '<?php echo SERVERURL; ?>core/getISV.php';
 
     var activo;
     $.ajax({
@@ -724,7 +724,7 @@ function modal_productos() {
         'data-form': 'save'
     });
     $('#formProductos').attr({
-        'action': '<?php echo SERVERURL;?>ajax/agregarProductosAjax.php'
+        'action': '<?php echo SERVERURL; ?>ajax/agregarProductosAjax.php'
     });
     $('#formProductos')[0].reset();
     $('#reg_producto').show();
@@ -793,7 +793,7 @@ function modal_productos() {
         $('#formProductos #producto_isv_compra').attr('checked', false);
     }
 
-    $("#formProductos #preview").attr("src", "<?php echo SERVERURL;?>vistas/plantilla/img/products/image_preview.png");
+    $("#formProductos #preview").attr("src", "<?php echo SERVERURL; ?>vistas/plantilla/img/products/image_preview.png");
 
     $('#formProductos #proceso_productos').val("Registro de Productos");
     $('#modal_registrar_productos').modal({
@@ -804,7 +804,7 @@ function modal_productos() {
 }
 /*FIN FORMULARIO PRODUCTOS*/
 function getEmpresaProductos() {
-    var url = '<?php echo SERVERURL;?>core/getEmpresa.php';
+    var url = '<?php echo SERVERURL; ?>core/getEmpresa.php';
 
     $.ajax({
         type: "POST",
@@ -825,7 +825,7 @@ function getEmpresaProductos() {
 }
 
 function getMedida(count) {
-    var url = '<?php echo SERVERURL;?>core/getMedida.php';
+    var url = '<?php echo SERVERURL; ?>core/getMedida.php';
 
     $.ajax({
         type: "POST",
@@ -855,7 +855,7 @@ function getMedida(count) {
 }
 
 function getAlmacen() {
-    var url = '<?php echo SERVERURL;?>core/getAlmacen.php';
+    var url = '<?php echo SERVERURL; ?>core/getAlmacen.php';
 
     $.ajax({
         type: "POST",
@@ -904,7 +904,7 @@ function getAlmacen() {
 }
 
 function getTipoProducto() {
-    var url = '<?php echo SERVERURL;?>core/getTipoProducto.php';
+    var url = '<?php echo SERVERURL; ?>core/getTipoProducto.php';
 
     $.ajax({
         type: "POST",
@@ -925,7 +925,7 @@ function getTipoProducto() {
 }
 
 function getCategoriaProductos() {
-    var url = '<?php echo SERVERURL;?>core/getCategoriaProductos.php';
+    var url = '<?php echo SERVERURL; ?>core/getCategoriaProductos.php';
 
     $.ajax({
         type: "POST",
@@ -943,7 +943,7 @@ function getCategoriaProductos() {
 }
 
 function getProductos() {
-    var url = '<?php echo SERVERURL;?>core/getProductos.php';
+    var url = '<?php echo SERVERURL; ?>core/getProductos.php';
 
     $.ajax({
         type: "POST",
@@ -971,7 +971,7 @@ function modal_clientes() {
         'data-form': 'save'
     });
     $('#formClientes').attr({
-        'action': '<?php echo SERVERURL;?>ajax/agregarClientesAjax.php'
+        'action': '<?php echo SERVERURL; ?>ajax/agregarClientesAjax.php'
     });
     $('#formClientes')[0].reset();
     $('#reg_cliente').show();
@@ -1002,7 +1002,7 @@ function modal_clientes() {
 }
 
 function getDepartamentoClientes() {
-    var url = '<?php echo SERVERURL;?>core/getDepartamentos.php';
+    var url = '<?php echo SERVERURL; ?>core/getDepartamentos.php';
 
     $.ajax({
         type: "POST",
@@ -1026,7 +1026,7 @@ function modal_proveedores() {
         'data-form': 'save'
     });
     $('#formProveedores').attr({
-        'action': '<?php echo SERVERURL;?>ajax/agregarProveedoresAjax.php'
+        'action': '<?php echo SERVERURL; ?>ajax/agregarProveedoresAjax.php'
     });
     $('#formProveedores')[0].reset();
     $('#reg_proveedor').show();
@@ -1057,7 +1057,7 @@ function modal_proveedores() {
 }
 
 function getDepartamentoProveedores() {
-    var url = '<?php echo SERVERURL;?>core/getDepartamentos.php';
+    var url = '<?php echo SERVERURL; ?>core/getDepartamentos.php';
 
     $.ajax({
         type: "POST",
@@ -1072,7 +1072,7 @@ function getDepartamentoProveedores() {
 }
 
 function getMunicipiosProveedores(municipios_id) {
-    var url = '<?php echo SERVERURL;?>core/getMunicipios.php';
+    var url = '<?php echo SERVERURL; ?>core/getMunicipios.php';
 
     var departamentos_id = $('#formProveedores #departamento_proveedores').val();
 
@@ -1092,7 +1092,7 @@ function getMunicipiosProveedores(municipios_id) {
 }
 
 $('#formProveedores #departamento_proveedores').on('change', function() {
-    var url = '<?php echo SERVERURL;?>core/getMunicipios.php';
+    var url = '<?php echo SERVERURL; ?>core/getMunicipios.php';
 
     var departamentos_id = $('#formProveedores #departamento_proveedores').val();
 
@@ -1543,7 +1543,7 @@ function enviarFormulario(url, params) {
 function printQuote(cotizacion_id) {
     params = {
         "id": cotizacion_id,
-        "type": "Cotizacion_carta_izzy",
+        "type": "Factura_Cotizacion",
         "db": "<?php echo $GLOBALS['db']; ?>"
     };   
 
@@ -1552,7 +1552,7 @@ function printQuote(cotizacion_id) {
 }
 
 function printBill(facturas_id, $print_comprobante) {
-    var url = "<?php echo SERVERURL;?>core/getImpresoraComprobante.php";
+    var url = "<?php echo SERVERURL; ?>core/getImpresoraComprobante.php";
 
     $.ajax({
         type: 'POST',
@@ -1647,7 +1647,7 @@ function printBill(facturas_id, $print_comprobante) {
 }
 
 function printBillReporteVentas(facturas_id, print_comprobante) {
-    var url = "<?php echo SERVERURL;?>core/getImpresoraComprobante.php";
+    var url = "<?php echo SERVERURL; ?>core/getImpresoraComprobante.php";
 
     $.ajax({
         type: 'POST',
@@ -1740,7 +1740,7 @@ function printBillReporteVentas(facturas_id, print_comprobante) {
 }
 
 function printBillComprobanteReporteVentas(facturas_id, print_comprobante) {
-    var url = "<?php echo SERVERURL;?>core/getImpresoraComprobante.php";
+    var url = "<?php echo SERVERURL; ?>core/getImpresoraComprobante.php";
 
     $.ajax({
         type: 'POST',
@@ -1754,7 +1754,7 @@ function printBillComprobanteReporteVentas(facturas_id, print_comprobante) {
 
             // Comprobar si la impresora está activa
             if (impresora && impresora.estado == 1) {
-                var baseUrl = '<?php echo SERVERURL;?>core/';
+                var baseUrl = '<?php echo SERVERURL; ?>core/';
                 var endpoint = 'generaComprobanteEntrega.php';
 
                 // Generar la URL con los parámetros de facturas_id y formato
@@ -1802,7 +1802,7 @@ function printBillComprobanteReporteVentas(facturas_id, print_comprobante) {
 }
 
 function printComprobanteCajas(apertura_id) {
-    var url = "<?php echo SERVERURL;?>core/llenarDataTableImpresora.php";
+    var url = "<?php echo SERVERURL; ?>core/llenarDataTableImpresora.php";
 
     $.ajax({
         type: 'POST',
@@ -1990,7 +1990,7 @@ function modal_colaboradores() {
         'data-form': 'save'
     });
     $('#formColaboradores').attr({
-        'action': '<?php echo SERVERURL;?>ajax/agregarColaboradorAjax.php'
+        'action': '<?php echo SERVERURL; ?>ajax/agregarColaboradorAjax.php'
     });
     $('#formColaboradores')[0].reset();
     $('#reg_colaborador').show();
@@ -2020,7 +2020,7 @@ function modal_colaboradores() {
 }
 
 function getPuestoColaboradores() {
-    var url = '<?php echo SERVERURL;?>core/getPuestoColaboradores.php';
+    var url = '<?php echo SERVERURL; ?>core/getPuestoColaboradores.php';
 
     $.ajax({
         type: "POST",
@@ -2035,7 +2035,7 @@ function getPuestoColaboradores() {
 }
 
 function getEmpresaColaboradores() {
-    var url = '<?php echo SERVERURL;?>core/getEmpresa.php';
+    var url = '<?php echo SERVERURL; ?>core/getEmpresa.php';
 
     $.ajax({
         type: "POST",
@@ -2058,7 +2058,7 @@ $('#cambiar_contraseña_usuarios_sistema').on('click', function(e) {
         'data-form': 'update'
     });
     $('#form-cambiarcontra').attr({
-        'action': '<?php echo SERVERURL;?>ajax/modificarContrasenaAjax.php'
+        'action': '<?php echo SERVERURL; ?>ajax/modificarContrasenaAjax.php'
     });
     $('#form-cambiarcontra')[0].reset();
 
@@ -2088,7 +2088,7 @@ $('#marcarAsistencia').on('click', function(e) {
         'data-form': 'save'
     });
     $('#formAsistencia').attr({
-        'action': '<?php echo SERVERURL;?>ajax/addAsistenciaMarcajeAjax.php'
+        'action': '<?php echo SERVERURL; ?>ajax/addAsistenciaMarcajeAjax.php'
     });
     $('#formAsistencia')[0].reset();
     $('#reg_asistencia').show();
@@ -2124,7 +2124,7 @@ $('#formAsistencia #asistencia_empleado').on('change', function() {
 //INICIO MODIFICAR PERFIL USUARIO SISTEMA
 //CONSULTAR CODIGO DE CLIENTE
 function getCodigoCliente() {
-    var url = '<?php echo SERVERURL;?>core/getCodigoCliente.php';
+    var url = '<?php echo SERVERURL; ?>core/getCodigoCliente.php';
 
     $.ajax({
         type: 'POST',
@@ -2143,7 +2143,7 @@ function generatePin(generateNew) {
 
     // Realizar la solicitud Ajax para generar el PIN
     $.ajax({
-        url: '<?php echo SERVERURL;?>core/generarPinCliente.php',
+        url: '<?php echo SERVERURL; ?>core/generarPinCliente.php',
         type: 'POST',
         data: {
             codigoCliente: codigoCliente,
@@ -2164,7 +2164,7 @@ function generatePin(generateNew) {
 
 function updateDatePin(newPin) {
     $.ajax({
-        url: '<?php echo SERVERURL;?>core/updatePin.php.php', // Reemplaza con la URL correcta para actualizar el PIN
+        url: '<?php echo SERVERURL; ?>core/updatePin.php.php', // Reemplaza con la URL correcta para actualizar el PIN
         type: 'POST',
         data: {
             pin: newPin
@@ -2198,7 +2198,7 @@ $('#modificar_perfil_usuario_sistema').on('click', function(e) {
     $("#datosClientes").show();
     getCodigoCliente();
 
-    var url = '<?php echo SERVERURL;?>core/editarColaboradoresUsuario.php';
+    var url = '<?php echo SERVERURL; ?>core/editarColaboradoresUsuario.php';
 
     $.ajax({
         type: 'POST',
@@ -2209,7 +2209,7 @@ $('#modificar_perfil_usuario_sistema').on('click', function(e) {
                 'data-form': 'update'
             });
             $('#formColaboradores').attr({
-                'action': '<?php echo SERVERURL;?>ajax/modificarColaboradorAjaxMain.php'
+                'action': '<?php echo SERVERURL; ?>ajax/modificarColaboradorAjaxMain.php'
             });
             $('#reg_colaborador').hide();
             $('#edi_colaborador').show();
@@ -2259,7 +2259,7 @@ $('#modificar_perfil_usuario_sistema').on('click', function(e) {
 
 
 function getImagenHeaderConsulta(callback) {
-    var url = '<?php echo SERVERURL;?>core/get_image.php';
+    var url = '<?php echo SERVERURL; ?>core/get_image.php';
 
     // Obtener la URL de la imagen usando Ajax
     $.ajax({
@@ -2309,7 +2309,7 @@ function validarAperturaCajaUsuario() {
 }
 
 function getConsultarAperturaCaja() {
-    var url = '<?php echo SERVERURL;?>core/getAperturaCajaUsuario.php';
+    var url = '<?php echo SERVERURL; ?>core/getAperturaCajaUsuario.php';
 
     var estado_apertura;
 
@@ -2360,7 +2360,7 @@ var listar_cuentas_por_cobrar_clientes = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL;?>core/llenarDataTableCobrarClientes.php",
+            "url": "<?php echo SERVERURL; ?>core/llenarDataTableCobrarClientes.php",
             "data": {
                 "estado": estado,
                 "clientes_id": clientes_id,
@@ -2636,7 +2636,7 @@ var ver_abono_cxp_proveedor_dataTable = function(tbody, table) {
 }
 
 function getClientesCXC() {
-    var url = '<?php echo SERVERURL;?>core/getClientesCXC.php';
+    var url = '<?php echo SERVERURL; ?>core/getClientesCXC.php';
 
     $.ajax({
         type: "POST",
@@ -2651,7 +2651,7 @@ function getClientesCXC() {
 }
 
 function getProveedoresCXP() {
-    var url = '<?php echo SERVERURL;?>core/getProveedoresCXP.php';
+    var url = '<?php echo SERVERURL; ?>core/getProveedoresCXP.php';
 
     $.ajax({
         type: "POST",
@@ -2700,7 +2700,7 @@ var listar_cuentas_por_pagar_proveedores = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL;?>core/llenarDataTablePagarProveedores.php",
+            "url": "<?php echo SERVERURL; ?>core/llenarDataTablePagarProveedores.php",
             "data": {
                 "estado": estado,
                 "proveedores_id": proveedores_id,
@@ -2946,7 +2946,7 @@ var registrar_pago_proveedores_dataTable = function(tbody, table) {
 
 /*INICIO FUNCION OBTENER MUNICIPIOS*/
 function getMunicipiosClientes(municipios_id) {
-    var url = '<?php echo SERVERURL;?>core/getMunicipios.php';
+    var url = '<?php echo SERVERURL; ?>core/getMunicipios.php';
 
     var departamentos_id = $('#formClientes #departamento_cliente').val();
 
@@ -2967,7 +2967,7 @@ function getMunicipiosClientes(municipios_id) {
 }
 
 $('#formClientes #departamento_cliente').on('change', function() {
-    var url = '<?php echo SERVERURL;?>core/getMunicipios.php';
+    var url = '<?php echo SERVERURL; ?>core/getMunicipios.php';
 
     var departamentos_id = $('#formClientes #departamento_cliente').val();
 
@@ -2996,7 +2996,7 @@ var listar_clientes = function(estado) {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL;?>core/llenarDataTableClientes.php",
+            "url": "<?php echo SERVERURL; ?>core/llenarDataTableClientes.php",
             "data": {
                 "estado": estado // nuevo parámetro
             }
@@ -3172,7 +3172,7 @@ var listar_generar_clientes = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL;?>core/llenarDataTableGenerarSistema.php",
+            "url": "<?php echo SERVERURL; ?>core/llenarDataTableGenerarSistema.php",
             "data": {
                 "clientes_id": clientes_id,
             }
@@ -3278,8 +3278,8 @@ $(document).ready(function() {
 
 // Definir un mapa que asocie los valores de sistema_id con las URLs
 const sistemaUrls = {
-    1: '<?php echo SERVERURL;?>core/scriptDataBaseIZZY.php',
-    2: '<?php echo SERVERURL;?>core/scriptDataBaseCAMI.php',
+    1: '<?php echo SERVERURL; ?>core/scriptDataBaseIZZY.php',
+    2: '<?php echo SERVERURL; ?>core/scriptDataBaseCAMI.php',
 };
 
 $("#reg_generarSitema").click(function(e) {
@@ -3525,7 +3525,7 @@ var generar_clientes_dataTable = function(tbody, table) {
 }
 
 function getPlanes() {
-    var url = '<?php echo SERVERURL;?>core/getPlanes.php';
+    var url = '<?php echo SERVERURL; ?>core/getPlanes.php';
 
     $.ajax({
         type: "POST",
@@ -3540,7 +3540,7 @@ function getPlanes() {
 }
 
 function getValidarFacturacion() {
-    var url = '<?php echo SERVERURL;?>core/getValidarFacturacion.php';
+    var url = '<?php echo SERVERURL; ?>core/getValidarFacturacion.php';
 
     $.ajax({
         type: "POST",
@@ -3559,7 +3559,7 @@ function getValidarFacturacion() {
 
 
 function getSistemas() {
-    var url = '<?php echo SERVERURL;?>core/getSistemas.php';
+    var url = '<?php echo SERVERURL; ?>core/getSistemas.php';
 
     $.ajax({
         type: "POST",
@@ -3577,7 +3577,7 @@ var editar_clientes_dataTable = function(tbody, table) {
     $(tbody).off("click", "button.table_editar");
     $(tbody).on("click", "button.table_editar", function() {
         var data = table.row($(this).parents("tr")).data();
-        var url = '<?php echo SERVERURL;?>core/editarClientes.php';
+        var url = '<?php echo SERVERURL; ?>core/editarClientes.php';
         $('#formClientes #clientes_id').val(data.clientes_id)
 
         $.ajax({
@@ -3590,7 +3590,7 @@ var editar_clientes_dataTable = function(tbody, table) {
                     'data-form': 'update'
                 });
                 $('#formClientes').attr({
-                    'action': '<?php echo SERVERURL;?>ajax/modificarClientesAjax.php'
+                    'action': '<?php echo SERVERURL; ?>ajax/modificarClientesAjax.php'
                 });
                 $('#formClientes')[0].reset();
                 $('#reg_cliente').hide();
@@ -3646,7 +3646,7 @@ var eliminar_clientes_dataTable = function(tbody, table) {
     $(tbody).off("click", "button.table_eliminar");
     $(tbody).on("click", "button.table_eliminar", function() {
         var data = table.row($(this).parents("tr")).data();
-        var url = '<?php echo SERVERURL;?>core/editarClientes.php';
+        var url = '<?php echo SERVERURL; ?>core/editarClientes.php';
         $('#formClientes #clientes_id').val(data.clientes_id);
 
         $.ajax({
@@ -3659,7 +3659,7 @@ var eliminar_clientes_dataTable = function(tbody, table) {
                     'data-form': 'delete'
                 });
                 $('#formClientes').attr({
-                    'action': '<?php echo SERVERURL;?>ajax/eliminarClientesAjax.php'
+                    'action': '<?php echo SERVERURL; ?>ajax/eliminarClientesAjax.php'
                 });
                 $('#formClientes')[0].reset();
                 $('#reg_cliente').hide();
@@ -3840,7 +3840,7 @@ function getNombreCliente(clientes_id) {
 //funcion aplicar nuevo saldo
 function saldoFactura(facturas_id) {
     //IMPORTE NUEVO EFECTIVO
-    var url = '<?php echo SERVERURL;?>core/getSaldoFactura.php';
+    var url = '<?php echo SERVERURL; ?>core/getSaldoFactura.php';
 
     $.ajax({
         type: 'POST',
@@ -3856,7 +3856,7 @@ function saldoFactura(facturas_id) {
 //funcion aplicar nuevo saldo compras CXP
 function saldoCompras(compras_id) {
     //IMPORTE NUEVO EFECTIVO
-    var url = '<?php echo SERVERURL;?>core/getSaldoCompras.php';
+    var url = '<?php echo SERVERURL; ?>core/getSaldoCompras.php';
 
     $.ajax({
         type: 'POST',
@@ -3883,7 +3883,7 @@ function customRound(number) {
 }
 
 function pago(facturas_id, tipoPago) {
-    var url = '<?php echo SERVERURL;?>core/editarPagoFacturas.php';
+    var url = '<?php echo SERVERURL; ?>core/editarPagoFacturas.php';
 
     $('#pagos_multiples_switch').attr('checked', false);
     getCollaboradoresModalPagoFacturas();
@@ -4030,7 +4030,7 @@ $(document).ready(function() {
 });
 
 function getBanco() {
-    var url = '<?php echo SERVERURL;?>core/getBanco.php';
+    var url = '<?php echo SERVERURL; ?>core/getBanco.php';
 
     $.ajax({
         type: "POST",
@@ -4064,7 +4064,7 @@ var listar_AbonosCXC = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL;?>core/getAbonosCXC.php",
+            "url": "<?php echo SERVERURL; ?>core/getAbonosCXC.php",
             "data": {
                 "factura_id": factura_id
             }
@@ -4215,7 +4215,7 @@ var listar_AbonosCXP = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL;?>core/getAbonosCXP.php",
+            "url": "<?php echo SERVERURL; ?>core/getAbonosCXP.php",
             "data": {
                 "compras_id": compras_id
             },
@@ -4433,7 +4433,7 @@ $(document).ready(function() {
 
 //INICIO MODAL REGSITRAR PAGO COMPRAS PROVEEDORES
 function pagoCompras(compras_id, saldo, tipo) {
-    var url = '<?php echo SERVERURL;?>core/editarPagoCompras.php';
+    var url = '<?php echo SERVERURL; ?>core/editarPagoCompras.php';
 
     $('#pagos_multiples_switch').attr('checked', false);
     getCollaboradoresModalPagoFacturasCompras();
@@ -4556,7 +4556,7 @@ $(document).ready(function() {
 });
 
 function getBancoPurchase() {
-    var url = '<?php echo SERVERURL;?>core/getBanco.php';
+    var url = '<?php echo SERVERURL; ?>core/getBanco.php';
 
     $.ajax({
         type: "POST",
@@ -4576,7 +4576,7 @@ function getBancoPurchase() {
 //FIN MODAL REGSITRAR PAGO COMPRAS PROVEEDORES
 
 function getCollaboradoresModalPagoFacturas() {
-    var url = '<?php echo SERVERURL;?>core/getColaboradores.php';
+    var url = '<?php echo SERVERURL; ?>core/getColaboradores.php';
 
     $.ajax({
         type: "POST",
@@ -4603,7 +4603,7 @@ function getCollaboradoresModalPagoFacturas() {
 }
 
 function getCollaboradoresModalPagoFacturasCompras() {
-    var url = '<?php echo SERVERURL;?>core/getColaboradores.php';
+    var url = '<?php echo SERVERURL; ?>core/getColaboradores.php';
 
     $.ajax({
         type: "POST",
@@ -4687,7 +4687,7 @@ var listar_asistencia = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL;?>core/llenarDataTableAsistencia.php",
+            "url": "<?php echo SERVERURL; ?>core/llenarDataTableAsistencia.php",
             "data": {
                 "fechai": fechai,
                 "fechaf": fechaf,
@@ -4864,7 +4864,7 @@ var delete_salida_asistencia_colaboradores_dataTable = function(tbody, table) {
 }
 
 function deleteAsistenciaMarcajeSalidaColaborador(asistencia_id) {
-    var url = '<?php echo SERVERURL;?>core/deleteAsistenciaColaborador.php';
+    var url = '<?php echo SERVERURL; ?>core/deleteAsistenciaColaborador.php';
 
     $.ajax({
         type: "POST",
@@ -4927,7 +4927,7 @@ var delete_marcaje_asistencia_colaboradores_dataTable = function(tbody, table) {
 }
 
 function deleteMarcajeSalida(asistencia_id) {
-    var url = '<?php echo SERVERURL;?>core/deleteMarcajeSalidaColaborador.php';
+    var url = '<?php echo SERVERURL; ?>core/deleteMarcajeSalidaColaborador.php';
 
     $.ajax({
         type: "POST",
@@ -4971,7 +4971,7 @@ var edit_asistencia_colaboradores_dataTable = function(tbody, table) {
     $(tbody).off("click", "button.editar_asistencia");
     $(tbody).on("click", "button.editar_asistencia", function() {
         var data = table.row($(this).parents("tr")).data();
-        var url = '<?php echo SERVERURL;?>core/editarAsistencia.php';
+        var url = '<?php echo SERVERURL; ?>core/editarAsistencia.php';
         $('#formAsistencia')[0].reset();
         $('#formAsistencia #asistencia_id').val(data.asistencia_id);
 
@@ -4985,7 +4985,7 @@ var edit_asistencia_colaboradores_dataTable = function(tbody, table) {
                     'data-form': 'update'
                 });
                 $('#formAsistencia').attr({
-                    'action': '<?php echo SERVERURL;?>ajax/updateAsistenciaAjax.php'
+                    'action': '<?php echo SERVERURL; ?>ajax/updateAsistenciaAjax.php'
                 });
                 $('#reg_asistencia').hide();
                 $('#edi_asistencia').show();
@@ -5014,7 +5014,7 @@ var edit_asistencia_colaboradores_dataTable = function(tbody, table) {
 }
 
 function getColaboradores() {
-    var url = '<?php echo SERVERURL;?>core/getColaboradores.php';
+    var url = '<?php echo SERVERURL; ?>core/getColaboradores.php';
 
     $.ajax({
         type: "POST",
@@ -5037,7 +5037,7 @@ function modal_asistencia() {
         'data-form': 'save'
     });
     $('#formAsistencia').attr({
-        'action': '<?php echo SERVERURL;?>ajax/addAsistenciaAjax.php'
+        'action': '<?php echo SERVERURL; ?>ajax/addAsistenciaAjax.php'
     });
     $('#formAsistencia')[0].reset();
     $('#reg_asistencia').show();
@@ -5086,7 +5086,7 @@ function showTime() {
 }
 
 function getColaboradorAsistencia() {
-    var url = '<?php echo SERVERURL;?>core/editarUsarioSistema.php';
+    var url = '<?php echo SERVERURL; ?>core/editarUsarioSistema.php';
 
     var colaboradores_id;
 
@@ -5104,7 +5104,7 @@ function getColaboradorAsistencia() {
 }
 
 function getHoraInicio(colaborador_id) {
-    var url = '<?php echo SERVERURL;?>core/getHoraInicio.php';
+    var url = '<?php echo SERVERURL; ?>core/getHoraInicio.php';
 
     var tipo;
 
@@ -5124,7 +5124,7 @@ function getHoraInicio(colaborador_id) {
 //FIN ASISTENCIA
 
 function getImagenHeader() {
-    var url = '<?php echo SERVERURL;?>core/get_image.php';
+    var url = '<?php echo SERVERURL; ?>core/get_image.php';
 
     // Obtener la URL de la imagen usando Ajax
     $.ajax({
@@ -5142,7 +5142,7 @@ function getImagenHeader() {
 }
 
 function getGithubVersion() {
-    var url = '<?php echo SERVERURL;?>core/getGithubVersion.php';
+    var url = '<?php echo SERVERURL; ?>core/getGithubVersion.php';
 
     $.ajax({
         url: url,
@@ -5157,7 +5157,7 @@ function getGithubVersion() {
 }
 
 function getEstadoClientes() {
-    var url = '<?php echo SERVERURL;?>core/getEstado.php';
+    var url = '<?php echo SERVERURL; ?>core/getEstado.php';
 
     $.ajax({
         type: "POST",
@@ -5172,7 +5172,7 @@ function getEstadoClientes() {
 }
 
 function getCuentasProveedores() {
-    var url = '<?php echo SERVERURL;?>core/getCuenta.php';
+    var url = '<?php echo SERVERURL; ?>core/getCuenta.php';
 
     $.ajax({
         type: "POST",
