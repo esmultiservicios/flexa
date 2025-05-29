@@ -2438,13 +2438,13 @@ var listar_cuentas_por_cobrar_clientes = function() {
                 "data": "vendedor"
             },
             {
-                "defaultContent": "<button class='table_abono btn btn-dark'><span class='fas fa-cash-register fa-lg'></span></button>"
+                "defaultContent": "<button class='table_abono btn btn-dark'><span class='fas fa-cash-register fa-lg'></span>Abonar</button>"
             },
             {
-                "defaultContent": "<button class='table_reportes abono_factura btn btn-dark ocultar'><span class='fa fa-money-bill-wave fa-solid'></span></button>"
+                "defaultContent": "<button class='table_reportes abono_factura btn btn-dark ocultar'><span class='fa fa-money-bill-wave fa-solid'></span>Abonos</button>"
             },
             {
-                "defaultContent": "<button class='table_reportes print_factura btn btn-dark ocultar'><span class='fas fa-file-download fa-lg'></span></button>"
+                "defaultContent": "<button class='table_reportes print_factura btn btn-dark ocultar'><span class='fas fa-file-download fa-lg'></span>Factura</button>"
             }
         ],
         "pageLength": 10,
@@ -2775,13 +2775,13 @@ var listar_cuentas_por_pagar_proveedores = function() {
                 },
             },
             {
-                "defaultContent": "<button class='table_pay btn btn-dark ocultar'><span class='fas fa-hand-holding-usd fa-lg'></span></button>"
+                "defaultContent": "<button class='table_pay btn btn-dark ocultar'><span class='fas fa-hand-holding-usd fa-lg'></span>Pagar</button>"
             },
             {
-                "defaultContent": "<button class='abono_proveedor btn btn-dark'><span class='fa fa-money-bill-wave fa-solid'></span></button>"
+                "defaultContent": "<button class='abono_proveedor btn btn-dark'><span class='fa fa-money-bill-wave fa-solid'></span>Abonar</button>"
             },
             {
-                "defaultContent": "<button class='table_reportes print_factura btn btn-dark ocultar'><span class='fas fa-file-download fa-lg'></span></button>"
+                "defaultContent": "<button class='table_reportes print_factura btn btn-dark ocultar'><span class='fas fa-file-download fa-lg'></span>Factura</button>"
             }
         ],
         "pageLength": 10,
@@ -3023,13 +3023,13 @@ var listar_clientes = function(estado) {
                 "data": "sistema"
             },
             {
-                "defaultContent": "<button class='table_crear btn btn-dark ocultar generar'><span class='fab fa-centos fa-lg'></span></button>"
+                "defaultContent": "<button class='table_crear btn btn-dark ocultar generar'><span class='fab fa-centos fa-lg'></span>Generar</button>"
             },
             {
-                "defaultContent": "<button class='table_editar btn btn-dark ocultar'><span class='fas fa-edit fa-lg'></span></button>"
+                "defaultContent": "<button class='table_editar btn btn-dark ocultar'><span class='fas fa-edit fa-lg'></span>Editar</button>"
             },
             {
-                "defaultContent": "<button class='table_eliminar btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span></button>"
+                "defaultContent": "<button class='table_eliminar btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span>Eliminar</button>"
             }
         ],
         "lengthMenu": lengthMenu10,
@@ -4714,13 +4714,13 @@ var listar_asistencia = function() {
                 "data": "comentario"
             },
             {
-                "defaultContent": "<button class='table_editar editar_asistencia btn btn-dark ocultar'><span class='fas fa-edit fa-lg'></span></button>"
+                "defaultContent": "<button class='table_editar editar_asistencia btn btn-dark ocultar'><span class='fas fa-edit fa-lg'></span>Editar</button>"
             },
             {
-                "defaultContent": "<button class='table_eliminar eliminar_salida btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span></button>"
+                "defaultContent": "<button class='table_eliminar eliminar_salida btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span>Eliminar</button>"
             },
             {
-                "defaultContent": "<button class='table_eliminar eliminar_marcaje btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span></button>"
+                "defaultContent": "<button class='table_eliminar eliminar_marcaje btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span>Marcaje</button>"
             }
         ],
         "lengthMenu": lengthMenu10,
