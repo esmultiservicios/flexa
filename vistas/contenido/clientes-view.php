@@ -56,16 +56,16 @@
                         style="width:100%">
                         <thead>
                             <tr>
-                                <th>Clientes</th>
+                            <th>Clientes</th>
                                 <th>RTN</th>
                                 <th>Teléfono</th>
                                 <th>Correo</th>
                                 <th>Departamento</th>
                                 <th>Municipio</th>
-                                <th class="sistema">Sistema</th>
+                                <th>Sistema</th>
                                 <th>Estado</th>
-                                <th class="puntos">Puntos</th>
-                                <th class="generar">Generar</th>
+                                <th>Puntos</th>
+                                <th>Generar</th>
                                 <th>Editar</th>
                                 <th>Eliminar</th>
                             </tr>
