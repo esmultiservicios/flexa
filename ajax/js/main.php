@@ -1732,7 +1732,7 @@ function enviarFormulario(url, params) {
 function printQuote(cotizacion_id) {
     params = {
         "id": cotizacion_id,
-        "type": "Cotizacion_carta_izzy",
+        "type": "Factura_Cotizacion",
         "db": "<?php echo $GLOBALS['db']; ?>"
     };   
 
@@ -1764,7 +1764,7 @@ function printBill(facturas_id, $print_comprobante) {
                 if (formato === "Carta") {
                     params = {
                         "id": facturas_id,
-                        "type": "Factura_carta_izzy",
+                        "type": "Factura_Carta",
                         "db": "<?php echo $GLOBALS['db']; ?>"
                     };
                 } else if (formato === "Media Carta") {
@@ -1824,7 +1824,7 @@ function printBillReporteVentas(facturas_id, print_comprobante) {
                 if (formato === "Carta") {
                     params = {
                         "id": facturas_id,
-                        "type": "Factura_carta_izzy",
+                        "type": "Factura_Carta",
                         "db": "<?php echo $GLOBALS['db']; ?>"
                     };
                 } else if (formato === "Media Carta") {
