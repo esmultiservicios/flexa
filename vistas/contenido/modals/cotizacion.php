@@ -11,7 +11,7 @@
 			<form class="form-horizontal" id="formAyudaQuote" action="" method="POST" data-form="" enctype="multipart/form-data">
 				<div class="form-row">
 					<div class="col-md-12 mb-3">
-					  <label><center><b>Las teclas de función solo se pueden utilizar posicionándose en el área de la factura</b></center></label>
+					  <label class="text-center"><b>Las teclas de función solo se pueden utilizar posicionándose en el área de la factura</b></label>
 					</div>	
 					
 					<div class="col-md-12 mb-3">
@@ -97,7 +97,10 @@
 			</form>
         </div>	
 		<div class="modal-footer">
-			<button class="guardar btn btn-primary ml-2" type="submit" style="display: none;" id="reg_modificar_precio_quote" form="formModificarPrecioCotizaciones"><div class="sb-nav-link-icon"></div><i class="far fa-save fa-lg"></i> Registrar</button>				
+			<button class="btn btn-danger" data-dismiss="modal">
+				<i class="fas fa-times mr-1"></i> Cancelar
+			</button>			
+			<button class="guardar btn btn-success ml-2" type="submit" style="display: none;" id="reg_modificar_precio_quote" form="formModificarPrecioCotizaciones"><div class="sb-nav-link-icon"></div><i class="far fa-save fa-lg"></i> Registrar</button>				
 		</div>			
       </div>
     </div>
@@ -153,7 +156,10 @@
 			</form>
         </div>	
 		<div class="modal-footer">
-			<button class="guardar btn btn-primary ml-2" type="submit" style="display: none;" id="reg_DescuentoQuote" form="formDescuentoCotizaciones"><div class="sb-nav-link-icon"></div><i class="far fa-save fa-lg"></i> Registrar</button>				
+			<button class="btn btn-danger" data-dismiss="modal">
+				<i class="fas fa-times mr-1"></i> Cancelar
+			</button>				
+			<button class="guardar btn btn-success ml-2" type="submit" style="display: none;" id="reg_DescuentoQuote" form="formDescuentoCotizaciones"><div class="sb-nav-link-icon"></div><i class="far fa-save fa-lg"></i> Registrar</button>				
 		</div>			
       </div>
     </div>
