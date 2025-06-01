@@ -1,17 +1,23 @@
 <script>
-$(document).ready(function() {
+$(() => {
     listar_bitacora();
-});
-//BUSQUEDA FECHAS BITACORA
-$(document).ready(function() {
-	$('#formMainBitacora #fechai').on('change',function(){
-		listar_bitacora();
+
+	$('#formMainBitacora #search').on("click", function(e) {
+        e.preventDefault();
+        listar_bitacora();
     });
 
-	$('#formMainBitacora #fechaf').on('change',function(){
-		listar_bitacora();
-    });
+    // Evento para el botón de Limpiar (reset)
+    $('#formMainBitacora').on('reset', function() {
+        // Limpia y refresca los selects
+        $(this).find('.selectpicker')  // Usa `this` para referenciar el formulario actual
+            .val('')
+            .selectpicker('refresh');
+
+			listar_bitacora();
+    });		
 });
+
 
 //INICIO BITACORA
 var listar_bitacora = function(){

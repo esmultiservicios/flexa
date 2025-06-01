@@ -1,24 +1,17 @@
-<div class="container-fluid">	
-	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
-		<div class="container-fluid">
-			<ol class="breadcrumb mb-0">
-				<li class="breadcrumb-item">
-					<a class="text-decoration-none text-primary" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a>
-				</li>
-				<li class="breadcrumb-item active fw-bold">Productos Host</li>
-			</ol>
-		</div>
-	</nav>	
-	
+<div class="container-fluid">
+    <ol class="breadcrumb mt-2 mb-4">
+        <li class="breadcrumb-item"><a class="breadcrumb-link" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a></li>
+        <li class="breadcrumb-item active">Productos Host</li>
+    </ol>
     <div class="card mb-4">
 		<div class="card mb-4">
 			<div class="card-header">
-				<i class="fas fa-network-wired mr-1"></i>
+				<i class="fas fa-network-wired fa-lg mr-1"></i>
 				Productos Host
 			</div>
 			<div class="card-body"> 
 				<div class="table-responsive">
-					<table id="dataTableHost" class="table table-striped table-condensed table-hover" style="width:100%">
+					<table id="dataTableHost" class="table table-header-gradient table-striped table-condensed table-hover" style="width:100%">
 						<thead>
 							<tr>
 								<th>Cliente</th>

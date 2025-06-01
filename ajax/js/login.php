@@ -1,4 +1,5 @@
 <script>
+// Funciones globales
 function sf(ID) {
     document.getElementById(ID).focus();
 }
@@ -8,97 +9,59 @@ function redireccionar() {
 }
 
 $(document).ready(function() {
+    $("#groupDB").hide();
+
+    // Generar PIN aleatorio
     $("#generate_pin_link").click(function(e) {
         e.preventDefault();
-
-        // Generar un nuevo número de PIN (puedes personalizar esta lógica)
-        var newPin = Math.floor(Math.random() * 10000);
-
-        // Actualizar el valor del número de PIN en el elemento span correspondiente
-        $("#pin_value").text(newPin);
+        $("#pin_value").text(Math.floor(Math.random() * 10000));
     });
 
-    $("#cancel_reset").on("click", function() {
-        $('#form-signin')[0].reset();
-        document.getElementById("inputEmail").focus();
+    // Validación de cliente/PIN
+    $('#inputCliente').on('input', function() {
+        if ($(this).val().length === 8) $('#inputPin').focus();
     });
 
-    $("#cancel_signup").on("click", function() {
-        $('#form-signin')[0].reset();
-        document.getElementById("inputEmail").focus();
-    });
+    // Validación inmediata de email/password
+    $("#inputEmail, #inputPassword").on("input blur", function() {
+        var email = $("#inputEmail").val();
+        var password = $("#inputPassword").val();
 
-    $("#forgot_pswd").on("click", function() {
-        document.getElementById("usu_forgot").focus();
-    });
+        if (email && password) {
+            $.ajax({
+                type: 'POST',
+                url: '<?php echo SERVERURL; ?>core/getValidUserSesion.php',
+                data: { 
+                    email: email, 
+                    pass: password 
+                },
+                dataType: 'json',
+                success: function(resp) {
+                    $(".RespuestaAjax").hide();
 
-    $("#btn-signup").on("click", function() {
-        document.getElementById("user_name").focus();
-    });
-});
-
-var timeout; // Variable para manejar el tiempo de espera entre escritura y validación
-
-$('#inputCliente').on('input', function() {
-    var inputEmailValue = $(this).val();
-
-    if (inputEmailValue.length === 8) {
-        $('#inputPin').focus();
-    }
-});
-
-$("#inputEmail, #inputPassword").on("input blur", function() {
-    clearTimeout(timeout); // Limpiar el temporizador anterior
-    var email = $("#inputEmail").val();
-    var password = $("#inputPassword").val();
-
-    timeout = setTimeout(function() {
-            if (email !== "" && password !== "") {
-                var url = '<?php echo SERVERURL; ?>core/getValidUserSesion.php';
-
-                $.ajax({
-                    type: 'POST',
-                    url: url,
-                    data: {
-                        email: email,
-                        pass: password
-                    },
-					
-                    success: function(resp) {
-                        if (resp === "1") {
-                            $("#groupDB").show();
-                            $("#inputCliente").focus();
-                        } else {
-                            $("#groupDB").hide();
-                            // Limpia y oculta los campos de inputCliente e inputPin
-                            $("#inputCliente, #inputPin").val("");
-                        }
-                    },
-                    error: function() {
-                        $("#groupDB").hide(); // Oculta el campo de selección inputDB
-                        // Limpia y oculta los campos de inputCliente e inputPin
+                    if (resp.is_test) {
+                        $("#groupDB").hide();
+                    } else if (resp.success && resp.show_db) {
+                        $("#groupDB").show();
+                        $("#inputCliente").focus();
+                    } else {
+                        $("#groupDB").hide();
                         $("#inputCliente, #inputPin").val("");
-                        $(".RespuestaAjax").html(
-                            "Error de autenticación"); // Muestra un mensaje de error al usuario
                     }
-                });
-            } else {
-                $("#groupDB").hide();
-                // Limpia los campos de inputCliente e inputPin si alguno está vacío
-                if (email === "") {
-                    $("#inputCliente").val("");
+                },
+                error: function(xhr, status, error) {
+                    $("#groupDB").hide();
+                    $("#inputCliente, #inputPin").val("");
+                    $(".RespuestaAjax").html("Error en el servidor").show();
                 }
-                if (password === "") {
-                    $("#inputPin").val("");
-                }
-            }
-        },
-        300
-    ); // Establece un tiempo de espera de 300 milisegundos (medio segundo) después de que el usuario deje de escribir
-});
+            });
+        } else {
+            $("#groupDB").hide();
+            if (!email) $("#inputCliente").val("");
+            if (!password) $("#inputPin").val("");
+        }
+    });
 
-
-$(document).ready(function() {
     $("#loginform").submit(function(e) {
         e.preventDefault();
 
@@ -109,14 +72,7 @@ $(document).ready(function() {
             url: url,
             data: $('#loginform').serialize(),
             beforeSend: function() {
-                swal({
-                    title: "",
-                    text: "Por favor espere...",
-                    icon: '<?php echo SERVERURL; ?>vistas/plantilla/img/gif-load.gif',
-                    buttons: false, // Deshabilitar botones
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-					closeOnClickOutside: false, // Prevenir que el usuario cierre el modal al hacer clic afuera
-                });
+                showLoading("Por favor espere...");
                 $("#loginform #acceso").show();
             },
             success: function(resp) {
@@ -363,261 +319,235 @@ $(document).ready(function() {
         return false;
     });
 
-    $("#form_registro #registrarse").on("click", function(e) {
-        e.preventDefault();
-
-        swal({
-            content: {
-                element: "div",
-                attributes: {
-                    innerHTML: `
-                        <h2 style="color: #f0ad4e; font-size: 22px; margin-bottom: 15px;">
-                            🔧 Mantenimiento en Curso
-                        </h2>
-                        <p style="font-size: 16px; color: #555;">
-                            Estamos trabajando para mejorar nuestros servicios. <strong>Disculpa las molestias.</strong>
-                        </p>
-                        <p style="font-size: 16px; color: #555;">
-                            ⚙️ Pronto estará disponible nuevamente. ¡Gracias por tu comprensión!
-                        </p>
-                    `
-                }
-            },
-            icon: "error",
-            buttons: {
-                confirm: {
-                    text: "Aceptar",
-                    closeModal: true,
-                }
-            },
-            closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-            closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-        });
-    });
-
+    // Reset password
     $("#forgot_form").submit(function(e) {
         e.preventDefault();
-
-        var url = '<?php echo SERVERURL; ?>ajax/resetearContrasenaLoginAjax.php';
-
         $.ajax({
             type: 'POST',
-            url: url,
-            data: $('#forgot_form').serialize(),
+            url: '<?php echo SERVERURL; ?>ajax/resetearContrasenaLoginAjax.php',
+            data: $(this).serialize(),
             beforeSend: function() {
-                swal({
-                    title: "",
-                    text: "Por favor espere...",
-                    icon: '<?php echo SERVERURL; ?>vistas/plantilla/img/gif-load.gif',
-                    closeOnConfirm: false,
-                    showConfirmButton: false,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    imageSize: '150x150',
-                });
-                $("#loginform #acceso").show();
+                showLoading("Registrando usuario...");
             },
             success: function(resp) {
                 if (resp == 1) {
-                    swal({
-                        content: {
-                            element: "div",
-                            attributes: {
-                                innerHTML: `
-                                    <h2 style="color: #28a745; font-size: 22px; margin-bottom: 15px;">
-                                        ✅ ¡Éxito!
-                                    </h2>
-                                    <p style="font-size: 16px; color: #555;">
-                                        Tu <strong>contraseña</strong> ha sido reseteada exitosamente. 🎉
-                                    </p>
-                                    <p style="font-size: 16px; color: #555;">
-                                        Un correo electrónico ha sido enviado con los detalles para que puedas acceder nuevamente. 📧
-                                    </p>
-                                `
-                            }
-                        },
-                        icon: "success",
-                        closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                        closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                    });
-                } else if (resp == 2) {
-                    swal({
-                        content: {
-                            element: "div",
-                            attributes: {
-                                innerHTML: `
-                                    <h2 style="color: #dc3545; font-size: 22px; margin-bottom: 15px;">
-                                        ❌ Error
-                                    </h2>
-                                    <p style="font-size: 16px; color: #555;">
-                                        Lamentablemente, hubo un problema al resetear tu <strong>contraseña</strong>. 😔
-                                    </p>
-                                    <p style="font-size: 16px; color: #555;">
-                                        Por favor, intenta nuevamente más tarde o contacta con nuestro soporte. 📞
-                                    </p>
-                                `
-                            }
-                        },
-                        icon: "error",
-                        dangerMode: true,
-                        closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                        closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                    });
-                } else if (resp == 3) {
-                    swal({
-                        content: {
-                            element: "div",
-                            attributes: {
-                                innerHTML: `
-                                    <h2 style="color: #dc3545; font-size: 22px; margin-bottom: 15px;">
-                                        ❌ Error
-                                    </h2>
-                                    <p style="font-size: 16px; color: #555;">
-                                        El <strong>usuario</strong> ingresado no existe. 😕
-                                    </p>
-                                    <p style="font-size: 16px; color: #555;">
-                                        Verifica si el nombre de usuario está escrito correctamente o si aún no estás registrado. 📲
-                                    </p>
-                                `
-                            }
-                        },
-                        icon: "error",
-                        dangerMode: true,
-                        closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                        closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                    });
+                    showNotify('success', 'Contraseña Reseteada', "Contraseña reseteada exitosamente");
                 } else {
-                    swal({
-                        content: {
-                            element: "div",
-                            attributes: {
-                                innerHTML: `
-                                    <h2 style="color: #dc3545; font-size: 22px; margin-bottom: 15px;">
-                                        ❌ Error
-                                    </h2>
-                                    <p style="font-size: 16px; color: #555;">
-                                        Hubo un problema al completar los datos. 😓
-                                    </p>
-                                    <p style="font-size: 16px; color: #555;">
-                                        Verifica que todos los campos estén correctamente llenos. Si el problema persiste, inténtalo de nuevo. 🔄
-                                    </p>
-                                `
-                            }
-                        },
-                        icon: "error",
-                        dangerMode: true,
-                        closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                        closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                    });
+                    showNotify('error', 'Error', resp);
                 }
             },
             error: function() {
-                swal({
-                    content: {
-                        element: "div",
-                        attributes: {
-                            innerHTML: `
-                                <h2 style="color: #dc3545; font-size: 22px; margin-bottom: 15px;">
-                                    ❌ Error de Inicio de Sesión
-                                </h2>
-                                <p style="font-size: 16px; color: #555;">
-                                    Oops! 😕 Hubo un problema al procesar su solicitud de inicio de sesión.
-                                </p>
-                                <p style="font-size: 16px; color: #555;">
-                                    Verifique sus credenciales o intente nuevamente en unos minutos. 🔄
-                                </p>
-                            `
-                        }
-                    },
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                });
+                showNotify('error', 'Error', "Problema al procesar la solicitud");
             }
         });
         return false;
     });
+
 });
 
-$(function() {
-    $('#inicio_sesion').click(function(e) {
-        $("#loginform").delay(100).fadeIn(100);
-        $("#forgot_form").fadeOut(100);
-        $('#register-form-link').removeClass('active');
-        $(this).addClass('active');
-        e.preventDefault();
-    });
-    $('#forgot').click(function(e) {
-        $("#forgot_form #usu_forgot").focus();
-        $("#forgot_form").delay(100).fadeIn(100);
-        $("#loginform").fadeOut(100);
-        $('#login-form-link').removeClass('active');
-        $(this).addClass('active');
-        e.preventDefault();
-    });
+// Validación de contraseñas en tiempo real
+$('#user-pass, #user-repeatpass').on('blur', function() {
+    const pass1 = $('#user-pass').val();
+    const pass2 = $('#user-repeatpass').val();
+    
+    if (pass1 && pass2) {
+        if (pass1 !== pass2) {
+            $('#user-pass, #user-repeatpass').addClass('is-invalid');
+            showNotify('error', 'Error', 'Las contraseñas no coinciden');
+        } else {
+            $('#user-pass, #user-repeatpass').removeClass('is-invalid');
+            if(pass1.length < 8) {
+                showNotify('warning', 'Advertencia', 'La contraseña debe tener al menos 8 caracteres');
+            }
+        }
+    }
 });
-$(document).ready(function() {
-    $('#loginform #show_password').on('mousedown', function() {
-        var cambio = $("#loginform #inputPassword")[0];
-        if (cambio.type == "password") {
-            cambio.type = "text";
-            $('#loginform #icon').removeClass('fa fa-eye-slash').addClass('fa fa-eye');
-        } else {
-            cambio.type = "password";
-            $('#loginform #icon').removeClass('fa fa-eye').addClass('fa fa-eye-slash');
-        }
-    });
-    $('#loginform #show_password').on('click', function() {
-        $('#Password').attr('type', $(this).is(':checked') ? 'text' : 'password');
-    });
-    $('#loginform #show_password').on('mouseout', function() {
-        $('#loginform #icon').removeClass('fa fa-eye').addClass('fa fa-eye-slash');
-        var cambio = $("#loginform #inputPassword")[0];
-        cambio.type = "password";
-        $('#Password').attr('type', $(this).is(':checked') ? 'text' : 'password');
-        return false;
-    });
+    
+// Validación de email en tiempo real
+$('#mail').on('blur', function() {
+    const email = $(this).val();
+    if(email && !isValidEmail(email)) {
+        $(this).addClass('is-invalid');
+        showNotify('error', 'Error', 'Ingrese un correo electrónico válido');
+    } else {
+        $(this).removeClass('is-invalid');
+    }
 });
-$(document).ready(function() {
-    $('#form_registro #show_password1').on('mousedown', function() {
-        var cambio = $("#form_registro #user-pass")[0];
-        if (cambio.type == "password") {
-            cambio.type = "text";
-            $('#form-signup #icon1').removeClass('fa fa-eye-slash').addClass('fa fa-eye');
-        } else {
-            cambio.type = "password";
-            $('#form-signup #icon1').removeClass('fa fa-eye').addClass('fa fa-eye-slash');
+
+// Función para validar email
+function isValidEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+// Función para validar teléfono
+function isValidPhone(phone) {
+    const re = /^[0-9]{8,12}$/;
+    return re.test(phone);
+}
+
+$('.form-control').on('input change', function () {
+    if ($(this).val().trim() !== '') {
+        $(this).removeClass('is-invalid');
+    }
+});
+
+// Empresa
+$('#user_empresa').on('input', function () {
+    if ($(this).val().trim() !== '') {
+        $(this).removeClass('is-invalid');
+    }
+});
+
+// Nombre
+$('#user_name').on('input', function () {
+    if ($(this).val().trim() !== '') {
+        $(this).removeClass('is-invalid');
+    }
+});
+
+// Teléfono
+$('#user_telefono').on('input', function () {
+    if (isValidPhone($(this).val())) {
+        $(this).removeClass('is-invalid');
+    }
+});
+
+// Correo
+$('#mail').on('input', function () {
+    if (isValidEmail($(this).val())) {
+        $(this).removeClass('is-invalid');
+    }
+});
+
+// Contraseña
+$('#user-pass, #user-repeatpass').on('input', function () {
+    const pass1 = $('#user-pass').val();
+    const pass2 = $('#user-repeatpass').val();
+
+    if (pass1.length >= 8) {
+        $('#user-pass').removeClass('is-invalid');
+    }
+
+    if (pass1 === pass2 && pass2.length >= 8) {
+        $('#user-pass, #user-repeatpass').removeClass('is-invalid');
+    }
+});
+
+
+// Proceso de registro
+$("#registrarse").click(function(e) {
+    e.preventDefault();
+    
+    // Validar campos
+    const empresa = $('#user_empresa').val().trim();
+    const nombre = $('#user_name').val().trim();
+    const telefono = $('#user_telefono').val().trim();
+    const email = $('#mail').val().trim();
+    const pass1 = $('#user-pass').val();
+    const pass2 = $('#user-repeatpass').val();
+    const clientes_id = 0;
+    const sistema_id = 1;
+    const planes_id = 1;
+    const eslogan = '';
+    const otra_informacion = '';
+    const celular = '';
+    const ubicacion = '';
+    const validar = 0;
+    const rtn = '';
+    
+    // Resetear clases de error
+    $('.form-control').removeClass('is-invalid');
+    
+    // Validaciones básicas
+    if (!empresa) {
+        $('#user_empresa').addClass('is-invalid').focus();
+        showNotify('error', 'Error', 'El nombre de la empresa es obligatorio');
+        return;
+    }
+
+    if (!nombre) {
+        $('#user_name').addClass('is-invalid').focus();
+        showNotify('error', 'Error', 'El nombre es obligatorio');
+        return;
+    }
+    
+    if (!telefono || !isValidPhone(telefono)) {
+        $('#user_telefono').addClass('is-invalid').focus();
+        showNotify('error', 'Error', 'Ingrese un teléfono válido (8-12 dígitos)');
+        return;
+    }
+    
+    if (!email || !isValidEmail(email)) {
+        $('#mail').addClass('is-invalid').focus();
+        showNotify('error', 'Error', 'Ingrese un correo electrónico válido');
+        return;
+    }
+    
+    if (!pass1 || pass1.length < 8) {
+        $('#user-pass').addClass('is-invalid').focus();
+        showNotify('error', 'Error', 'La contraseña debe tener al menos 8 caracteres');
+        return;
+    }
+    
+    if (pass1 !== pass2) {
+        $('#user-pass, #user-repeatpass').addClass('is-invalid');
+        $('#user-repeatpass').focus();
+        showNotify('error', 'Error', 'Las contraseñas no coinciden');
+        return;
+    }
+    
+    // Enviar datos al servidor
+    $.ajax({
+        type: 'POST',
+        url: '<?php echo SERVERURL; ?>ajax/registrarClienteAutonomoAjax.php',
+        dataType: 'json',
+        data: {
+            clientes_id: clientes_id,
+            user_empresa: empresa,
+            user_name: nombre,
+            user_telefono: telefono,
+            email: email,
+            user_pass: pass1,
+            sistema_id: sistema_id,
+            planes_id: planes_id,
+            eslogan: eslogan,
+            otra_informacion: otra_informacion,
+            celular: celular,
+            ubicacion: ubicacion,
+            validar: validar,
+            rtn: rtn,          
+        },
+        beforeSend: function() {
+            showLoading("Registrando usuario...");
+        },
+        success: function(resp) {           
+            if (resp.estado) {
+                showNotify(resp.type, resp.title, resp.mensaje);
+                
+                // Limpiar formulario
+                $('#form_registro')[0].reset();
+                
+                // Redirigir al login después de 2 segundos
+                setTimeout(function() {
+                    $('#cancel_signup').click(); // Activa el botón de volver al login
+                    $('#inputEmail').val(email).focus(); // Rellena el email en el login
+                }, 2000);
+            } else {
+                showNotify(resp.type, resp.title, resp.mensaje);
+            }
+        },
+        error: function(xhr, status, error) {          
+            try {
+                const errResponse = JSON.parse(xhr.responseText);
+                showNotify('error', 'Error', errResponse.mensaje || 'Error en el servidor');
+            } catch (e) {
+                showNotify('error', 'Error', 'Error de conexión: ' + error);
+            }
+        },
+        complete: function() {
+            
         }
-    });
-    $('#form_registro #show_password1').on('click', function() {
-        $('#Password').attr('type', $(this).is(':checked') ? 'text' : 'password');
-    });
-    $('#form_registro #show_password1').on('mouseout', function() {
-        $('#form_registro #icon1').removeClass('fa fa-eye').addClass('fa fa-eye-slash');
-        var cambio = $("#form_registro #user-pass")[0];
-        cambio.type = "password";
-        $('#Password').attr('type', $(this).is(':checked') ? 'text' : 'password');
-        return false;
-    });
-    $('#form_registro #show_password2').on('mousedown', function() {
-        var cambio = $("#form_registro #user-repeatpass")[0];
-        if (cambio.type == "password") {
-            cambio.type = "text";
-            $('#form-signup #icon2').removeClass('fa fa-eye-slash').addClass('fa fa-eye');
-        } else {
-            cambio.type = "password";
-            $('#form-signup #icon2').removeClass('fa fa-eye').addClass('fa fa-eye-slash');
-        }
-    });
-    $('#form_registro #show_password2').on('click', function() {
-        $('#Password').attr('type', $(this).is(':checked') ? 'text' : 'password');
-    });
-    $('#form_registro #show_password2').on('mouseout', function() {
-        $('#form_registro #icon2').removeClass('fa fa-eye').addClass('fa fa-eye-slash');
-        var cambio = $("#form_registro #user-repeatpass")[0];
-        cambio.type = "password";
-        $('#Password').attr('type', $(this).is(':checked') ? 'text' : 'password');
-        return false;
     });
 });
 </script>

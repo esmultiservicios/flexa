@@ -1,14 +1,20 @@
-<div class="container-fluid" id="div_top">	
-	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
-		<div class="container-fluid">
-			<ol class="breadcrumb mb-0">
-				<li class="breadcrumb-item">
-					<a class="text-decoration-none text-primary" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a>
-				</li>
-				<li class="breadcrumb-item active fw-bold">Asignación de Planes</li>
-			</ol>
-		</div>
-	</nav>		
+<div class="container-fluid" id="div_top">
+    <!-- Asignación de Planes -->
+    <div class="breadcrumb-container">
+        <ol class="breadcrumb-harmony">
+            <li class="breadcrumb-item">
+                <a class="breadcrumb-link" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">
+                    <i class="fas fa-home breadcrumb-icon"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="breadcrumb-separator">/</li>
+            <li class="breadcrumb-item active">
+                <i class="fas fa-user-check breadcrumb-icon"></i>
+                <span>Asignación de Planes</span>
+            </li>
+        </ol>
+    </div>
 
     <div class="card mb-4">
         <div class="card-header">

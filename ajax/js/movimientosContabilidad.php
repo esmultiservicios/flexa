@@ -1,11 +1,21 @@
 <script>
-$(document).ready(function() {
+$(() => {
     listar_movimientos_contabilidad();
-});
 
-$('#formMainMovimientosContabilidad #search').on("click", function(e){
-	e.preventDefault();
-	listar_movimientos_contabilidad();
+	$('#formMainMovimientosContabilidad #search').on("click", function(e) {
+        e.preventDefault();
+        listar_movimientos_contabilidad();
+    });
+
+    // Evento para el botón de Limpiar (reset)
+    $('#formMainMovimientosContabilidad').on('reset', function() {
+        // Limpia y refresca los selects
+        $(this).find('.selectpicker')  // Usa `this` para referenciar el formulario actual
+            .val('')
+            .selectpicker('refresh');
+
+			listar_movimientos_contabilidad();
+    });	
 });
 
 var listar_movimientos_contabilidad = function(){

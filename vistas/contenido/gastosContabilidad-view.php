@@ -1,86 +1,95 @@
 	<div class="container-fluid">
-		<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
-			<div class="container-fluid">
-				<ol class="breadcrumb mb-0">
-					<li class="breadcrumb-item">
-						<a class="text-decoration-none text-primary" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a>
-					</li>
-					<li class="breadcrumb-item active fw-bold">Egresos</li>
-				</ol>
-			</div>
-		</nav>
-	
+		<!-- Egresos -->
+		<div class="breadcrumb-container">
+			<ol class="breadcrumb-harmony">
+				<li class="breadcrumb-item">
+					<a class="breadcrumb-link" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">
+						<i class="fas fa-home breadcrumb-icon"></i>
+						<span>Dashboard</span>
+					</a>
+				</li>
+				<li class="breadcrumb-separator">/</li>
+				<li class="breadcrumb-item active">
+					<i class="fas fa-money-bill-wave breadcrumb-icon"></i>
+					<span>Egresos</span>
+				</li>
+			</ol>
+		</div>
+
 	    <div class="card mb-4">
-	        <div class="card-body">
-	            <form class="form-inline" id="formMainGastosContabilidad" action="" method="POST" data-form=""
-	                autocomplete="off" enctype="multipart/form-data">
+			<div class="card-body">
+				<form id="formMainGastosContabilidad">
+					<div class="row">
+						<div class="col-md-3 col-sm-6 mb-3">
+							<div class="form-group">
+								<label class="small mb-1">Estado</label>
+								<select id="estado_egresos" name="estado_egresos" 
+									class="form-control selectpicker" title="Estado" data-live-search="true">
+									<option value="1">Activas</option>
+									<option value="0">Anuladas</option>
+								</select>
+							</div>
+						</div>
+						
+						<div class="col-md-3 col-sm-6 mb-3">
+							<div class="form-group">
+								<label class="small mb-1">Fecha Inicio</label>
+								<div class="input-group">
+									<div class="input-group-prepend">
+										<span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+									</div>
+									<input type="date" class="form-control" id="fechai" name="fechai" value="<?php 
+										$fecha = date ("Y-m-d");
+										
+										$año = date("Y", strtotime($fecha));
+										$mes = date("m", strtotime($fecha));
+										$dia = date("d", mktime(0,0,0, $mes+1, 0, $año));
 
-	                <div class="form-group mx-sm-3 mb-1">
-	                    <div class="input-group">
-	                        <div class="input-group-append">
-	                            <span class="input-group-text">
-	                                <div class="sb-nav-link-icon"></div>Estado
-	                            </span>
-	                            <select id="estado_egresos" name="estado_egresos" class="selectpicker" title="Estado"
-	                                data-live-search="true">
-	                                <option value="1">Activas</option>
-	                                <option value="2">Anuladas</option>
-	                            </select>
-	                        </div>
-	                    </div>
-	                </div>
-	                <div class="form-group mx-sm-3 mb-1">
-	                    <div class="input-group">
-	                        <div class="input-group-append">
-	                            <span class="input-group-text">
-	                                <div class="sb-nav-link-icon"></div>Fecha Inicio
-	                            </span>
-	                        </div>
-	                        <input type="date" class="form-control" id="fechai" name="fechai" value="<?php 
-							$fecha = date ("Y-m-d");
-							
-							$año = date("Y", strtotime($fecha));
-							$mes = date("m", strtotime($fecha));
-							$dia = date("d", mktime(0,0,0, $mes+1, 0, $año));
+										$dia1 = date('d', mktime(0,0,0, $mes, 1, $año));
+										$dia2 = date('d', mktime(0,0,0, $mes, $dia, $año));
 
-							$dia1 = date('d', mktime(0,0,0, $mes, 1, $año)); //PRIMER DIA DEL MES
-							$dia2 = date('d', mktime(0,0,0, $mes, $dia, $año)); // ULTIMO DIA DEL MES
+										$fecha_inicial = date("Y-m-d", strtotime($año."-".$mes."-".$dia1));
+										echo $fecha_inicial;
+									?>">
+								</div>
+							</div>
+						</div>
+						
+						<div class="col-md-3 col-sm-6 mb-3">
+							<div class="form-group">
+								<label class="small mb-1">Fecha Fin</label>
+								<div class="input-group">
+									<div class="input-group-prepend">
+										<span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+									</div>
+									<input type="date" class="form-control" id="fechaf" name="fechaf" value="<?php echo date('Y-m-d');?>">
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-12 text-right">
+							<button type="submit" class="btn btn-primary mr-2" id="search">
+								<i class="fas fa-filter fa-lg"></i> Filtrar
+							</button>
+							<button type="reset" class="btn btn-secondary">
+								<i class="fas fa-broom fa-lg"></i> Limpiar
+							</button>                        
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
 
-							$fecha_inicial = date("Y-m-d", strtotime($año."-".$mes."-".$dia1));
-							$fecha_final = date("Y-m-d", strtotime($año."-".$mes."-".$dia2));						
-							
-							
-							echo $fecha_inicial;
-						?>">
-	                    </div>
-	                </div>
-	                <div class="form-group mx-sm-3 mb-1">
-	                    <div class="input-group">
-	                        <div class="input-group-append">
-	                            <span class="input-group-text">
-	                                <div class="sb-nav-link-icon"></div>Fecha Fin
-	                            </span>
-	                        </div>
-	                        <input type="date" class="form-control" id="fechaf" name="fechaf"
-	                            value="<?php echo date('Y-m-d');?>">
-	                    </div>
-	                </div>
-	                <div class="form-group mx-sm-2 mb-1">
-	                    <button class="consultar btn btn-secondary" type="submit" id="search">
-	                        <div class="sb-nav-link-icon"></div><i class="fas fa-search fa-lg"></i> Buscar
-	                    </button>
-	                </div>
-	            </form>
-	        </div>
-	    </div>
 	    <div class="card mb-4">
 	        <div class="card-header">
-	            <i class="fas fa-file-invoice-dollar mr-1"></i>
+	            <i class="fas fa-file-invoice-dollar fa-lg mr-1"></i>
 	            Egresos
 	        </div>
 	        <div class="card-body">
 	            <div class="table-responsive">
-	                <table id="dataTableGastosContabilidad" class="table table-striped table-condensed table-hover"
+	                <table id="dataTableGastosContabilidad" class="table table-header-gradient table-striped table-condensed table-hover"
 	                    style="width:100%">
 	                    <thead>
 	                        <tr>
@@ -97,11 +106,12 @@
 	                            <th>Nota de Crédito</th>
 	                            <th>Total</th>
 	                            <th>Observación</th>
+								<th>Estado</th>
 	                            <th>Editar</th>
 	                            <th>Imprimir</th>
 	                        </tr>
 	                    </thead>
-	                    <tfoot class="bg-info text-white font-weight-bold">
+	                    <tfoot class="bg-secondary text-white font-weight-bold">
 	                        <tr>
 	                            <td colspan='2'>Total</td>
 	                            <td colspan="5"></td>
@@ -110,7 +120,7 @@
 	                            <td id="descuento-g"></td>
 	                            <td id="nc-g"></td>
 	                            <td id='total-footer-gastos'></td>
-	                            <td colspan="3"></td>
+	                            <td colspan="4"></td>
 	                        </tr>
 	                    </tfoot>
 	                </table>

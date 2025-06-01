@@ -1,12 +1,26 @@
 <script>
 var registro = false;
 
-$(document).ready(function() {
+$(() => {
     funciones();
     listar_movimientos();
 
     $('#movimientos').css('cursor', 'pointer');
     $('#registroMovimientos').css('cursor', 'pointer');
+
+	$('#form_main_movimientos #search').on("click", function(e) {
+        e.preventDefault();
+        listar_movimientos();
+    });
+
+    // Evento para el botón de Limpiar Filtros
+    $('#form_main_movimientos').on('reset', function() {
+        // Limpia y refresca los selects
+        $('#form_main_movimientos .selectpicker')
+            .val('')
+            .selectpicker('refresh');
+        listar_movimientos();
+    });    
 });
 
 function funciones() {
@@ -619,23 +633,11 @@ const BusquedaProducto = (barcode) => {
                 $('#formMovimientos #almacen_modal').val('').selectpicker('refresh')
                 $('#formMovimientos #movimiento_cantidad').focus(); 
             } else {
-                swal({
-                    title: "Error",
-                    text: registro.message,
-                    icon: "error",
-                    button: "Aceptar",
-                    dangerMode: true
-                });
+                showNotify('error', 'Error', registro.message);
             }
         },
         error: function() {
-            swal({
-                title: "Error",
-                text: "Hubo un problema en la comunicación con el servidor",
-                icon: "error",
-                button: "Aceptar",
-                dangerMode: true
-            });
+            showNotify('error', 'Error', 'Hubo un problema en la comunicación con el servidor');
         }
     });
 };
@@ -647,13 +649,7 @@ $('#formMovimientos #produto_barcode').on('keypress', (event) => {
         let barcode = $(event.target).val().trim();
 
         if (barcode.length === 0) {
-            swal({
-                title: "Error",
-                text: "Lo sentimos, debe ingresar un nombre de producto, o escanear un código de barras",
-                icon: "error",
-                button: "Aceptar",
-                dangerMode: true
-            });
+            showNotify('error', 'Error', 'Lo sentimos, debe ingresar un nombre de producto, o escanear un código de barras');
 
             $('#formMovimientos #produto_barcode').focus();
             return;
@@ -661,13 +657,7 @@ $('#formMovimientos #produto_barcode').on('keypress', (event) => {
 
         // Validar si se seleccionó algún radio button
         if ($('input[name="movimiento_operacion"]:checked').length === 0) {
-            swal({
-                title: "Error",
-                text: "Debe seleccionar un tipo de operación (Entrada o Salida)",
-                icon: "error",
-                button: "Aceptar",
-                dangerMode: true
-            });
+            showNotify('error', 'Error', 'Debe seleccionar un tipo de operación (Entrada o Salida)');
 
             $('input[name="movimiento_operacion"]').first().focus();
             return;

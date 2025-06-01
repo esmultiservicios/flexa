@@ -1,63 +1,84 @@
 	<div class="container-fluid">
-	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
-		<div class="container-fluid">
-			<ol class="breadcrumb mb-0">
-				<li class="breadcrumb-item">
-					<a class="text-decoration-none text-primary" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a>
-				</li>
-				<li class="breadcrumb-item active fw-bold">Movimiento de Cuentas</li>
-			</ol>
-		</div>
-	</nav>
-		
-    <div class="card mb-4">
-        <div class="card-body">
-			<form class="form-inline" id="formMainMovimientosContabilidad" action="" method="POST" data-form="" autocomplete="off" enctype="multipart/form-data">
-				<div class="form-group mx-sm-3 mb-1">
-					<div class="input-group">				
-						<div class="input-group-append">				
-							<span class="input-group-text"><div class="sb-nav-link-icon"></div>Fecha Inicio</span>
+	<!-- Movimiento de Cuentas -->
+	<div class="breadcrumb-container">
+		<ol class="breadcrumb-harmony">
+			<li class="breadcrumb-item">
+				<a class="breadcrumb-link" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">
+					<i class="fas fa-home breadcrumb-icon"></i>
+					<span>Dashboard</span>
+				</a>
+			</li>
+			<li class="breadcrumb-separator">/</li>
+			<li class="breadcrumb-item active">
+				<i class="fas fa-exchange-alt breadcrumb-icon"></i>
+				<span>Movimiento de Cuentas</span>
+			</li>
+		</ol>
+	</div>
+
+	<div class="card mb-4">
+		<div class="card-body">
+			<form id="formMainMovimientosContabilidad">
+				<div class="row">
+					<div class="col-md-3 col-sm-6 mb-3">
+						<div class="form-group">
+							<label class="small mb-1">Fecha Inicio</label>
+							<div class="input-group">
+								<div class="input-group-prepend">
+									<span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+								</div>
+								<input type="date" class="form-control" id="fechai" name="fechai" value="<?php 
+									$fecha = date ("Y-m-d");
+									
+									$año = date("Y", strtotime($fecha));
+									$mes = date("m", strtotime($fecha));
+									$dia = date("d", mktime(0,0,0, $mes+1, 0, $año));
+
+									$dia1 = date('d', mktime(0,0,0, $mes, 1, $año));
+									$dia2 = date('d', mktime(0,0,0, $mes, $dia, $año));
+
+									$fecha_inicial = date("Y-m-d", strtotime($año."-".$mes."-".$dia1));
+									echo $fecha_inicial;
+								?>">
+							</div>
 						</div>
-						<input type="date" class="form-control" id="fechai" name="fechai" value="<?php 
-							$fecha = date ("Y-m-d");
-							
-							$año = date("Y", strtotime($fecha));
-							$mes = date("m", strtotime($fecha));
-							$dia = date("d", mktime(0,0,0, $mes+1, 0, $año));
-
-							$dia1 = date('d', mktime(0,0,0, $mes, 1, $año)); //PRIMER DIA DEL MES
-							$dia2 = date('d', mktime(0,0,0, $mes, $dia, $año)); // ULTIMO DIA DEL MES
-
-							$fecha_inicial = date("Y-m-d", strtotime($año."-".$mes."-".$dia1));
-							$fecha_final = date("Y-m-d", strtotime($año."-".$mes."-".$dia2));						
-							
-							
-							echo $fecha_inicial;
-						?>">
 					</div>
-				</div>	
-				<div class="form-group mx-sm-3 mb-1">
-					<div class="input-group">				
-						<div class="input-group-append">				
-							<span class="input-group-text"><div class="sb-nav-link-icon"></div>Fecha Fin</span>
+					
+					<div class="col-md-3 col-sm-6 mb-3">
+						<div class="form-group">
+							<label class="small mb-1">Fecha Fin</label>
+							<div class="input-group">
+								<div class="input-group-prepend">
+									<span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+								</div>
+								<input type="date" class="form-control" id="fechaf" name="fechaf" value="<?php echo date('Y-m-d');?>">
+							</div>
 						</div>
-						<input type="date" class="form-control" id="fechaf" name="fechaf" value="<?php echo date('Y-m-d');?>" >
 					</div>
 				</div>
-				<div class="form-group mx-sm-2 mb-1">
-					<button class="consultar btn btn-secondary" type="submit" id="search"><div class="sb-nav-link-icon"></div><i class="fas fa-search fa-lg"></i> Buscar</button>
-				</div> 			  
-			</form>	           
-        </div>
-    </div>	
+				
+				<div class="row">
+					<div class="col-12 text-right">
+						<button type="submit" class="btn btn-primary mr-2" id="search">
+							<i class="fas fa-filter fa-lg"></i> Filtrar
+						</button>
+						<button type="reset" class="btn btn-secondary">
+							<i class="fas fa-broom fa-lg"></i> Limpiar
+						</button>                        
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	
     <div class="card mb-4">
         <div class="card-header">
-            <i class="fas fa-file-invoice mr-1"></i>
+            <i class="fas fa-file-invoice fa-lg mr-1"></i>
             Movimiento de Cuentas
         </div>
         <div class="card-body"> 
             <div class="table-responsive">
-                <table id="dataTableMovimientosContabilidad" class="table table-striped table-condensed table-hover" style="width:100%">
+                <table id="dataTableMovimientosContabilidad" class="table table-header-gradient table-striped table-condensed table-hover" style="width:100%">
                     <thead>
                         <tr>
                             <th>Fecha</th>

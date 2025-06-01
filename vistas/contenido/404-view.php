@@ -9,7 +9,7 @@
 								<img class="mb-4 img-error" src="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>vistas/plantilla/img/error-404.svg" />
 								<p class="lead">Esta URL solicitada no se encontró en este servidor..</p>
 								<a class="link-return" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">
-									<i class="fas fa-arrow-left mr-1"></i>
+									<i class="fas fa-arrow-left fa-lg mr-1"></i>
 									Regresar al Dashboard
 								</a>
 							</div>

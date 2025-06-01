@@ -1,113 +1,116 @@
 <div class="container-fluid">
-	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
-		<div class="container-fluid">
-			<ol class="breadcrumb mb-0">
-				<li class="breadcrumb-item">
-					<a class="text-decoration-none text-primary" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a>
-				</li>
-				<li class="breadcrumb-item" id="movimientos">
-					<span class="text-dark">Movimientos</span>
-				</li>
-				<li class="breadcrumb-item active fw-bold" id="registroMovimientos">
-					Registro Movimiento de Productos
-				</li>
-			</ol>
-		</div>
-	</nav>
-
+    <!-- Movimientos y Registro -->
+    <div class="breadcrumb-container">
+        <ol class="breadcrumb-harmony">
+            <li class="breadcrumb-item">
+                <a class="breadcrumb-link" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">
+                    <i class="fas fa-home breadcrumb-icon"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="breadcrumb-separator">/</li>
+            <li class="breadcrumb-item" id="movimientos">
+                <i class="fas fa-exchange-alt breadcrumb-icon"></i>
+                <span>Movimientos</span>
+            </li>
+            <li class="breadcrumb-separator">/</li>
+            <li class="breadcrumb-item active" id="registroMovimientos">
+                <i class="fas fa-clipboard-list breadcrumb-icon"></i>
+                <span>Registro Movimiento de Productos</span>
+            </li>
+        </ol>
+    </div>
 
     <div id="main_inventario">
-        <div class="card mb-4">
+    <div class="card mb-4">
             <div class="card-body">
                 <form class="" id="form_main_movimientos">
                     <div class="row">
-                        <div class="form-group mx-sm-3 mb-1">
-                            <div class="input-group">
-                                <div class="input-group-append">
-                                    <span class="input-group-text">
-                                        <div class="sb-nav-link-icon"></div>Categoría
-                                    </span>
-                                    <select id="inventario_tipo_productos_id" name="inventario_tipo_productos_id"
-                                        class="selectpicker" data-live-search="true" data-toggle='tooltip' data-placement='top' title="Categoría de Productos">
-                                    </select>
-                                </div>
+                        <!-- Primera fila con 4 campos -->
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-3">
+                                <label class="small mb-1">Categoría</label>
+                                <select id="inventario_tipo_productos_id" name="inventario_tipo_productos_id"
+                                    class="form-control selectpicker" data-live-search="true" data-toggle='tooltip' 
+                                    data-placement='top' title="Categoría de Productos">
+                                </select>
                             </div>
                         </div>
-                        <div class="form-group mx-sm-3 mb-1">
-                            <div class="input-group">
-                                <div class="input-group-append">
-                                    <span class="input-group-text">
-                                        <div class="sb-nav-link-icon"></div>Fecha Inicio
-                                    </span>
-                                </div>
-                                <input type="date" required id="fechai" name="fechai" value="<?php 
-                                $fecha = date ("Y-m-d");
-                                
-                                $año = date("Y", strtotime($fecha));
-                                $mes = date("m", strtotime($fecha));
-                                $dia = date("d", mktime(0,0,0, $mes+1, 0, $año));
-
-                                $dia1 = date('d', mktime(0,0,0, $mes, 1, $año)); //PRIMER DIA DEL MES
-                                $dia2 = date('d', mktime(0,0,0, $mes, $dia, $año)); // ULTIMO DIA DEL MES
-
-                                $fecha_inicial = date("Y-m-d", strtotime($año."-".$mes."-".$dia1));
-                                $fecha_final = date("Y-m-d", strtotime($año."-".$mes."-".$dia2));						
-                                
-                                
-                                echo $fecha_inicial;
-                            ?>" style="width:165px;" class="form-control" data-toggle="tooltip" data-placement="top"
-                                    title="Fecha Inicio">
+                        
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-3">
+                                <label class="small mb-1">Bodega</label>
+                                <select id="almacen" name="almacen" class="form-control selectpicker" 
+                                    data-live-search="true" title="Bodega">
+                                </select>
                             </div>
                         </div>
-                        <div class="form-group mx-sm-3 mb-1">
-                            <div class="input-group">
-                                <div class="input-group-append">
-                                    <span class="input-group-text">
-                                        <div class="sb-nav-link-icon"></div>Fecha Fin
-                                    </span>
-                                </div>
-                                <input type="date" required id="fechaf" name="fechaf"
-                                    value="<?php echo date ("Y-m-d");?>" style="width:165px;" class="form-control"
-                                    data-toggle="tooltip" data-placement="top" title="Fecha Fin">
+                        
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-3">
+                                <label class="small mb-1">Producto</label>
+                                <select id="producto_movimiento_filtro" name="producto_movimiento_filtro"
+                                    class="form-control selectpicker" data-live-search="true" title="Producto">
+                                </select>
                             </div>
                         </div>
-                        <div class="form-group mx-sm-3 mb-1">
-                            <div class="input-group">
-                                <div class="input-group-append">
-                                    <span class="input-group-text">
-                                        <div class="sb-nav-link-icon"></div>Bodega
-                                    </span>
-                                    <select id="almacen" name="almacen" class="selectpicker" data-live-search="true"
-                                        title="Bodega">
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group mx-sm-3 mb-1">
-                            <div class="input-group">
-                                <div class="input-group-append">
-                                    <span class="input-group-text">
-                                        <div class="sb-nav-link-icon"></div>Producto
-                                    </span>
-                                    <select id="producto_movimiento_filtro" name="producto_movimiento_filtro"
-                                        class="selectpicker" data-live-search="true" title="Producto">
-                                    </select>
-                                </div>
+                        
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-3">
+                                <label class="small mb-1">Cliente</label>
+                                <select id="cliente_movimiento_filtro" name="cliente_movimiento_filtro"
+                                    class="form-control selectpicker" data-live-search="true" title="Cliente">
+                                </select>
                             </div>
                         </div>
                     </div>
+                    
                     <div class="row">
-                        <div class="form-group mx-sm-3 mb-1">
-                            <div class="input-group">
-                                <div class="input-group-append">
-                                    <span class="input-group-text">
-                                        <div class="sb-nav-link-icon"></div>Cliente
-                                    </span>
-                                    <select id="cliente_movimiento_filtro" name="cliente_movimiento_filtro"
-                                        class="selectpicker" data-live-search="true" title="Cliente">
-                                    </select>
+                        <!-- Segunda fila con 2 campos de fecha -->
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-3">
+                                <label class="small mb-1">Fecha Inicio</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                    </div>
+                                    <input type="date" class="form-control" id="fechai" name="fechai" value="<?php 
+                                        $fecha = date ("Y-m-d");
+                                        
+                                        $año = date("Y", strtotime($fecha));
+                                        $mes = date("m", strtotime($fecha));
+                                        $dia = date("d", mktime(0,0,0, $mes+1, 0, $año));
+
+                                        $dia1 = date('d', mktime(0,0,0, $mes, 1, $año));
+                                        $dia2 = date('d', mktime(0,0,0, $mes, $dia, $año));
+
+                                        $fecha_inicial = date("Y-m-d", strtotime($año."-".$mes."-".$dia1));
+                                        echo $fecha_inicial;
+                                    ?>">
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-3">
+                                <label class="small mb-1">Fecha Fin</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                    </div>
+                                    <input type="date" class="form-control" id="fechaf" name="fechaf" value="<?php echo date('Y-m-d');?>">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Puedes agregar más campos aquí si es necesario -->
+                        <div class="col-md-6 col-sm-12 d-flex align-items-end justify-content-end">
+                            <button type="submit" class="btn btn-primary mr-2" id="search">
+                                <i class="fas fa-filter fa-lg"></i> Filtrar
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="fas fa-broom fa-lg"></i> Limpiar
+                            </button>   
                         </div>
                     </div>
                 </form>
@@ -117,12 +120,12 @@
         <div class="card mb-4">
             <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fab fa-servicestack mr-1"></i>
+                    <i class="fas fa-exchange-alt fa-lg mr-1"></i>
                     Movimiento de Productos
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="dataTablaMovimientos" class="table table-striped table-condensed table-hover"
+                        <table id="dataTablaMovimientos" class="table table-header-gradient table-striped table-condensed table-hover"
                             style="width:100%">
                             <thead>
                                 <tr>                                    
@@ -142,7 +145,7 @@
                                     <th>Bodega</th>
                                 </tr>
                             </thead>
-                            <tfoot class="bg-info text-white font-weight-bold">
+                            <tfoot class="bg-secondary">
                                 <tr>
                                     <td colspan="7"></td>
                                     <td colspan='1' class="text-center">Total</td> 
@@ -347,7 +350,3 @@
     <?php
 	$insMainModel->guardar_historial_accesos("Ingreso al modulo Inventario");
 ?>
-
-    <a href="https://api.whatsapp.com/send?phone=50432273380&text=Hola%20CLINICARE,%20nos%20gustar%C3%ADa%20que%20nos%20puedan%20brindar%20asistencia%20t%C3%A9cnica,%20muchas%20gracias."
-        class="float-ws" target="_blank" data-toggle="tooltip" data-placement="top" title="Soporte CLINICARE">
-        <i class="fab fa-whatsapp my-float-ws"></i></a>

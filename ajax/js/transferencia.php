@@ -1,42 +1,31 @@
 <script>
-$(document).ready(function() {
+$(() => {
     inventario_transferencia();
     getTipoProductos();
     getAlmacen();
-});
 
+    // Evento para el botón de Buscar (submit)
+    $('#form_main_movimientos_transferencia').on('submit', function(e) {
+        e.preventDefault();
 
-$('#form_main_movimientos #inventario_tipo_productos_id').on('change', function() {
-    inventario_transferencia();
-});
+        inventario_transferencia(); 
+    });
 
-$('#form_main_movimientos #inventario_productos_id').on('change', function() {
-    inventario_transferencia();
-});
+    // Evento para el botón de Limpiar (reset)
+    $('#form_main_movimientos_transferencia').on('reset', function() {
+        // Limpia y refresca los selects
+        $(this).find('.selectpicker')  // Usa `this` para referenciar el formulario actual
+            .val('')
+            .selectpicker('refresh');
 
-$('#form_main_movimientos #fechai').on('change', function() {
-    inventario_transferencia();
-});
-
-$('#form_main_movimientos #fechaf').on('change', function() {
-    inventario_transferencia();
-});
-
-$('#form_main_movimientos #almacen').on('change', function() {
-    inventario_transferencia();
-});
-
-$('#form_main_movimientos #search').on("click", function(e) {
-    e.preventDefault();
-    inventario_transferencia();
+            inventario_transferencia();
+    });
 });
 
 //INVENTARIO TRANSFERENCIA
 var inventario_transferencia = function() {
-    var form = $("#form_main_movimientos");
+    var form = $("#form_main_movimientos_transferencia");
     var tipo_producto_id = form.find("#inventario_tipo_productos_id").val() || '';
-    var fechai = form.find("#fechai").val();
-    var fechaf = form.find("#fechaf").val();
     var productos_id = form.find("#inventario_productos_id").val();
     var bodega = form.find("#almacen").val();
 
@@ -47,15 +36,13 @@ var inventario_transferencia = function() {
             url: "<?php echo SERVERURL;?>core/llenarDataTableInvetarioTransferencia.php",
             data: {
                 tipo_producto_id: tipo_producto_id,
-                fechai: fechai,
-                fechaf: fechaf,
                 bodega: bodega,
                 productos_id: productos_id
             }
         },
         columns: [ 
             { 
-                defaultContent: "<button data-toggle='tooltip' data-placement='top' title='Actualizar la fecha de vencimiento' class='table_change_date btn btn-dark'><span class='fa-solid fa-calendar-days fa-lg'></span></button>" 
+                defaultContent: "<button data-toggle='tooltip' data-placement='top' title='Actualizar la fecha de vencimiento' class='table_change_date btn btn-secondary'><span class='fa-solid fa-calendar-days fa-lg'></span>Fecha</button>" 
             },                    
             { 
                 data: "fecha_registro" 
@@ -120,7 +107,7 @@ var inventario_transferencia = function() {
                 data: "bodega" 
             },
             { 
-                defaultContent: "<button data-toggle='tooltip' data-placement='top' title='Permite mover o transferir un producto de una bodega a otra' class='table_transferencia btn btn-dark'><span class='fa fa-exchange-alt fa-lg'></span></button>" 
+                defaultContent: "<button data-toggle='tooltip' data-placement='top' title='Permite mover o transferir un producto de una bodega a otra' class='table_eliminar table_transferencia'><span class='fa fa-exchange-alt fa-lg'></span>Transferir</button>" 
             }
         ],
         lengthMenu: lengthMenu10,
@@ -221,14 +208,7 @@ var transferencia_producto_dataTable = function(tbody, table) {
         var data = table.row($(this).parents("tr")).data();
         $('#formTransferencia')[0].reset();
         if (data.superior > 0) {
-            swal({
-                title: 'Error',
-                text: 'No se puede hacer transferencia de producto que depente de otro inventario',
-                icon: 'error',
-                dangerMode: true,
-                closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-            });
+            showNotify('error', 'Error', 'No se puede hacer transferencia de producto que depente de otro inventario');
             return false
         }
 
@@ -246,34 +226,48 @@ var transferencia_producto_dataTable = function(tbody, table) {
     })
 };
 
-$('#putEditarBodega').on('click', function(e) {
-    e.preventDefault(); // Evita la acción por defecto del botón
-    
+$('#formTransferencia').on('submit', function(e) {   
+    e.preventDefault();
     var form = $("#formTransferencia");
     var respuesta = form.children('.RespuestaAjax');
-    
-    // Verificar si el formulario es válido antes de hacer la petición AJAX
-    if (form[0].checkValidity()) {
-        var url = '<?php echo SERVERURL;?>ajax/modificarBodegaProductosAjax.php';
-        $.ajax({
-            type: 'POST',
-            url: url,
-            data: form.serialize(),
-            beforeSend: function() {
-                $('#modal_transferencia_producto').modal({
-                    show: false,
-                    keyboard: false,
-                    backdrop: 'static'
-                });
+
+    swal({
+        title: "¿Estas seguro?",
+        text: "¿Desea transferir este producto?",
+        icon: "warning",
+        buttons: {
+            cancel: {
+                text: "Cancelar",
+                visible: true
             },
-            success: function(data) {
-                respuesta.html(data);
+            confirm: {
+                text: "¡Sí, transferir el producto!",
             }
-        });
-    } else {
-        // Si no es válido, activar los mensajes de validación de HTML5
-        form[0].reportValidity();
-    }
+        },
+		buttons: true,
+		dangerMode: true,
+        closeOnEsc: false,
+        closeOnClickOutside: false
+    }).then((willConfirm) => {
+        if (willConfirm) {
+            var url = '<?php echo SERVERURL;?>ajax/modificarBodegaProductosAjax.php';
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: form.serialize(),
+                beforeSend: function() {
+                    $('#modal_transferencia_producto').modal({
+                        show: false,
+                        keyboard: false,
+                        backdrop: 'static'
+                    });
+                },
+                success: function(data) {
+                    respuesta.html(data);
+                }
+            });
+        }
+    });
 });
 
 //TRANSFERIR PRODUCTO/BODEGA
@@ -344,29 +338,29 @@ function getTipoProductos() {
         url: url,
         async: true,
         success: function(data) {
-            $('#form_main_movimientos #inventario_tipo_productos_id').html("");
-            $('#form_main_movimientos #inventario_tipo_productos_id').html(data);
-            $('#form_main_movimientos #inventario_tipo_productos_id').selectpicker('refresh');
+            $('#form_main_movimientos_transferencia #inventario_tipo_productos_id').html("");
+            $('#form_main_movimientos_transferencia #inventario_tipo_productos_id').html(data);
+            $('#form_main_movimientos_transferencia #inventario_tipo_productos_id').selectpicker('refresh');
 
             $('#formMovimientos #movimientos_tipo_producto_id').html("");
             $('#formMovimientos #movimientos_tipo_producto_id').html(data);
             $('#formMovimientos #movimientos_tipo_producto_id').selectpicker('refresh');
 
-            getProductosMovimientos($('#form_main_movimientos #inventario_tipo_productos_id').val());
+            getProductosMovimientos($('#form_main_movimientos_transferencia #inventario_tipo_productos_id').val());
         }
     });
 }
 //FIN OBTENER EL TIPO DE PRODUCTO
 
-$(document).ready(function() {
-    $('#form_main_movimientos #inventario_tipo_productos_id').on('change', function() {
+$(() => {
+    $('#form_main_movimientos_transferencia #inventario_tipo_productos_id').on('change', function() {
         var tipo_producto_id;
 
-        if ($('#form_main_movimientos #inventario_tipo_productos_id').val() == "" || $(
-                '#form_main_movimientos #inventario_tipo_productos_id').val() == null) {
+        if ($('#form_main_movimientos_transferencia #inventario_tipo_productos_id').val() == "" || $(
+                '#form_main_movimientos_transferencia #inventario_tipo_productos_id').val() == null) {
             tipo_producto_id = 1;
         } else {
-            tipo_producto_id = $('#form_main_movimientos #inventario_tipo_productos_id').val();
+            tipo_producto_id = $('#form_main_movimientos_transferencia #inventario_tipo_productos_id').val();
         }
 
         getProductosMovimientos(tipo_producto_id);
@@ -382,9 +376,9 @@ function getProductosMovimientos(tipo_producto_id) {
         url: url,
         data: 'tipo_producto_id=' + tipo_producto_id,
         success: function(data) {
-            $('#form_main_movimientos #inventario_productos_id').html("");
-            $('#form_main_movimientos #inventario_productos_id').html(data);
-            $('#form_main_movimientos #inventario_productos_id').selectpicker('refresh');
+            $('#form_main_movimientos_transferencia #inventario_productos_id').html("");
+            $('#form_main_movimientos_transferencia #inventario_productos_id').html(data);
+            $('#form_main_movimientos_transferencia #inventario_productos_id').selectpicker('refresh');
         }
     });
 }
@@ -403,9 +397,9 @@ function getAlmacen() {
         url: url,
         async: true,
         success: function(data) {
-            $('#form_main_movimientos #almacen').html("");
-            $('#form_main_movimientos #almacen').html(data);
-            $('#form_main_movimientos #almacen').selectpicker('refresh');
+            $('#form_main_movimientos_transferencia #almacen').html("");
+            $('#form_main_movimientos_transferencia #almacen').html(data);
+            $('#form_main_movimientos_transferencia #almacen').selectpicker('refresh');
 
             $('#formTransferencia #id_bodega').html("");
             $('#formTransferencia #id_bodega').html(data);

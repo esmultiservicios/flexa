@@ -1,5 +1,5 @@
 <script>
-$(document).ready(function() {
+$(() => {
     getTipoContrato();
     getPagoPlanificado();
     getTipoEmpleado();
@@ -7,21 +7,21 @@ $(document).ready(function() {
     listar_contratos();
     $('#form_main_contrato #estado').val(1);
     $('#form_main_contrato #estado').selectpicker('refresh');
-});
 
-$('#form_main_contrato #estado').on("change", function(e) {
-    listar_contratos();
-});
+	$('#form_main_contrato #search').on("click", function(e) {
+        e.preventDefault();
+        listar_contratos();
+    });
 
-$('#form_main_contrato #tipo_contrato').on("change", function(e) {
-    listar_contratos();
-});
-$('#form_main_contrato #pago_planificado').on("change", function(e) {
-    listar_contratos();
-});
+    // Evento para el botón de Limpiar (reset)
+    $('#form_main_contrato').on('reset', function() {
+        // Limpia y refresca los selects
+        $(this).find('.selectpicker')  // Usa `this` para referenciar el formulario actual
+            .val('')
+            .selectpicker('refresh');
 
-$('#form_main_contrato #tipo_empleado').on("change", function(e) {
-    listar_contratos();
+			listar_contratos();
+    });	    
 });
 
 //INICIO ACCIONES FROMULARIO CONTRATOS
@@ -87,10 +87,29 @@ var listar_contratos = function() {
                 "data": "notas"
             },
             {
-                "defaultContent": "<button class='table_editar btn btn-dark ocultar'><span class='fas fa-edit fa-lg'></span></button>"
+                "data": "estado",
+                "render": function(data, type, row) {
+                    if (type === 'display') {
+                        var estadoText = data == 1 ? 'Activo' : 'Inactivo';
+                        var icon = data == 1 ? 
+                            '<i class="fas fa-check-circle mr-1"></i>' : 
+                            '<i class="fas fa-times-circle mr-1"></i>';
+                        var badgeClass = data == 1 ? 
+                            'badge badge-pill badge-success' : 
+                            'badge badge-pill badge-danger';
+                        
+                        return '<span class="' + badgeClass + 
+                            '" style="font-size: 0.95rem; padding: 0.5em 0.8em; font-weight: 600;">' +
+                            icon + estadoText + '</span>';
+                    }
+                    return data;
+                }
+            },            
+            {
+                "defaultContent": "<button class='table_editar btn ocultar'><span class='fas fa-edit fa-lg'></span>Editar</button>"
             },
             {
-                "defaultContent": "<button class='table_eliminar btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span></button>"
+                "defaultContent": "<button class='table_eliminar btn ocultar'><span class='fa fa-trash fa-lg'></span>Eliminar</button>"
             }
         ],
         "lengthMenu": lengthMenu,
@@ -220,12 +239,7 @@ var editar_contratos_dataTable = function(tbody, table) {
             data: $('#formContrato').serialize(),
             success: function(registro) {
                 var valores = eval(registro);
-                $('#formContrato').attr({
-                    'data-form': 'update'
-                });
-                $('#formContrato').attr({
-                    'action': '<?php echo SERVERURL;?>ajax/modificarContratosAjax.php'
-                });
+
                 $('#reg_contrato').hide();
                 $('#edi_contrato').show();
                 $('#delete_contrato').hide();
@@ -281,80 +295,78 @@ var eliminar_contratos_dataTable = function(tbody, table) {
     $(tbody).off("click", "button.table_eliminar");
     $(tbody).on("click", "button.table_eliminar", function() {
         var data = table.row($(this).parents("tr")).data();
-        var url = '<?php echo SERVERURL;?>core/editarContratos.php';
-        $('#formContrato')[0].reset();
-        $('#formContrato #contrato_id').val(data.contrato_id);
 
-        $.ajax({
-            type: 'POST',
-            url: url,
-            data: $('#formContrato').serialize(),
-            success: function(registro) {
-                var valores = eval(registro);
-                $('#formContrato').attr({
-                    'data-form': 'delete'
-                });
-                $('#formContrato').attr({
-                    'action': '<?php echo SERVERURL;?>ajax/eliminarContratosAjax.php'
-                });
-                $('#reg_contrato').hide();
-                $('#edi_contrato').hide();
-                $('#delete_contrato').show();
-                $('#formContrato #contrato_colaborador_id').val(valores[0]);
-                $('#formContrato #contrato_colaborador_id').selectpicker('refresh');
-                $('#formContrato #colaborador_id').val(valores[0]);
-                $('#formContrato #contrato_tipo_contrato_id').val(valores[1]);
-                $('#formContrato #contrato_tipo_contrato_id').selectpicker('refresh');
-                $('#formContrato #contrato_pago_planificado_id').val(valores[2]);
-                $('#formContrato #contrato_pago_planificado_id').selectpicker('refresh');
-                $('#formContrato #contrato_tipo_empleado_id').val(valores[3]);
-                $('#formContrato #contrato_tipo_empleado_id').selectpicker('refresh');
-                $('#formContrato #contrato_salario').val(valores[4]);
-                $('#formContrato #contrato_fecha_inicio').val(valores[5]);
-                $('#formContrato #contrato_fecha_fin').val(valores[6]);
-                $('#formContrato #contrato_notas').val(valores[7]);
-                $('#formContrato #contrato_salario_mensual').val(valores[9]);
-
-                if (valores[8] == 1) {
-                    $('#formContrato #contrato_activo').attr('checked', true);
-                } else {
-                    $('#formContrato #contrato_activo').attr('checked', false);
+        var contrato_id = data.contrato_id;
+        var nombreEmpleado = data.empleado; 
+        
+        // Construir el mensaje de confirmación con HTML
+        var mensajeHTML = `¿Desea eliminar permanentemente el contrato?<br><br>
+                        <strong>Empleado:</strong> ${nombreEmpleado}`;
+        
+        swal({
+            title: "Confirmar eliminación",
+            content: {
+                element: "span",
+                attributes: {
+                    innerHTML: mensajeHTML
                 }
-
-                //DESHABILITAR OBJETOS
-                $('#formContrato #contrato_colaborador_id').attr('disabled', true);
-                $('#formContrato #contrato_tipo_contrato_id').attr('disabled', true);
-                $('#formContrato #contrato_pago_planificado_id').attr('disabled', true);
-                $('#formContrato #contrato_tipo_empleado_id').attr('disabled', true);
-                $('#formContrato #contrato_salario').attr('readonly', true);
-                $('#formContrato #contrato_fecha_inicio').attr('readonly', true);
-                $('#formContrato #contrato_fecha_fin').attr('readonly', true);
-                $('#formContrato #contrato_activo').attr('disabled', true);
-                $('#formContrato #contrato_notas').attr('readonly', true);
-                $('#formContrato #contrato_salario_mensual').attr('readonly', true);
-                $('#formContrato #buscar_contrato_empleado').hide();
-
-                $('#formContrato #proceso_contrato').val("Eliminar");
-
-                $('#modal_registrar_contrato').modal({
-                    show: true,
-                    keyboard: false,
-                    backdrop: 'static'
+            },
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "Cancelar",
+                    value: null,
+                    visible: true,
+                    className: "btn-light"
+                },
+                confirm: {
+                    text: "Sí, eliminar",
+                    value: true,
+                    className: "btn-danger",
+                    closeModal: false
+                }
+            },
+            dangerMode: true,
+            closeOnEsc: false,
+            closeOnClickOutside: false
+        }).then((confirmar) => {
+            if (confirmar) {
+               
+                $.ajax({
+                    type: 'POST',
+                    url: '<?php echo SERVERURL;?>ajax/eliminarContratosAjax.php',
+                    data: {
+                        contrato_id: contrato_id
+                    },
+                    dataType: 'json', // Esperamos respuesta JSON
+                    before: function(){
+                        // Mostrar carga mientras se procesa
+                        showLoading("Eliminando registro...");
+                    },
+                    success: function(response) {
+                        swal.close();
+                        
+                        if(response.status === "success") {
+                            showNotify("success", response.title, response.message);
+                            table.ajax.reload(null, false); // Recargar tabla sin resetear paginación
+                            table.search('').draw();                    
+                        } else {
+                            showNotify("error", response.title, response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        swal.close();
+                        showNotify("error", "Error", "Ocurrió un error al procesar la solicitud");
+                    }
                 });
             }
-        });
+        });	        
     });
 }
 //FIN ACCIONES FROMULARIO CONTRATOS
 
 /*INICIO FORMULARIO CONTRATOS*/
 function modal_contratos() {
-    $('#formContrato').attr({
-        'data-form': 'save'
-    });
-    $('#formContrato').attr({
-        'action': '<?php echo SERVERURL;?>ajax/addContratosAjax.php'
-    });
     $('#formContrato')[0].reset();
     $('#reg_contrato').show();
     $('#edi_contrato').hide();
@@ -386,6 +398,133 @@ function modal_contratos() {
         backdrop: 'static'
     });
 }
+
+$('#formContrato').on('submit', function(e) {
+    e.preventDefault();
+
+    // 1. Refrescar todos los selectpickers para asegurar sincronización
+    $('.selectpicker').selectpicker('refresh');
+
+    // 2. Construir objeto de datos manualmente (versión mejorada)
+    const getValue = (selector) => $(selector).val();
+    const isChecked = (selector) => $(selector).is(':checked') ? 1 : 0;
+    
+    const formData = {
+        contrato_id: getValue('#contrato_id'),
+        contrato_colaborador_id: getValue('#contrato_colaborador_id'),
+        contrato_tipo_contrato_id: getValue('#contrato_tipo_contrato_id'),
+        contrato_pago_planificado_id: getValue('#contrato_pago_planificado_id'),
+        contrato_tipo_empleado_id: getValue('#contrato_tipo_empleado_id'),
+        contrato_salario_mensual: getValue('#contrato_salario_mensual'),
+        contrato_salario: getValue('#contrato_salario'),
+        contrato_fecha_inicio: getValue('#contrato_fecha_inicio'),
+        contrato_fecha_fin: getValue('#contrato_fecha_fin') || null, // Manejo explícito de valores vacíos
+        contrato_notas: getValue('#contrato_notas'),
+        contrato_activo: isChecked('#contrato_activo'),
+        // Campos adicionales si existen
+        calculo_semanal: isChecked('#calculo_semanal')
+    };
+
+    // 3. Validación básica en cliente (opcional)
+    const requiredFields = ['contrato_colaborador_id', 'contrato_tipo_contrato_id', 'contrato_salario_mensual'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+        showNotify('error', 'Error', `Faltan campos requeridos: ${missingFields.join(', ')}`);
+        return;
+    }
+
+    // 4. Determinar si es creación o edición
+    const isEdit = !!(formData.contrato_id && String(formData.contrato_id).trim() !== '' && formData.contrato_id !== '0');
+    const url = isEdit ? '<?php echo SERVERURL;?>ajax/modificarContratosAjax.php' 
+                      : '<?php echo SERVERURL;?>ajax/addContratosAjax.php';
+
+    // 5. Configuración de SweetAlert dinámica
+    swal({
+        title: isEdit ? "¿Actualizar contrato?" : "¿Registrar nuevo contrato?",
+        text: isEdit ? "Confirma los cambios del contrato" : "Confirma que deseas registrar este nuevo contrato",
+        icon: "info",
+        buttons: {
+            cancel: { text: "Cancelar", visible: true, className: "btn-light" },
+            confirm: { 
+                text: isEdit ? "Sí, actualizar" : "Sí, registrar",
+            }
+        },
+        dangerMode: false,
+        closeOnEsc: false,
+        closeOnClickOutside: false
+    }).then((willConfirm) => {
+        if (willConfirm) {
+            // 6. Deshabilitar botón durante el envío
+            const submitBtn = $(this).find('[type="submit"]');
+            const originalBtnHtml = submitBtn.html();
+            submitBtn.prop('disabled', true)
+                    .html('<i class="fas fa-spinner fa-spin"></i> Procesando...');
+
+            // 7. Enviar datos
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: formData,
+                dataType: "json",
+                success: function(response) {
+                    // Restaurar botón
+                    submitBtn.prop('disabled', false).html(originalBtnHtml);
+                    
+                    if (response?.status === "success") {
+                        showNotify("success", response.title, response.message);
+                        
+                        // Ejecutar funciones callback si existen
+                        if (response.funcion) {
+                            try {
+                                new Function(response.funcion)(); // Más seguro que eval()
+                            } catch (e) {
+                                console.error("Error ejecutando función:", e);
+                            }
+                        }
+                        
+                        // Limpiar formulario si es creación exitosa
+                        if (!isEdit && response.clearForm) {
+                            $('#formContrato')[0].reset();
+                            $('.selectpicker').selectpicker('refresh');
+                        }
+                        
+                        // Cerrar modal si es necesario
+                        if (response.modal) {
+                            $('#modal_registrar_contrato').modal('hide');
+                        }
+                    } else {
+                        showNotify("error", response?.title || "Error", response?.message || "Error desconocido");
+                        
+                        // Resaltar campos con error si existen
+                        if (response?.missing_fields) {
+                            $('.is-invalid').removeClass('is-invalid');
+                            response.missing_fields.forEach(field => {
+                                $(`[name="${field}"], #${field}`).addClass('is-invalid');
+                            });
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    // Restaurar botón
+                    submitBtn.prop('disabled', false).html(originalBtnHtml);
+                    
+                    // Manejo mejorado de errores
+                    let errorMsg = "Error al procesar la solicitud";
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        errorMsg = errorResponse.message || errorMsg;
+                    } catch (e) {
+                        console.error("Error parsing response:", e);
+                    }
+                    
+                    showNotify("error", "Error de conexión", errorMsg);
+                    console.error("Detalles del error:", xhr.responseText);
+                }
+            });
+        }
+    });
+});
 /*FIN FORMULARIO CONTRATOS*/
 
 $(document).ready(function() {
@@ -614,14 +753,7 @@ function ValidarTipoPago(semanal) {
 
         $('#formContrato #contrato_salario').val(parseFloat(salario).toFixed(2));
     } else {
-        swal({
-            title: "Error",
-            text: "Lo sentimos debe seleccionar un pago planificado antes de llenar este valor",
-            icon: "error",
-            dangerMode: true,
-            closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-            closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-        });
+        showNotify('error', 'Error', 'Lo sentimos debe seleccionar un pago planificado antes de llenar este valor');
     }
 }
 </script>

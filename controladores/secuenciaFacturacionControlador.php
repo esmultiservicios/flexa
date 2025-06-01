@@ -7,8 +7,15 @@
 	
 	class secuenciaFacturacionControlador extends secuenciaFacturacionModelo{
 		public function agregar_secuencia_facturacion_controlador(){
-			if(!isset($_SESSION['user_sd'])){ 
-				session_start(['name'=>'SD']); 
+			// Validar sesión primero
+			$validacion = mainModel::validarSesion();
+			if($validacion['error']) {
+				return mainModel::showNotification([
+					"title" => "Error de sesión",
+					"text" => $validacion['mensaje'],
+					"type" => "error",
+					"funcion" => "window.location.href = '".$validacion['redireccion']."'"
+				]);
 			}
 			
 			$empresa_id = mainModel::cleanString($_POST['empresa_secuencia']);
@@ -43,45 +50,57 @@
 				"fecha_registro" => $fecha_registro,					
 			];			
 			
-			$resultSecuenciaFacturacion = secuenciaFacturacionModelo::valid_secuencia_facturacion($empresa_id, $documento_id);
-			
-			if($resultSecuenciaFacturacion->num_rows==0){
-				$query = secuenciaFacturacionModelo::agregar_secuencia_facturacion_modelo($datos);
-				
-				if($query){
-					$alert = [
-						"alert" => "clear",
-						"title" => "Registro almacenado",
-						"text" => "El registro se ha almacenado correctamente",
-						"type" => "success",
-						"btn-class" => "btn-primary",
-						"btn-text" => "¡Bien Hecho!",
-						"form" => "formSecuencia",
-						"id" => "proceso_secuencia_facturacion",
-						"valor" => "Registro",	
-						"funcion" => "listar_secuencia_facturacion();getEmpresaSecuencia();getDocumentoSecuencia();",
-						"modal" => "",						
-					];						
-				}else{
-					$alert = [
-						"alert" => "simple",
-						"title" => "Ocurrio un error inesperado",
-						"text" => "No hemos podido procesar su solicitud",
-						"type" => "error",
-						"btn-class" => "btn-danger",					
-					];					
-				}
-			}else{
-				$alert = [
-					"alert" => "simple",
-					"title" => "Resgistro ya existe",
-					"text" => "Lo sentimos este registro ya existe",
-					"type" => "error",	
-					"btn-class" => "btn-danger",						
-				];					
+			if(secuenciaFacturacionModelo::valid_secuencia_facturacion($empresa_id, $documento_id)->num_rows > 0){
+				return mainModel::showNotification([
+					"type" => "error",
+					"title" => "Error",
+					"text" => "No se pudo registrar la secuencia de facturacion",                
+				]);                
 			}
+
+			$mainModel = new mainModel();
+			$planConfig = $mainModel->getPlanConfiguracionMainModel();
 			
-			return mainModel::sweetAlert($alert);
+			// Solo evaluar si existe configuración de plan
+			if (isset($planConfig['secuencias'])) {
+				$limiteSecuencias = (int)$planConfig['secuencias']; // No usamos ?? 0 aquí para no convertir "no definido" en 0
+				
+				// Caso 1: Límite es 0 (bloquear)
+				if ($limiteSecuencias === 0) {
+					return $mainModel->showNotification([
+						"type" => "error",
+						"title" => "Acceso restringido",
+						"text" => "Su plan actual no permite registrar secuencias de facturacion."
+					]);
+				}
+				
+				// Caso 2: Si tiene límite > 0, validar disponibilidad
+				$totalRegistrados = (int)secuenciaFacturacionModelo::getTotalSecuenciaRegistradas();
+				
+				if ($totalRegistrados >= $limiteSecuencias) {
+					return $mainModel->showNotification([
+						"type" => "error",
+						"title" => "Límite alcanzado",
+						"text" => "Límite de secuencias de facturacion alcanzado (Máximo: $limiteSecuencias). Actualiza tu plan."
+					]);
+				}
+			}	
+
+			if(!secuenciaFacturacionModelo::agregar_secuencia_facturacion_modelo($datos)){
+				return mainModel::showNotification([
+					"title" => "Error",
+					"text" => "No se pudo registrar la secuencia de facturacion",
+					"type" => "error"
+				]);
+			}
+
+			return mainModel::showNotification([
+				"type" => "success",
+				"title" => "Registro exitoso",
+				"text" => "Secuencia de facturacion registrada correctamente",           
+				"form" => "formSecuencia",
+				"funcion" => "listar_secuencia_facturacion();getEmpresaSecuencia();getDocumentoSecuencia();"
+			]);
 		}
 		
 		public function edit_secuencia_facturacion_controlador(){
@@ -96,11 +115,7 @@
 			$fecha_activacion = mainModel::cleanString($_POST['fecha_activacion_secuencia']);
 			$fecha_limite = mainModel::cleanString($_POST['fecha_limite_secuencia']);
 
-			if (isset($_POST['estado_secuencia'])){
-				$activo = $_POST['estado_secuencia'];
-			}else{
-				$activo = 2;
-			}	
+			$activo = isset($_POST['estado_secuencia']) && $_POST['estado_secuencia'] == 'on' ? 1 : 0;		
 			
 			$datos = [
 				"secuencia_facturacion_id" => $secuencia_facturacion_id,
@@ -116,76 +131,71 @@
 				"activo" => $activo,					
 			];	
 
-			$query = secuenciaFacturacionModelo::edit_secuencia_facturacion_modelo($datos);
-			
-			if($query){				
-				$alert = [
-					"alert" => "edit",
-					"title" => "Registro modificado",
-					"text" => "El registro se ha modificado correctamente",
-					"type" => "success",
-					"btn-class" => "btn-primary",
-					"btn-text" => "¡Bien Hecho!",
-					"form" => "formSecuencia",	
-					"id" => "proceso_secuencia_facturacion",
-					"valor" => "Editar",
-					"funcion" => "listar_secuencia_facturacion();getEmpresaSecuencia();getDocumentoSecuencia();",
-					"modal" => "",
-				];
-			}else{
-				$alert = [
-					"alert" => "simple",
-					"title" => "Ocurrio un error inesperado",
-					"text" => "No hemos podido procesar su solicitud",
-					"type" => "error",
-					"btn-class" => "btn-danger",					
-				];				
-			}			
-			
-			return mainModel::sweetAlert($alert);
+			if(!secuenciaFacturacionModelo::edit_secuencia_facturacion_modelo($datos)){
+				return mainModel::showNotification([
+					"title" => "Error",
+					"text" => "No se pudo actualizar la secuencia de facturacion",
+					"type" => "error"
+				]);
+			}
+
+			return mainModel::showNotification([
+				"type" => "success",
+				"title" => "Registro exitoso",
+				"text" => "Secuencia de facturacion actualizada correctamente",           
+				"form" => "formSecuencia",
+				"funcion" => "listar_secuencia_facturacion();getEmpresaSecuencia();getDocumentoSecuencia();"
+			]);
 		}
 		
 		public function delete_secuencia_facturacion_controlador(){
 			$secuencia_facturacion_id = $_POST['secuencia_facturacion_id'];
 			
-			$result_valid_secuencia_facturacion = secuenciaFacturacionModelo::valid_secuencia_facturacion_facturas($secuencia_facturacion_id);
+			$campos = ['secuencia_facturacion_id'];
+			$tabla = "secuencia_facturacion";
+			$condicion = "secuencia_facturacion_id = {$secuencia_facturacion_id}";
+
+			$puesto = mainModel::consultar_tabla($tabla, $campos, $condicion);
 			
-			if($result_valid_secuencia_facturacion->num_rows==0){
-				$query = secuenciaFacturacionModelo::delete_secuencia_facturacion_modelo($secuencia_facturacion_id);
-								
-				if($query){
-					$alert = [
-						"alert" => "clear",
-						"title" => "Registro eliminado",
-						"text" => "El registro se ha eliminado correctamente",
-						"type" => "success",
-						"btn-class" => "btn-primary",
-						"btn-text" => "¡Bien Hecho!",
-						"form" => "formSecuencia",	
-						"id" => "proceso_secuencia_facturacion",
-						"valor" => "Eliminar",
-						"funcion" => "listar_secuencia_facturacion();getEmpresaSecuencia();getDocumentoSecuencia();",
-						"modal" => "modal_registrar_secuencias",
-					];
-				}else{
-					$alert = [
-						"alert" => "simple",
-						"title" => "Ocurrio un error inesperado",
-						"text" => "No hemos podido procesar su solicitud",
-						"type" => "error",
-						"btn-class" => "btn-danger",					
-					];				
-				}				
-			}else{
-				$alert = [
-					"alert" => "simple",
-					"title" => "Este registro cuenta con información almacenada",
-					"text" => "No se puede eliminar este registro",
-					"type" => "error",	
-					"btn-class" => "btn-danger",						
-				];				
-			}			
-			return mainModel::sweetAlert($alert);
+			if (empty($puesto)) {
+				header('Content-Type: application/json');
+				echo json_encode([
+					"status" => "error",
+					"title" => "Error",
+					"message" => "Puesto no encontrado"
+				]);
+				exit();
+			}
+			
+			$nombre = $puesto[0]['puesto'] ?? '';
+
+			// VALIDAMOS QUE EL PRODCUTO NO TENGA MOVIMIENTOS, PARA PODER ELIMINARSE
+			if(secuenciaFacturacionModelo::valid_secuencia_facturacion_facturas($secuencia_facturacion_id)->num_rows > 0){
+				header('Content-Type: application/json');
+				echo json_encode([
+					"status" => "error",
+					"title" => "No se puede eliminar",
+					"message" => "El puesto {$nombre} tiene colaboradores asociados"
+				]);
+				exit();                
+			}
+
+			if(!secuenciaFacturacionModelo::delete_secuencia_facturacion_modelo($secuencia_facturacion_id)){
+				header('Content-Type: application/json');
+				echo json_encode([
+					"status" => "error",
+					"title" => "Error",
+					"message" => "No se pudo eliminar el puesto {$nombre}"
+				]);
+				exit();
+			}
+			
+			header('Content-Type: application/json');
+			echo json_encode([
+				"status" => "success",
+				"title" => "Eliminado",
+				"message" => "Secuencia de facturacion {$nombre} eliminada correctamente"
+			]);
+			exit();
 		}
 	}
-?>

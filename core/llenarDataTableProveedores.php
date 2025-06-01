@@ -20,7 +20,8 @@
 			"telefono"=>$row['telefono'],
 			"correo"=>$row['correo'],
 			"departamento"=>$row['departamento'],
-			"municipio"=>$row['municipio']			
+			"municipio"=>$row['municipio'],
+			"estado"=>$row['estado']
 		);		
 	}
 	
@@ -32,4 +33,3 @@
 	);
 
 	echo json_encode($arreglo);
-?>

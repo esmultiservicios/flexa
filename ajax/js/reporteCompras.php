@@ -1,21 +1,25 @@
 <script>
-$(document).ready(function() {
+//reporteCompras.php    
+$(() => {
     getReporteCompras();
     listar_reporte_compras();
     $('#form_main_compras #tipo_compras_reporte').val(1);
     $('#form_main_compras #tipo_compras_reporte').selectpicker('refresh');
-});
 
-$('#form_main_compras #tipo_compras_reporte').on("change", function(e) {
-    listar_reporte_compras();
-});
+    $('#form_main_compras #search').on("click", function(e) {
+        e.preventDefault();
+        listar_reporte_compras();
+    });
 
-$('#form_main_compras #fechai').on("change", function(e) {
-    listar_reporte_compras();
-});
+    // Evento para el botón de Limpiar (reset)
+    $('#form_main_compras').on('reset', function() {
+        // Limpia y refresca los selects
+        $(this).find('.selectpicker')  // Usa `this` para referenciar el formulario actual
+            .val('')
+            .selectpicker('refresh');
 
-$('#form_main_compras #fechaf').on("change", function(e) {
-    listar_reporte_compras();
+			listar_reporte_compras();
+    });		   
 });
 
 //INICIO REPORTE DE COMPRAS
@@ -46,7 +50,20 @@ var listar_reporte_compras = function() {
                 "data": "fecha"
             },
             {
-                "data": "tipo_documento"
+                "data": "tipo_documento",
+                "render": function(data, type, row) {
+                    if (type === 'display') {
+                        var icon = data === 'Crédito' 
+                            ? '<i class="fas fa-clock mr-1"></i>' 
+                            : '<i class="fas fa-check-circle mr-1"></i>';
+                        var badgeClass = data === 'Crédito' 
+                            ? 'badge badge-pill badge-warning' 
+                            : 'badge badge-pill badge-success';
+                        return '<span class="' + badgeClass + '" style="font-size: 0.95rem; padding: 0.5em 0.8em; font-weight: 600;">' + 
+                            icon + data + '</span>';
+                    }
+                    return data;
+                }
             },
             {
                 "data": "cuenta"
@@ -55,7 +72,13 @@ var listar_reporte_compras = function() {
                 "data": "proveedor"
             },
             {
-                "data": "numero"
+                "data": "numero",
+                "render": function(data, type, row) {
+                    if (type === 'sort') {
+                        return parseInt(row.numero_ordenamiento);
+                    }
+                    return data;
+                }
             },
             {
                 "data": "subtotal",
@@ -134,16 +157,20 @@ var listar_reporte_compras = function() {
                 },
             },
             {
-                "defaultContent": "<button class='table_reportes print_compras btn btn-dark ocultar'><span class='fas fa-file-download fa-lg'></span></button>"
+                "defaultContent": "<button class='table_reportes print_compras btn btn-success ocultar'><span class='fas fa-file-download fa-lg'></span>Factura</button>"
             },
             {
-                "defaultContent": "<button class='table_cancelar cancelar_compras btn btn-dark ocultar'><span class='fas fa-ban fa-lg'></span></button>"
+                "defaultContent": "<button class='table_cancelar cancelar_compras btn btn-danger ocultar'><span class='fas fa-ban fa-lg'></span>Anular</button>"
             }
         ],
+        "order": [[4, "desc"]], // Ordenar por número descendente
+        "orderFixed": {
+            "pre": [[4, "desc"]]
+        },
         "lengthMenu": lengthMenu10,
         "stateSave": true,
         "bDestroy": true,
-        "language": idioma_español, //esta se encuenta en el archivo main.js
+        "language": idioma_español,
         "dom": dom,
         "columnDefs": [{
                 width: "9.09%",
@@ -199,35 +226,22 @@ var listar_reporte_compras = function() {
                 });
             }
 
-            // Sumar los valores de la columna de Subtotal
-            var subtotal = api.column(5, {
-                page: 'current'
-            }).data().reduce(function(a, b) {
+            var subtotal = api.column(5, {page: 'current'}).data().reduce(function(a, b) {
                 return a + parseFloat(b);
             }, 0);
 
-            // Sumar los valores de la columna de ISV
-            var isv = api.column(6, {
-                page: 'current'
-            }).data().reduce(function(a, b) {
+            var isv = api.column(6, {page: 'current'}).data().reduce(function(a, b) {
                 return a + parseFloat(b);
             }, 0);
 
-            // Sumar los valores de la columna de Descuento
-            var descuento = api.column(7, {
-                page: 'current'
-            }).data().reduce(function(a, b) {
+            var descuento = api.column(7, {page: 'current'}).data().reduce(function(a, b) {
                 return a + parseFloat(b);
             }, 0);
 
-            // Sumar los valores de la columna de Total
-            var total = api.column(8, {
-                page: 'current'
-            }).data().reduce(function(a, b) {
+            var total = api.column(8, {page: 'current'}).data().reduce(function(a, b) {
                 return a + parseFloat(b);
             }, 0);
 
-            // Mostrar los totales con formato en las celdas correspondientes del pie de la tabla
             $('#subtotal-i').html(formatNumber(subtotal));
             $('#impuesto-i').html(formatNumber(isv));
             $('#descuento-i').html(formatNumber(descuento));
@@ -247,8 +261,7 @@ var listar_reporte_compras = function() {
                 text: '<i class="fas fa-file-excel fa-lg"></i> Excel',
                 titleAttr: 'Excel',
                 title: 'Reporte de Compras',
-                messageTop: 'Fecha desde: ' + convertDateFormat(fechai) + ' Fecha hasta: ' +
-                    convertDateFormat(fechaf),
+                messageTop: 'Fecha desde: ' + convertDateFormat(fechai) + ' Fecha hasta: ' + convertDateFormat(fechaf),
                 messageBottom: 'Fecha de Reporte: ' + convertDateFormat(today()),
                 className: 'table_reportes btn btn-success ocultar',
                 exportOptions: {
@@ -264,15 +277,14 @@ var listar_reporte_compras = function() {
                 orientation: 'landscape',
                 pageSize: 'LETTER',
                 title: 'Reporte de Compras',
-                messageTop: 'Fecha desde: ' + convertDateFormat(fechai) + ' Fecha hasta: ' +
-                    convertDateFormat(fechaf),
+                messageTop: 'Fecha desde: ' + convertDateFormat(fechai) + ' Fecha hasta: ' + convertDateFormat(fechaf),
                 messageBottom: 'Fecha de Reporte: ' + convertDateFormat(today()),
                 className: 'table_reportes btn btn-danger ocultar',
                 exportOptions: {
                     columns: [0, 1, 2, 3, 4, 5, 6, 7]
                 },
                 customize: function(doc) {
-                    if (imagen) { // Solo agrega la imagen si 'imagen' tiene contenido válido
+                    if (imagen) {
                         doc.content.splice(0, 0, {
                             image: imagen,  
                             width: 100,
@@ -346,23 +358,12 @@ function anular(compras_id) {
         data: 'compras_id=' + compras_id,
         success: function(data) {
             if (data == 1) {
-                swal({
-                    title: "Success",
-                    text: "La factura de compra ha sido anulada con éxito",
-                    icon: "success",
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                    
-                });
+                swal.close(); // Cierra el modal de SweetAlert
+                showNotify('success', 'Success', 'La factura de compra ha sido anulada con éxito');
                 listar_reporte_compras();
             } else {
-                swal({
-                    title: "Error",
-                    text: "La factura de compra no se pudo anular",
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                });
+                swal.close(); // Cierra el modal de SweetAlert
+                showNotify('error', 'Error', 'La factura de compra no se pudo anular');
             }
         }
     });

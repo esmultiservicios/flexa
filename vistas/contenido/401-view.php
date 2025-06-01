@@ -9,7 +9,7 @@
 								<img class="mb-4 img-permisos" src="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>vistas/plantilla/img/error-401.png" />
 								<p class="lead">Autorización Requerida</p>
 								<a class="link-return" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">
-									<i class="fas fa-arrow-left mr-1"></i>
+									<i class="fas fa-arrow-left fa-lg mr-1"></i>
 									Regresar al Dashboard
 								</a>
 							</div>

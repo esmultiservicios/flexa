@@ -2,7 +2,7 @@
 $(document).ready(function() {
     listar_correos_configuracion();
     getSMTPSecure();
-    getTipoCorreo();
+    getTipoCorreo();   
 });
 
 //INICIO CORREO
@@ -11,7 +11,7 @@ var listar_correos_configuracion = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL; ?>core/llenarDataTableConfCorreos.php"
+            "url": "<?php echo SERVERURL; ?>core/llenarDataTableConfCorreos.php",
         },
         "columns": [{
                 "data": "tipo_correo"
@@ -29,7 +29,7 @@ var listar_correos_configuracion = function() {
                 "data": "smtp_secure"
             },
             {
-                "defaultContent": "<button class='table_editar btn btn-dark ocultar'><span class='fas fa-edit'></span></button>"
+                "defaultContent": "<button class='table_editar btn ocultar'><span class='fas fa-edit'></span>Editar</button>"
             }
         ],
         "lengthMenu": lengthMenu,
@@ -188,22 +188,9 @@ function testEmail(server, correo, password, port, smtpSecure) {
             '&smtpSecure=' + smtpSecure,
         success: function(data) {
             if (data == 1) {
-                swal({
-                    title: "Success",
-                    text: "Conexión realizada satisfactoriamente",
-                    icon: "success",
-					closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-					closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                    
-                });
+                showNotify('success', 'Success', 'Conexión realizada satisfactoriamente');
             } else {
-                swal({
-                    title: "Error",
-                    text: "Credenciales invalidas, por favor corregir, también recuerde en su servidor de correo: Activar Aplicaciones poco seguras (SmtpClientAuthentication)",
-                    icon: "error",
-					dangerMode: true,
-					closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-					closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                });
+                showNotify('error', 'Error', 'Credenciales invalidas, por favor corregir, también recuerde en su servidor de correo: Activar Aplicaciones poco seguras (SmtpClientAuthentication)');
             }
         }
     });
@@ -397,24 +384,11 @@ function elminarDestinatario(notificaciones_id) {
         data: 'notificaciones_id=' + notificaciones_id,
         success: function(data) {
             if (data == 1) {
-                swal({
-                    title: "Success",
-                    text: "El destinatario ha sido eliminada correctamente",
-                    icon: "success",
-					closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-					closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                    
-                });
+                showNotify('success', 'Success', 'El destinatario ha sido eliminada correctamente');
                 listar_destinatarios();
                 $('#formDestinatarios #correo').focus();
             } else {
-                swal({
-                    title: 'Error',
-                    text: 'Lo sentimos no se puede eliminar el destinatario',
-                    icon: 'error',
-					dangerMode: true,
-					closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-					closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                });
+                showNotify('error', 'Error', 'Lo sentimos no se puede eliminar el destinatario');
             }
         }
     });

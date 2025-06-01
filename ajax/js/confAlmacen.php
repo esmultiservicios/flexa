@@ -3,15 +3,35 @@ $(document).ready(function() {
     listar_almacen();
     getEmpresaAlmacen();
     getUbicacionAlmacen();
+
+	$('#form_main_almacen #search').on("click", function (e) {
+		e.preventDefault();
+		listar_almacen();
+	});
+
+	// Evento para el botón de Limpiar (reset)
+	$('#form_main_almacen').on('reset', function () {
+		// Limpia y refresca los selects
+		$(this).find('.selectpicker') // Usa `this` para referenciar el formulario actual
+			.val('')
+			.selectpicker('refresh');
+
+			listar_almacen();
+	});    
 });
 
 //INICIO ALMACEN
 var listar_almacen = function() {
+    var estado = $('#form_main_almacen #estado_almacen').val();
+
     var table_almacen = $("#dataTableConfAlmacen").DataTable({
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL; ?>core/llenarDataTableAlmacen.php"
+            "url": "<?php echo SERVERURL; ?>core/llenarDataTableAlmacen.php",
+			"data": {
+                "estado": estado
+            }            
         },
         "columns": [{
                 "data": "empresa"
@@ -26,10 +46,29 @@ var listar_almacen = function() {
                 "data": "ubicacion"
             },
             {
-                "defaultContent": "<button class='table_editar btn btn-dark ocultar'><span class='fas fa-edit'></span></button>"
+                "data": "estado",
+                "render": function(data, type, row) {
+                    if (type === 'display') {
+                        var estadoText = data == 1 ? 'Activo' : 'Inactivo';
+                        var icon = data == 1 ? 
+                            '<i class="fas fa-check-circle mr-1"></i>' : 
+                            '<i class="fas fa-times-circle mr-1"></i>';
+                        var badgeClass = data == 1 ? 
+                            'badge badge-pill badge-success' : 
+                            'badge badge-pill badge-danger';
+                        
+                        return '<span class="' + badgeClass + 
+                            '" style="font-size: 0.95rem; padding: 0.5em 0.8em; font-weight: 600;">' +
+                            icon + estadoText + '</span>';
+                    }
+                    return data;
+                }
+            },            
+            {
+                "defaultContent": "<button class='table_editar btn ocultar'><span class='fas fa-edit'></span>Editar</button>"
             },
             {
-                "defaultContent": "<button class='table_eliminar btn btn-dark ocultar'><span class='fa fa-trash'></span></button>"
+                "defaultContent": "<button class='table_eliminar btn ocultar'><span class='fa fa-trash'></span>Eliminar</button>"
             }
         ],
         "lengthMenu": lengthMenu,
@@ -194,48 +233,69 @@ var delete_almacen_dataTable = function(tbody, table) {
     $(tbody).off("click", "button.table_eliminar");
     $(tbody).on("click", "button.table_eliminar", function() {
         var data = table.row($(this).parents("tr")).data();
-        var url = '<?php echo SERVERURL;?>core/editarAlmacen.php';
-        $('#formAlmacen #almacen_id').val(data.almacen_id);
 
-        $.ajax({
-            type: 'POST',
-            url: url,
-            data: $('#formAlmacen').serialize(),
-            success: function(registro) {
-                var valores = eval(registro);
-                $('#formAlmacen').attr({
-                    'data-form': 'update'
-                });
-                $('#formAlmacen').attr({
-                    'action': '<?php echo SERVERURL;?>ajax/eliminarAlmacenAjax.php'
-                });
-                $('#formAlmacen')[0].reset();
-                $('#reg_almacen').hide();
-                $('#edi_almacen').hide();
-                $('#delete_almacen').show();
-                $('#formAlmacen #pro_almacen').val("Eliminar Almacén");
-                $('#formAlmacen #ubicacion_almacen').val(valores[0]);
-                $('#formAlmacen #ubicacion_almacen').selectpicker('refresh');
-                $('#formAlmacen #almacen_almacen').val(valores[1]);
-                $('#formAlmacen #almacen_empresa_id').val(valores[3]);
-                $('#formAlmacen #almacen_empresa_id').selectpicker('refresh');
-
-                if (valores[2] == 1) {
-                    $('#formAlmacen #almacen_activo').attr('checked', true);
-                } else {
-                    $('#formAlmacen #almacen_activo').attr('checked', false);
+        var almacen_id = data.almacen_id;
+        var nombreAlmacen = data.nombre; 
+        
+        // Construir el mensaje de confirmación con HTML
+        var mensajeHTML = `¿Desea eliminar permanentemente el almacén?<br><br>
+                        <strong>Nombre:</strong> ${nombreAlmacen}`;
+        
+        swal({
+            title: "Confirmar eliminación",
+            content: {
+                element: "span",
+                attributes: {
+                    innerHTML: mensajeHTML
                 }
-
-                //DESHABIITAR OBJETOS
-                $('#formAlmacen #almacen_almacen').attr('readonly', true);
-                $('#formAlmacen #ubicacion_almacen').attr('disabled', true);
-                $('#formAlmacen #almacen_activo').attr('disabled', true);
-                $('#formAlmacen #almacen_empresa_id').attr('disabled', true);
-
-                $('#modal_almacen').modal({
-                    show: true,
-                    keyboard: false,
-                    backdrop: 'static'
+            },
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "Cancelar",
+                    value: null,
+                    visible: true,
+                    className: "btn-light"
+                },
+                confirm: {
+                    text: "Sí, eliminar",
+                    value: true,
+                    className: "btn-danger",
+                    closeModal: false
+                }
+            },
+            dangerMode: true,
+            closeOnEsc: false,
+            closeOnClickOutside: false
+        }).then((confirmar) => {
+            if (confirmar) {
+               
+                $.ajax({
+                    type: 'POST',
+                    url: '<?php echo SERVERURL;?>ajax/eliminarAlmacenesAjax.php',
+                    data: {
+                        almacen_id: almacen_id
+                    },
+                    dataType: 'json', // Esperamos respuesta JSON
+                    before: function(){
+                        // Mostrar carga mientras se procesa
+                        showLoading("Eliminando registro...");
+                    },
+                    success: function(response) {
+                        swal.close();
+                        
+                        if(response.status === "success") {
+                            showNotify("success", response.title, response.message);
+                            table.ajax.reload(null, false); // Recargar tabla sin resetear paginación
+                            table.search('').draw();                    
+                        } else {
+                            showNotify("error", response.title, response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        swal.close();
+                        showNotify("error", "Error", "Ocurrió un error al procesar la solicitud");
+                    }
                 });
             }
         });
@@ -287,15 +347,38 @@ function getUbicacionAlmacen() {
 }
 
 function getEmpresaAlmacen() {
-    var url = '<?php echo SERVERURL;?>core/getEmpresa.php';
-
     $.ajax({
+        url: "<?php echo SERVERURL; ?>core/getEmpresa.php",
         type: "POST",
-        url: url,
-        async: true,
-        success: function(data) {
-            $('#formAlmacen #almacen_empresa_id').html("");
-            $('#formAlmacen #almacen_empresa_id').html(data);
+        dataType: "json",
+        success: function(response) {
+            const select = $('#formAlmacen #almacen_empresa_id');
+            select.empty();
+            
+            if(response.success) {
+                response.data.forEach(empresa => {
+                    select.append(`
+                        <option value="${empresa.empresa_id}">
+                            ${empresa.nombre}
+                        </option>
+                    `);
+                });
+                
+                // Establecer valor por defecto si existe
+                if(response.data.length > 0) {
+                    select.val(1); // O el valor que necesites por defecto
+                    select.selectpicker('refresh');
+                }
+            } else {
+                select.append('<option value="">No hay empresas disponibles</option>');
+                showNotify("warning", "Advertencia", response.message || "No se encontraron empresas");
+            }
+            
+            select.selectpicker('refresh');
+        },
+        error: function(xhr) {
+            showNotify("error", "Error", "Error de conexión al cargar empresas");
+            $('#formAlmacen #almacen_empresa_id').html('<option value="">Error al cargar</option>');
             $('#formAlmacen #almacen_empresa_id').selectpicker('refresh');
         }
     });

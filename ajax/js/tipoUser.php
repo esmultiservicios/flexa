@@ -1,21 +1,60 @@
 <script>
 $(document).ready(function() {
-    listar_tipo_usuario();    
+    listar_tipo_usuario(); 
+	
+	$('#form_main_permisos #search').on("click", function (e) {
+		e.preventDefault();
+		listar_tipo_usuario();
+	});
+
+	// Evento para el botón de Limpiar (reset)
+	$('#form_main_permisos').on('reset', function () {
+		// Limpia y refresca los selects
+		$(this).find('.selectpicker') // Usa `this` para referenciar el formulario actual
+			.val('')
+			.selectpicker('refresh');
+
+			listar_tipo_usuario();
+	});
 });
 
 //INICIO ACCIONES FROMULARIO TIPO USUARIO
 var listar_tipo_usuario = function(){
+	var estado = $('#form_main_permisos #estado_medidas').val();
+
 	var table_tipo_usuario  = $("#dataTableTipoUser").DataTable({
 		"destroy":true,
 		"ajax":{
 			"method":"POST",
-			"url":"<?php echo SERVERURL;?>core/llenarDataTableTipoUsuario.php"
+			"url":"<?php echo SERVERURL;?>core/llenarDataTableTipoUsuario.php",
+			"data": {
+                "estado": estado
+            }			
 		},
 		"columns":[
 			{"data":"nombre"},
-			{"defaultContent":"<button class='table_permisos btn btn-dark'><span class='fas fa-users-cog fa-lg'></span></button>"},
-			{"defaultContent":"<button class='table_editar1 btn btn-dark'><span class='fas fa-edit fa-lg'></span></button>"},
-			{"defaultContent":"<button class='table_eliminar1 btn btn-dark'><span class='fa fa-trash fa-lg'></span></button>"}
+			{
+				"data": "estado",
+				"render": function(data, type, row) {
+					if (type === 'display') {
+						var estadoText = data == 1 ? 'Activo' : 'Inactivo';
+						var icon = data == 1 ? 
+							'<i class="fas fa-check-circle mr-1"></i>' : 
+							'<i class="fas fa-times-circle mr-1"></i>';
+						var badgeClass = data == 1 ? 
+							'badge badge-pill badge-success' : 
+							'badge badge-pill badge-danger';
+						
+						return '<span class="' + badgeClass + 
+							   '" style="font-size: 0.95rem; padding: 0.5em 0.8em; font-weight: 600;">' +
+							   icon + estadoText + '</span>';
+					}
+					return data;
+				}
+			},			
+			{"defaultContent":"<button class='table_permisos btn btn-dark'><span class='fas fa-users-cog fa-lg'></span>Asignar</button>"},
+			{"defaultContent":"<button class='table_editar1 table_editar btn btn-dark'><span class='fas fa-edit fa-lg'></span>Editar</button>"},
+			{"defaultContent":"<button class='table_eliminar1 table_eliminar btn btn-dark'><span class='fa fa-trash fa-lg'></span>Eliminar</button>"}
 		],
         "lengthMenu": lengthMenu,
 		"stateSave": true,
@@ -187,42 +226,72 @@ var eliminar_tipo_usuario_dataTable = function(tbody, table){
 	$(tbody).off("click", "button.table_eliminar1");
 	$(tbody).on("click", "button.table_eliminar1", function(){
 		var data = table.row( $(this).parents("tr") ).data();
-		var url = '<?php echo SERVERURL;?>core/editarTipoUsuario.php';
-		$('#formTipoUsuario #tipo_user_id').val(data.tipo_user_id);
 
-		$.ajax({
-			type:'POST',
-			url:url,
-			data:$('#formTipoUsuario').serialize(),
-			success: function(registro){
-				var valores = eval(registro);
-				$('#formTipoUsuario').attr({ 'data-form': 'delete' });
-				$('#formTipoUsuario').attr({ 'action': '<?php echo SERVERURL;?>ajax/eliminarTipoUsuarioAjax.php' });
-				$('#formTipoUsuario')[0].reset();
-				$('#reg_tipo_usuario').hide();
-				$('#edi_tipo_usuario').hide();
-				$('#delete_tipo_usuario').show();
-				$('#formTipoUsuario #tipo_usuario_nombre').val(valores[0]);
-
-				if(valores[1] == 1){
-					$('#formTipoUsuario #tipo_usuario_activo').attr('checked', true);
-				}else{
-					$('#formTipoUsuario #tipo_usuario_activo').attr('checked', false);
-				}
-
-				//DESHABIITAR OBJETOS
-				$('#formTipoUsuario #tipo_usuario_nombre').attr('readonly', true);
-				$('#formTipoUsuario #tipo_usuario_activo').attr('disabled', true);
-				$('#formTipoUsuario #estado_tipo_usuario').hide();
-
-				$('#formTipoUsuario #proceso_tipo_usuario').val("Eliminar");
-				$('#modal_registrar_tipoUsuario').modal({
-					show:true,
-					keyboard: false,
-					backdrop:'static'
-				});
-			}
-		});
+		var tipo_user_id = data.tipo_user_id;
+        var nombreTipoUsuario = data.nombre; 
+        
+        // Construir el mensaje de confirmación con HTML
+        var mensajeHTML = `¿Desea eliminar permanentemente el tipo de usuario?<br><br>
+                        <strong>Nombre:</strong> ${nombreTipoUsuario}`;
+        
+        swal({
+            title: "Confirmar eliminación",
+            content: {
+                element: "span",
+                attributes: {
+                    innerHTML: mensajeHTML
+                }
+            },
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "Cancelar",
+                    value: null,
+                    visible: true,
+                    className: "btn-light"
+                },
+                confirm: {
+                    text: "Sí, eliminar",
+                    value: true,
+                    className: "btn-danger",
+                    closeModal: false
+                }
+            },
+            dangerMode: true,
+            closeOnEsc: false,
+            closeOnClickOutside: false
+        }).then((confirmar) => {
+            if (confirmar) {
+               
+                $.ajax({
+                    type: 'POST',
+                    url: '<?php echo SERVERURL;?>ajax/eliminarTipoUsuariosAjax.php',
+                    data: {
+                        tipo_user_id: tipo_user_id
+                    },
+                    dataType: 'json', // Esperamos respuesta JSON
+                    before: function(){
+                        // Mostrar carga mientras se procesa
+                        showLoading("Eliminando registro...");
+                    },
+                    success: function(response) {
+                        swal.close();
+                        
+                        if(response.status === "success") {
+                            showNotify("success", response.title, response.message);
+                            table.ajax.reload(null, false); // Recargar tabla sin resetear paginación
+                            table.search('').draw();                    
+                        } else {
+                            showNotify("error", response.title, response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        swal.close();
+                        showNotify("error", "Error", "Ocurrió un error al procesar la solicitud");
+                    }
+                });
+            }
+        });
 	});
 }
 //FIN ACCIONES FROMULARIO TIPO USUARIO

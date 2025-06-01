@@ -1,4 +1,5 @@
-<div class="container-fluid">	
+<div class="container-fluid">
+	<!-- Empresa -->
 	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
 		<div class="container-fluid">
 			<ol class="breadcrumb mb-0">
@@ -9,16 +10,46 @@
 			</ol>
 		</div>
 	</nav>
-		
+
+	<div class="card mb-4">
+        <div class="card-body">
+            <form id="form_main_empresa">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="form-group">
+                            <label class="small mb-1">Estado</label>
+                            <select id="estado_empresa" name="estado_empresa" class="form-control selectpicker" title="Estado" data-live-search="true">
+								<option value="1">Activo</option>
+								<option value="0">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12 text-right">
+                        <button type="submit" class="btn btn-primary mr-2" id="search">
+                            <i class="fas fa-filter fa-lg"></i> Filtrar
+                        </button>
+                        <button type="reset" class="btn btn-secondary">
+                            <i class="fas fa-broom fa-lg"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     <div class="card mb-4">
 		<div class="card mb-4">
 			<div class="card-header">
-				<i class="fas fa-building mr-1"></i>
+				<i class="fas fa-building fa-lg mr-1"></i>
 				Empresa
 			</div>
 			<div class="card-body"> 
 				<div class="table-responsive">
-					<table id="dataTableEmpresa" class="table table-striped table-condensed table-hover" style="width:100%">
+					<table id="dataTableEmpresa" class="table table-header-gradient table-striped table-condensed table-hover" style="width:100%">
 						<thead>
 							<tr>
 								<th>Imagen</th>
@@ -28,6 +59,7 @@
 								<th>Correo</th>
 								<th>RTN</th>
 								<th>Ubicación</th>
+								<th>Estado</th>
 								<th>Editar</th>	
 								<th>Eliminar</th>
 							</tr>

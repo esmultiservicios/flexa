@@ -5,18 +5,19 @@
     </ol>-->
     <div class="card mb-4">
         <div class="card-header">
-            <i class="fas fa-file-invoice-dollar mr-1"></i>
+            <i class="fas fa-file-invoice-dollar fa-lg mr-1"></i>
             Compras
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <form class="FormularioAjax" id="purchase-form" action="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>ajax/addComprasAjax.php"
+                <form class="FormularioAjax" id="purchase-form"
+                    action="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>ajax/addComprasAjax.php"
                     method="POST" data-form="save" autocomplete="off" enctype="multipart/form-data">
                     <div class="form-group row">
                         <div class="col-sm-6">
-                            <button class="btn btn-primary" type="submit" id="reg_factura" form="purchase-form"
+                            <button class="btn btn-success" type="submit" id="reg_factura" form="purchase-form"
                                 data-toggle="tooltip" data-placement="top" title="Ingresar Factura de Compra">
-                                <div class="sb-nav-link-icon"></div><i class="far fa-save fa-lg"></i> Ingresar
+                                <div class="sb-nav-link-icon"></div><i class="far fa-save fa-lg"></i> Registrar
                             </button>
                         </div>
                         <label for="inputFecha" class="col-sm-1 col-form-label-md">Fecha <span
@@ -37,7 +38,7 @@
                                 <input type="hidden" class="form-control" placeholder="Compra" id="compras_id"
                                     name="compras_id" readonly>
                                 <input type="hidden" class="form-control" placeholder="row" id="pucharse_row"
-                                    name="pucharse_row" readonly value="0">                                    
+                                    name="pucharse_row" readonly value="0">
                                 <input type="hidden" class="form-control" placeholder="Proveedor" id="proveedores_id"
                                     name="proveedores_id" required>
                                 <select id="proveedor" name="proveedor" required class="selectpicker col-12"
@@ -88,10 +89,10 @@
                         </div>
                     </div>
 
-                    <div class="form-group row table-responsive-xl tableFixHead table table-hover">
+                    <div class="form-group row table-responsive-xl table table-hover">
                         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <table class="table table-bordered table-hover" id="purchaseItem">
-                                <thead class="align-cener">
+                            <table class="table-header-pro table-footer-pro" id="purchaseItem">
+                                <thead class="text-align: center">
                                     <tr>
                                         <th width="2%" scope="col"><input id="checkAllPurchase" class="formcontrol"
                                                 type="checkbox"></th>
@@ -111,14 +112,16 @@
                                         <td><input class="itemRowPurchase" type="checkbox"></td>
                                         <td>
                                             <div class="input-group mb-3">
-                                                <div class="input-group-append">
-                                                    <span data-toggle="tooltip" data-placement="top"
-                                                        title="Búsqueda de Productos" id="icon-search-bar_0"><a
-                                                            data-toggle="modal" href="#"
-                                                            class="btn btn-link form-control buscar_productos_purchase">
-                                                            <div class="sb-nav-link-icon"></div><i
-                                                                class="fas fa-search fa-lg icon-color"></i>
-                                                        </a></span>
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <button type="button" data-toggle="modal"
+                                                            class="btn btn-link buscar_productos_purchase p-0"
+                                                            data-toggle="tooltip" data-placement="top"
+                                                            title="Búsqueda de Productos" id="icon-search-bar_0">
+                                                            <i class="fas fa-search icon-color"
+                                                                style="font-size: 0.875rem;"></i>
+                                                        </button>
+                                                    </div>
                                                     <input type="text" name="bar-code-idPurchase[]"
                                                         id="bar-code-idPurchase_0"
                                                         class="form-control product-bar-codePurchase inputfield-details1"
@@ -150,7 +153,7 @@
                                             <input type="hidden" name="medidaPurchase[]" id="medidaPurchase_0" readonly
                                                 class="form-control buscar_medida_purchase" autocomplete="off">
                                             <input type="date" name="vencimientoPurchase[]" id="vencimientoPurchase_0"
-                                                class="form-control buscar_vencimiento_purchase" autocomplete="off">                                                
+                                                class="form-control buscar_vencimiento_purchase" autocomplete="off">
                                             <input type="hidden" name="bodegaPurchase[]" id="bodegaPurchase_0" readonly
                                                 class="form-control buscar_bodega_purchase" autocomplete="off">
                                         </td>

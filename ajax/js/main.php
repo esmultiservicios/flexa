@@ -55,6 +55,37 @@ function actualizarPermisos() {
     getSubMenu1(privilegio_id);
 }
 
+// Ejecutar al cargar la página
+window.addEventListener('DOMContentLoaded', ajustarMenuResponsivo);
+
+// Ejecutar al redimensionar la ventana
+window.addEventListener('resize', ajustarMenuResponsivo);
+
+// En tu archivo JavaScript o script
+function ajustarMenuResponsivo() {
+  const anchoPantalla = window.innerWidth;
+  
+  if (anchoPantalla < 769) { // Pantallas pequeñas (768px o menos)
+    document.getElementById('facturas').style.display = 'none';
+    document.getElementById('cotizacion').style.display = 'none';
+    document.getElementById('facturaCompras').style.display = 'none';
+
+    //MOSTRAMOS
+    document.getElementById('facturaMovil').style.display = '';
+  } else { // Pantallas grandes
+    document.getElementById('facturas').style.display = '';
+    document.getElementById('cotizacion').style.display = '';
+    document.getElementById('facturaCompras').style.display = '';
+
+    //OCULAMOS
+    document.getElementById('facturaMovil').style.display = 'none';
+  }
+}
+
+// Ejecutar al cargar y al redimensionar la ventana
+window.addEventListener('load', ajustarMenuResponsivo);
+window.addEventListener('resize', ajustarMenuResponsivo);
+
 // Ejecutar al cargar
 actualizarPermisos();
 
@@ -64,7 +95,7 @@ setInterval(actualizarPermisos, 300000); // 300000 ms = 5 minutos
 let renovar = false;
 let tiempoRestante = 0;
 
-function mostrarNotificacionRenovacion(tiempoRestante) {
+async function mostrarNotificacionRenovacion(tiempoRestante) {
     return new Promise((resolve) => {
         swal({
             title: "Renovar Sesión",
@@ -77,15 +108,45 @@ function mostrarNotificacionRenovacion(tiempoRestante) {
                     closeModal: false,
                 },
             },
-            closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-            closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera            
-        }).then((value) => {
+            closeOnEsc: false,
+            closeOnClickOutside: false            
+        }).then(async (value) => {
+            if (value) {
+                // Si el usuario elige renovar
+                const renovacionExitosa = await renovarSesion();
+                if (renovacionExitosa) {
+                    // Solo actualizamos la bitácora si la renovación fue exitosa
+                    await actualizarBitacora();
+                }
+            }
             resolve(value);
         });
     });
 }
 
-function mostrarNotificacionExpiracion() {
+async function renovarSesion() {
+    try {
+        const response = await fetch('<?php echo SERVERURL;?>core/renovar_sesion.php');
+        const data = await response.json();
+
+        if (data.success) {
+            // La renovación fue exitosa, actualizar el tiempo restante
+            tiempoRestante = data.tiempoSesion;
+            // Mostrar notificación de éxito
+            await showNotify('success', 'Sesión renovada', 'Tu sesión ha sido renovada exitosamente');
+            return true;
+        } else {
+            // Mostrar notificación de error
+            await showNotify('error', 'Error', 'No se pudo renovar la sesión: ' + (data.message || 'Error desconocido'));
+            return false;
+        }
+    } catch (error) {        
+        await showNotify('error', 'Error', 'No se pudo conectar al servidor para renovar la sesión');
+        return false;
+    }
+}
+
+async function mostrarNotificacionExpiracion() {
     swal({
         title: "Sesión Expirada",
         text: "Su sesión ha expirado. Serás redirigido a la página de inicio de sesión.",
@@ -97,33 +158,42 @@ function mostrarNotificacionExpiracion() {
             },
         },
         dangerMode: true,
-        closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-        closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera        
-    }).then(() => {
+        closeOnEsc: false,
+        closeOnClickOutside: false        
+    }).then(async () => {
+        // Actualizar la bitácora antes de redirigir
+        await actualizarBitacora();
         // Redirigir al usuario a la página de inicio de sesión
-        window.location.href = '<?php echo SERVERURL; ?>';
+        window.location.href = '<?php echo SERVERURL;?>';
     });
 }
 
-async function renovarSesion() {
-    const response = await fetch('<?php echo SERVERURL; ?>core/renovar_sesion.php');
-    const data = await response.json();
+async function actualizarBitacora() {
+    try {
+        const codigo_bitacora = localStorage.getItem('codigo_bitacora_sd');
+        const hora_salida = new Date().toLocaleTimeString();
+        
+        const response = await $.ajax({
+            url: '<?php echo SERVERURL; ?>core/actualizarBitacora.php',
+            type: 'POST',
+            data: {
+                codigo_bitacora: codigo_bitacora,
+                hora_salida: hora_salida
+            },
+            dataType: 'json'
+        });
 
-    console.log('Estado de sesión renovada:', data);
-
-    if (data.success) {
-        // La renovación fue exitosa, actualizar el tiempo restante
-        tiempoRestante = data.tiempoSesion;
-        // Llamar nuevamente a validarSesion después de renovar
-        await validarSesion();
+        if (!response.success) {            
+            await showNotify('warning', 'Advertencia', 'No se pudo actualizar el registro de la bitácora');
+        }
+    } catch (error) {        
+        await showNotify('error', 'Error', 'Error al intentar actualizar la bitácora');
     }
 }
 
 async function validarSesion() {
-    const response = await fetch('<?php echo SERVERURL; ?>core/verificar_sesion.php?renovar=' + renovar.toString());
+    const response = await fetch('<?php echo SERVERURL;?>core/verificar_sesion.php?renovar=' + renovar.toString());
     const data = await response.json();
-
-    console.log('Estado de sesión:', data);
 
     if (data.estado === 'expired') {
         mostrarNotificacionExpiracion();
@@ -139,7 +209,6 @@ async function validarSesion() {
         }
     }
 }
-
 // Ejecutar validarSesion inicialmente
 //validarSesion();
 
@@ -148,7 +217,7 @@ async function validarSesion() {
 
 //IICIO MENUS
 function getPermisosTipoUsuarioAccesosTable(privilegio_id) {
-    var url = '<?php echo SERVERURL; ?>core/getTipoUsuarioAccesos.php';
+    var url = '<?php echo SERVERURL;?>core/getTipoUsuarioAccesos.php';
 
     $.ajax({
         type: 'POST',
@@ -175,7 +244,7 @@ function getPermisosTipoUsuarioAccesosTable(privilegio_id) {
 }
 
 function getPermisosTipoUsuarioAccesosForms(privilegio_id) {
-    var url = '<?php echo SERVERURL; ?>core/getTipoUsuarioAccesos.php';
+    var url = '<?php echo SERVERURL;?>core/getTipoUsuarioAccesos.php';
 
     $.ajax({
         type: 'POST',
@@ -203,7 +272,7 @@ function getPermisosTipoUsuarioAccesosForms(privilegio_id) {
 }
 
 function getPermisosTipoUsuarioAccesosTableAccion(privilegio_id, tipo) {
-    var url = '<?php echo SERVERURL; ?>core/getTipoUsuarioAccesos.php';
+    var url = '<?php echo SERVERURL;?>core/getTipoUsuarioAccesos.php';
 
     $.ajax({
         type: 'POST',
@@ -235,7 +304,7 @@ function getPermisosTipoUsuarioAccesosTableAccion(privilegio_id, tipo) {
 }
 
 function getMenu(privilegio_id) {
-    var url = '<?php echo SERVERURL; ?>core/getMenuPrivilegios.php';
+    var url = '<?php echo SERVERURL;?>core/getMenuPrivilegios.php';
 
     $.ajax({
         type: 'POST',
@@ -261,7 +330,7 @@ function getMenu(privilegio_id) {
 }
 
 function getSubMenu(privilegio_id) {
-    var url = '<?php echo SERVERURL; ?>core/getSubMenuPrivilegios.php';
+    var url = '<?php echo SERVERURL;?>core/getSubMenuPrivilegios.php';
 
     $.ajax({
         type: 'POST',
@@ -279,18 +348,16 @@ function getSubMenu(privilegio_id) {
                         $('#' + valores_submenu[i].submenu).hide();
                         $('.' + valores_submenu[i].submenu).hide();
                     }
-
-                    console.log(valores_submenu[i].submenu);
                 }
             } catch (e) {
-                console.error('Error:', e);
+                
             }
         }
     });
 }
 
 function getSubMenu1(privilegio_id) {
-    var url = '<?php echo SERVERURL; ?>core/getSubMenuPrivilegios1.php';
+    var url = '<?php echo SERVERURL;?>core/getSubMenuPrivilegios1.php';
 
     $.ajax({
         type: 'POST',
@@ -317,7 +384,7 @@ function getSubMenu1(privilegio_id) {
 }
 
 function getPrivilegioUsuario() {
-    var url = '<?php echo SERVERURL; ?>core/getPrivilegioUsuario.php';
+    var url = '<?php echo SERVERURL;?>core/getPrivilegioUsuario.php';
     var privilegio = null;
 
     $.ajax({
@@ -342,7 +409,7 @@ function getPrivilegioUsuario() {
                     closeOnEsc: false,
                     closeOnClickOutside: false
                 }).then(() => {
-                    window.location.href = "<?php echo SERVERURL; ?>login/";
+                    window.location.href = "<?php echo SERVERURL;?>login/";
                 });
 
                 return;
@@ -350,8 +417,7 @@ function getPrivilegioUsuario() {
 
             privilegio = datos[0]; // Asigna el privilegio
         },
-        error: function(xhr, status, error) {
-            console.error("Error al obtener privilegio:", error);
+        error: function(xhr, status, error) {     
             swal({
                 title: "❌ ¡Error Detectado!",
                 text: "😵‍💫 Algo salió mal al procesar la solicitud. Inténtalo de nuevo más tarde. 🛠️",
@@ -373,7 +439,7 @@ function getPrivilegioUsuario() {
 }
 
 function getSessionUser() {
-    var url = '<?php echo SERVERURL; ?>core/getSessionUser.php';
+    var url = '<?php echo SERVERURL;?>core/getSessionUser.php';
     var db_cliente;
 
     $.ajax({
@@ -389,7 +455,7 @@ function getSessionUser() {
 }
 
 function getPrivilegioTipoUsuario() {
-    var url = '<?php echo SERVERURL; ?>core/getPrivilegioUsuarioTipo.php';
+    var url = '<?php echo SERVERURL;?>core/getPrivilegioUsuarioTipo.php';
     var privilegio;
 
     $.ajax({
@@ -407,7 +473,7 @@ function getPrivilegioTipoUsuario() {
 
 //INICIO OBTETNER EL NOMBRE DE USUARIO QUE INICIO SESIÓN
 function getUserSessionStart() {
-    var url = '<?php echo SERVERURL; ?>core/getUserSession.php';
+    var url = '<?php echo SERVERURL;?>core/getUserSession.php';
 
     $.ajax({
         type: "POST",
@@ -604,7 +670,7 @@ var dom = "<'row'<'col-sm-3'l><'col-sm-6 text-center'B><'col-sm-3'f>>" +
 
 //INICIO CONSUMIDOR FINAL PARA COTIZACION Y FACTURACION
 function getConsumidorFinal() {
-    var url = '<?php echo SERVERURL; ?>core/getConsumidorFinal.php';
+    var url = '<?php echo SERVERURL;?>core/getConsumidorFinal.php';
 
     $.ajax({
         type: 'POST',
@@ -626,7 +692,7 @@ function getConsumidorFinal() {
 }
 
 function getCajero() {
-    var url = '<?php echo SERVERURL; ?>core/getCajero.php';
+    var url = '<?php echo SERVERURL;?>core/getCajero.php';
 
     $.ajax({
         type: 'POST',
@@ -647,7 +713,7 @@ function getCajero() {
 }
 
 function getPorcentajeISV(documento) {
-    var url = '<?php echo SERVERURL; ?>core/getISV.php';
+    var url = '<?php echo SERVERURL;?>core/getISV.php';
 
     var isv;
     $.ajax({
@@ -664,7 +730,7 @@ function getPorcentajeISV(documento) {
 }
 
 function validarISV(documento) {
-    var url = '<?php echo SERVERURL; ?>core/getISV.php';
+    var url = '<?php echo SERVERURL;?>core/getISV.php';
 
     var activo;
     $.ajax({
@@ -719,12 +785,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
 //INICIO PRODUCTOS
 /*INICIO FORMULARIO PRODUCTOS*/
-function modal_productos() {
+function modal_registrar_productos() {
     $('#formProductos').attr({
         'data-form': 'save'
     });
     $('#formProductos').attr({
-        'action': '<?php echo SERVERURL; ?>ajax/agregarProductosAjax.php'
+        'action': '<?php echo SERVERURL;?>ajax/agregarProductosAjax.php'
     });
     $('#formProductos')[0].reset();
     $('#reg_producto').show();
@@ -793,18 +859,20 @@ function modal_productos() {
         $('#formProductos #producto_isv_compra').attr('checked', false);
     }
 
-    $("#formProductos #preview").attr("src", "<?php echo SERVERURL; ?>vistas/plantilla/img/products/image_preview.png");
+    $("#formProductos #preview").attr("src", "<?php echo SERVERURLLOGO;?>/image_preview.png");
 
-    $('#formProductos #proceso_productos').val("Registro de Productos");
+    $('#formProductos #estado_producto').hide();
+
     $('#modal_registrar_productos').modal({
         show: true,
         keyboard: false,
         backdrop: 'static'
     });
 }
+
 /*FIN FORMULARIO PRODUCTOS*/
 function getEmpresaProductos() {
-    var url = '<?php echo SERVERURL; ?>core/getEmpresa.php';
+    var url = '<?php echo SERVERURL;?>core/getEmpresa.php';
 
     $.ajax({
         type: "POST",
@@ -825,7 +893,7 @@ function getEmpresaProductos() {
 }
 
 function getMedida(count) {
-    var url = '<?php echo SERVERURL; ?>core/getMedida.php';
+    var url = '<?php echo SERVERURL;?>core/getMedida.php';
 
     $.ajax({
         type: "POST",
@@ -855,7 +923,7 @@ function getMedida(count) {
 }
 
 function getAlmacen() {
-    var url = '<?php echo SERVERURL; ?>core/getAlmacen.php';
+    var url = '<?php echo SERVERURL;?>core/getAlmacen.php';
 
     $.ajax({
         type: "POST",
@@ -904,7 +972,7 @@ function getAlmacen() {
 }
 
 function getTipoProducto() {
-    var url = '<?php echo SERVERURL; ?>core/getTipoProducto.php';
+    var url = '<?php echo SERVERURL;?>core/getTipoProducto.php';
 
     $.ajax({
         type: "POST",
@@ -925,7 +993,7 @@ function getTipoProducto() {
 }
 
 function getCategoriaProductos() {
-    var url = '<?php echo SERVERURL; ?>core/getCategoriaProductos.php';
+    var url = '<?php echo SERVERURL;?>core/getCategoriaProductos.php';
 
     $.ajax({
         type: "POST",
@@ -943,7 +1011,7 @@ function getCategoriaProductos() {
 }
 
 function getProductos() {
-    var url = '<?php echo SERVERURL; ?>core/getProductos.php';
+    var url = '<?php echo SERVERURL;?>core/getProductos.php';
 
     $.ajax({
         type: "POST",
@@ -963,6 +1031,43 @@ function getProductos() {
 }
 //FIN PRODUCTOS
 
+/*INICIO FORMULARIO PUESTO DE COLABORADORES*/
+function modal_puestos(){
+	  $('#formPuestos').attr({ 'data-form': 'save' });
+	  $('#formPuestos').attr({ 'action': '<?php echo SERVERURL;?>ajax/agregarPuestosAjax.php' });
+	  $('#formPuestos')[0].reset();
+	  $('#reg_puestos').show();
+	  $('#edi_puestos').hide();
+	  $('#delete_puestos').hide();
+
+	  //HABILITAR OBJETOS
+	  $('#formPuestos #puesto').attr('readonly', false);
+	  $('#formPuestos #puestos_activo').attr('disabled', false);
+	  $('#formPuestos #estado_puestos').hide();
+
+	  $('#formPuestos #proceso_puestos').val("Registro");
+	  $('#modal_registrar_puestos').modal({
+		show:true,
+		keyboard: false,
+		backdrop:'static'
+	  });
+
+      $('#modal_registrar_puestos').off('shown.bs.modal').on('shown.bs.modal', function(){
+            $(this).find('#formPuestos #puesto').focus();
+      });
+
+      // Escuchar cuando se cierra el modal (después de un registro exitoso)
+    $('#modal_registrar_puestos').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+            // Listener para después del cierre
+            $('#modal_registrar_puestos').on('hidden.bs.modal', function () {
+                if($('#formPuestos').data('success')) {
+                    alert("hey haz llegado hasta aqui");
+                }
+            });
+    });
+}
+/*FIN FORMULARIO PUESTO DE COLABORADORES*/
+
 //INICIO CLIENTES
 /*INICIO FORMULARIO CLIENTES*/
 function modal_clientes() {
@@ -971,7 +1076,7 @@ function modal_clientes() {
         'data-form': 'save'
     });
     $('#formClientes').attr({
-        'action': '<?php echo SERVERURL; ?>ajax/agregarClientesAjax.php'
+        'action': '<?php echo SERVERURL;?>ajax/agregarClientesAjax.php'
     });
     $('#formClientes')[0].reset();
     $('#reg_cliente').show();
@@ -1002,7 +1107,7 @@ function modal_clientes() {
 }
 
 function getDepartamentoClientes() {
-    var url = '<?php echo SERVERURL; ?>core/getDepartamentos.php';
+    var url = '<?php echo SERVERURL;?>core/getDepartamentos.php';
 
     $.ajax({
         type: "POST",
@@ -1026,7 +1131,7 @@ function modal_proveedores() {
         'data-form': 'save'
     });
     $('#formProveedores').attr({
-        'action': '<?php echo SERVERURL; ?>ajax/agregarProveedoresAjax.php'
+        'action': '<?php echo SERVERURL;?>ajax/agregarProveedoresAjax.php'
     });
     $('#formProveedores')[0].reset();
     $('#reg_proveedor').show();
@@ -1057,7 +1162,7 @@ function modal_proveedores() {
 }
 
 function getDepartamentoProveedores() {
-    var url = '<?php echo SERVERURL; ?>core/getDepartamentos.php';
+    var url = '<?php echo SERVERURL;?>core/getDepartamentos.php';
 
     $.ajax({
         type: "POST",
@@ -1072,7 +1177,7 @@ function getDepartamentoProveedores() {
 }
 
 function getMunicipiosProveedores(municipios_id) {
-    var url = '<?php echo SERVERURL; ?>core/getMunicipios.php';
+    var url = '<?php echo SERVERURL;?>core/getMunicipios.php';
 
     var departamentos_id = $('#formProveedores #departamento_proveedores').val();
 
@@ -1092,7 +1197,7 @@ function getMunicipiosProveedores(municipios_id) {
 }
 
 $('#formProveedores #departamento_proveedores').on('change', function() {
-    var url = '<?php echo SERVERURL; ?>core/getMunicipios.php';
+    var url = '<?php echo SERVERURL;?>core/getMunicipios.php';
 
     var departamentos_id = $('#formProveedores #departamento_proveedores').val();
 
@@ -1125,14 +1230,7 @@ $('#form-cambiarcontra #contranaterior').on('blur', function() {
             },
             success: function(datos) {
                 if (datos == 0) {
-                    swal({
-                        title: "Error",
-                        text: "La contraseña que ingresó no coincide con la anterior",
-                        icon: "error",
-                        dangerMode: true,
-                        closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                        closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                    });
+                    showNotify('error', 'Error', 'La contraseña que ingresó no coincide con la anterior');
                     $("#form-cambiarcontra #contranaterior").css("border-color", "red");
                     $("#form-cambiarcontra #ModalContraseñacontra_Edit").prop('disabled', true);
                 } else {
@@ -1543,7 +1641,7 @@ function enviarFormulario(url, params) {
 function printQuote(cotizacion_id) {
     params = {
         "id": cotizacion_id,
-        "type": "Factura_Cotizacion",
+        "type": "Cotizacion_carta_izzy",
         "db": "<?php echo $GLOBALS['db']; ?>"
     };   
 
@@ -1552,7 +1650,7 @@ function printQuote(cotizacion_id) {
 }
 
 function printBill(facturas_id, $print_comprobante) {
-    var url = "<?php echo SERVERURL; ?>core/getImpresoraComprobante.php";
+    var url = "<?php echo SERVERURL;?>core/getImpresoraComprobante.php";
 
     $.ajax({
         type: 'POST',
@@ -1575,7 +1673,7 @@ function printBill(facturas_id, $print_comprobante) {
                 if (formato === "Carta") {
                     params = {
                         "id": facturas_id,
-                        "type": "Factura_Carta",
+                        "type": "Factura_carta_izzy",
                         "db": "<?php echo $GLOBALS['db']; ?>"
                     };
                 } else if (formato === "Media Carta") {
@@ -1592,15 +1690,7 @@ function printBill(facturas_id, $print_comprobante) {
                     };                
                 } else {
                     // Manejar caso donde el formato no sea válido
-                    swal({
-                        title: "Error",
-                        text: "El formato de impresión no es válido. Verifica la configuración de la impresora.",
-                        icon: "error",
-                        button: "Cerrar",
-                        dangerMode: true,
-                        closeOnEsc: false,
-                        closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                      
-                    });
+                    showNotify('error', 'Error', 'El formato de impresión no es válido. Verifica la configuración de la impresora.');
                     return; // Salir si el formato no es válido
                 }
 
@@ -1608,38 +1698,11 @@ function printBill(facturas_id, $print_comprobante) {
                 viewReport(params);
             } else {
                 // Usando SweetAlert en lugar de alert
-                swal({
-                    title: "Error",
-                    text: "La impresora no está activa. Diríjase al menú de 'Configuración' > 'Impresoras' para activar la impresora. Después de activarla, podrás reimprimir la factura desde el reporte de facturación.",
-                    icon: "error",
-                    buttons: {
-                        confirm: {
-                            text: "Cerrar",
-                            closeModal: true,
-                        },
-                    },
-                    dangerMode: true,
-                    closeOnEsc: false,
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                });
+                 showNotify('error', 'Error', 'La impresora no está activa. Diríjase al menú de "Configuración" > "Impresoras" para activar la impresora. Después de activarla, podrás reimprimir la factura desde el reporte de facturación.');
             }
         },
-        error: function(xhr, status, error) {
-            console.error("Error en la solicitud AJAX:", error);
-            swal({
-                title: "Error",
-                text: "Hubo un problema al procesar la solicitud.",
-                icon: "error",
-                buttons: {
-                    confirm: {
-                        text: "Cerrar",
-                        closeModal: true,
-                    },
-                },
-                dangerMode: true,
-                closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera              
-            });
+        error: function(xhr, status, error) {            
+            showNotify('error', 'Error', 'Hubo un problema al procesar la solicitud.');
         }
     });
 
@@ -1647,7 +1710,7 @@ function printBill(facturas_id, $print_comprobante) {
 }
 
 function printBillReporteVentas(facturas_id, print_comprobante) {
-    var url = "<?php echo SERVERURL; ?>core/getImpresoraComprobante.php";
+    var url = "<?php echo SERVERURL;?>core/getImpresoraComprobante.php";
 
     $.ajax({
         type: 'POST',
@@ -1670,7 +1733,7 @@ function printBillReporteVentas(facturas_id, print_comprobante) {
                 if (formato === "Carta") {
                     params = {
                         "id": facturas_id,
-                        "type": "Factura_Carta",
+                        "type": "Factura_carta_izzy",
                         "db": "<?php echo $GLOBALS['db']; ?>"
                     };
                 } else if (formato === "Media Carta") {
@@ -1687,15 +1750,7 @@ function printBillReporteVentas(facturas_id, print_comprobante) {
                     };                
                 } else {
                     // Manejar caso donde el formato no sea válido
-                    swal({
-                        title: "Error",
-                        text: "El formato de impresión no es válido. Verifica la configuración de la impresora.",
-                        icon: "error",
-                        button: "Cerrar",
-                        dangerMode: true,
-                        closeOnEsc: false,
-                        closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                      
-                    });
+                    showNotify('error', 'Error', 'El formato de impresión no es válido. Verifica la configuración de la impresora.');
                     return; // Salir si el formato no es válido
                 }
 
@@ -1719,28 +1774,14 @@ function printBillReporteVentas(facturas_id, print_comprobante) {
                 });
             }
         },
-        error: function(xhr, status, error) {
-            console.error("Error en la solicitud AJAX:", error);
-            swal({
-                title: "Error",
-                text: "Hubo un problema al procesar la solicitud.",
-                icon: "error",
-                buttons: {
-                    confirm: {
-                        text: "Cerrar",
-                        closeModal: true,
-                    },
-                },
-                dangerMode: true,
-                closeOnEsc: false,
-                closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-            });
+        error: function(xhr, status, error) {            
+            showNotify('error', 'Error', 'Hubo un problema al procesar la solicitud.');
         }
     });
 }
 
 function printBillComprobanteReporteVentas(facturas_id, print_comprobante) {
-    var url = "<?php echo SERVERURL; ?>core/getImpresoraComprobante.php";
+    var url = "<?php echo SERVERURL;?>core/getImpresoraComprobante.php";
 
     $.ajax({
         type: 'POST',
@@ -1754,7 +1795,7 @@ function printBillComprobanteReporteVentas(facturas_id, print_comprobante) {
 
             // Comprobar si la impresora está activa
             if (impresora && impresora.estado == 1) {
-                var baseUrl = '<?php echo SERVERURL; ?>core/';
+                var baseUrl = '<?php echo SERVERURL;?>core/';
                 var endpoint = 'generaComprobanteEntrega.php';
 
                 // Generar la URL con los parámetros de facturas_id y formato
@@ -1762,47 +1803,19 @@ function printBillComprobanteReporteVentas(facturas_id, print_comprobante) {
 
                 // Abrir la URL generada
                 window.open(baseUrl + endpoint + params);
-                console.log('Comprobante Tipo:', impresora.tipo);
             } else {
                 // Usando SweetAlert en lugar de alert
-                swal({
-                    title: "Error",
-                    text: "No hay impresoras activas o configuradas.",
-                    icon: "error",
-                    buttons: {
-                        confirm: {
-                            text: "Cerrar",
-                            closeModal: true,
-                        },
-                    },
-                    dangerMode: true,
-                    closeOnEsc: false,
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-                });
+                showNotify('error', 'Error', 'No hay impresoras activas o configuradas.');
             }
         },
         error: function(xhr, status, error) {
-            console.error("Error en la solicitud AJAX:", error);
-            swal({
-                title: "Error",
-                text: "Hubo un problema al procesar la solicitud.",
-                icon: "error",
-                buttons: {
-                    confirm: {
-                        text: "Cerrar",
-                        closeModal: true,
-                    },
-                },
-                dangerMode: true,
-                closeOnEsc: false,
-                closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera
-            });
+            showNotify('error', 'Error', 'Hubo un problema al procesar la solicitud.');
         }
     });
 }
 
 function printComprobanteCajas(apertura_id) {
-    var url = "<?php echo SERVERURL; ?>core/llenarDataTableImpresora.php";
+    var url = "<?php echo SERVERURL;?>core/llenarDataTableImpresora.php";
 
     $.ajax({
         type: 'POST',
@@ -1866,13 +1879,7 @@ function sendQuote(cotizacion_id) {
         success: function(data) {
             bill = data;
             if (bill == 1) {
-                swal({
-                    title: "Success",
-                    text: "La cotización ha sido enviada por correo satisfactoriamente",
-                    icon: "success",
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                     
-                });
+                showNotify('success', 'Success', 'La cotización ha sido enviada por correo satisfactoriamente');
             }
         }
     });
@@ -1935,13 +1942,7 @@ function sendMail(facturas_id) {
         success: function(data) {
             bill = data;
             if (bill == 1) {
-                swal({
-                    title: "Success",
-                    text: "La factura ha sido enviada por correo satisfactoriamente",
-                    icon: "success",
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                     
-                });
+                showNotify('success', 'Success', 'La factura ha sido enviada por correo satisfactoriamente');
             }
         }
     });
@@ -1990,7 +1991,7 @@ function modal_colaboradores() {
         'data-form': 'save'
     });
     $('#formColaboradores').attr({
-        'action': '<?php echo SERVERURL; ?>ajax/agregarColaboradorAjax.php'
+        'action': '<?php echo SERVERURL;?>ajax/agregarColaboradorAjax.php'
     });
     $('#formColaboradores')[0].reset();
     $('#reg_colaborador').show();
@@ -1999,7 +2000,6 @@ function modal_colaboradores() {
 
     //HABILITAR OBJETOS
     $('#formColaboradores #nombre_colaborador').attr('readonly', false);
-    $('#formColaboradores #apellido_colaborador').attr('readonly', false);
     $('#formColaboradores #identidad_colaborador').attr('readonly', false);
     $('#formColaboradores #telefono_colaborador').attr('readonly', false);
     $('#formColaboradores #puesto_colaborador').attr('disabled', false);
@@ -2011,6 +2011,9 @@ function modal_colaboradores() {
     $('#formColaboradores #buscar_colaborador_empresa').show();
     $('#formColaboradores #estado_colaboradores').hide();
 
+    $('#formColaboradores #datosClientes').hide();
+    $('#formColaboradores #estado_colaborador').hide();
+
     $('#formColaboradores #proceso_colaboradores').val("Registro");
     $('#modal_registrar_colaboradores').modal({
         show: true,
@@ -2020,30 +2023,69 @@ function modal_colaboradores() {
 }
 
 function getPuestoColaboradores() {
-    var url = '<?php echo SERVERURL; ?>core/getPuestoColaboradores.php';
-
     $.ajax({
+        url: "<?php echo SERVERURL; ?>core/getPuestoColaboradores.php",
         type: "POST",
-        url: url,
-        async: true,
-        success: function(data) {
-            $('#formColaboradores #puesto_colaborador').html("");
-            $('#formColaboradores #puesto_colaborador').html(data);
+        dataType: "json",
+        success: function(response) {
+            const select = $('#formColaboradores #puesto_colaborador');
+            select.empty();
+            
+            if(response.success) {
+                response.data.forEach(puesto => {
+                    select.append(`
+                        <option value="${puesto.puestos_id}">
+                            ${puesto.nombre}
+                        </option>
+                    `);
+                });
+            } else {
+                select.append('<option value="">No hay colaboradores disponibles</option>');
+            }
+            
+            select.selectpicker('refresh');
+        },
+        error: function(xhr) {
+            showNotify("error", "Error", "Error de conexión al cargar colaboradores");
+            $('#formColaboradores #puesto_colaborador').html('<option value="">Error al cargar</option>');
             $('#formColaboradores #puesto_colaborador').selectpicker('refresh');
         }
     });
 }
 
 function getEmpresaColaboradores() {
-    var url = '<?php echo SERVERURL; ?>core/getEmpresa.php';
-
     $.ajax({
+        url: "<?php echo SERVERURL; ?>core/getEmpresa.php",
         type: "POST",
-        url: url,
-        async: true,
-        success: function(data) {
-            $('#formColaboradores #colaborador_empresa_id').html("");
-            $('#formColaboradores #colaborador_empresa_id').html(data);
+        dataType: "json",
+        success: function(response) {
+            const select = $('#formColaboradores #colaborador_empresa_id');
+            select.empty();
+            
+            if(response.success) {
+                response.data.forEach(empresa => {
+                    select.append(`
+                        <option value="${empresa.empresa_id}">
+                            ${empresa.nombre}
+                        </option>
+                    `);
+                });
+                
+                // Establecer valor por defecto si existe
+                if(response.data.length > 0) {
+                    select.val(1); // O el valor que necesites por defecto
+                    select.selectpicker('refresh');
+                }
+            } else {
+                select.append('<option value="">No hay empresas disponibles</option>');
+                showNotify("warning", "Advertencia", response.message || "No se encontraron empresas");
+            }
+            
+            select.selectpicker('refresh');
+        },
+        error: function(xhr) {
+            showNotify("error", "Error", "Error de conexión al cargar empresas");
+            $('#formColaboradores #colaborador_empresa_id').html('<option value="">Error al cargar</option>');
             $('#formColaboradores #colaborador_empresa_id').selectpicker('refresh');
         }
     });
@@ -2058,7 +2100,7 @@ $('#cambiar_contraseña_usuarios_sistema').on('click', function(e) {
         'data-form': 'update'
     });
     $('#form-cambiarcontra').attr({
-        'action': '<?php echo SERVERURL; ?>ajax/modificarContrasenaAjax.php'
+        'action': '<?php echo SERVERURL;?>ajax/modificarContrasenaAjax.php'
     });
     $('#form-cambiarcontra')[0].reset();
 
@@ -2084,12 +2126,7 @@ $('#cambiar_contraseña_usuarios_sistema').on('click', function(e) {
 //FIN MARCAR ASISTENCIA
 $('#marcarAsistencia').on('click', function(e) {
     e.preventDefault();
-    $('#formAsistencia').attr({
-        'data-form': 'save'
-    });
-    $('#formAsistencia').attr({
-        'action': '<?php echo SERVERURL; ?>ajax/addAsistenciaMarcajeAjax.php'
-    });
+
     $('#formAsistencia')[0].reset();
     $('#reg_asistencia').show();
     $('#edi_asistencia').hide();
@@ -2112,6 +2149,139 @@ $('#marcarAsistencia').on('click', function(e) {
     });
 });
 
+
+$('#formAsistencia').on('submit', function(e) {
+    e.preventDefault();
+
+    // 1. Refrescar selectpickers si existen
+    if ($('.selectpicker').length) {
+        $('.selectpicker').selectpicker('refresh');
+    }
+
+    // 2. Construir objeto de datos manualmente
+    const getValue = (selector) => $(selector).val();
+    const formData = {
+        asistencia_id: getValue('#asistencia_id'),
+        asistencia_empleado: getValue('#asistencia_empleado'),
+        fecha: getValue('#fecha'),
+        hora: getValue('#hora'),
+        horaf: getValue('#horagf') || null,
+        comentario: getValue('#comentario') || '',
+        marcarAsistencia_id: getValue('#marcarAsistencia_id') || 0
+    };
+
+    // 3. Validación básica en cliente
+    const requiredFields = ['asistencia_empleado', 'fecha'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+        showNotify('error', 'Error', `Faltan campos requeridos: ${missingFields.join(', ')}`);
+        return;
+    }
+
+    // 4. Determinar si es creación o edición
+    const isEdit = !!(formData.asistencia_id && String(formData.asistencia_id).trim() !== '' && formData.asistencia_id !== '0');
+
+    const url = isEdit ? '<?php echo SERVERURL;?>core/asistencia/modificarAsistenciaAjax.php' 
+                      : '<?php echo SERVERURL;?>core/asistencia/addAsistenciaMarcajeAjax.php';
+
+    // 5. Configuración de SweetAlert dinámica
+    swal({
+        title: isEdit ? "¿Actualizar asistencia?" : "¿Registrar asistencia?",
+        text: isEdit ? "Confirma los cambios en el registro" : "Confirma que deseas registrar esta asistencia",
+        icon: "info",
+        buttons: {
+            cancel: { 
+                text: "Cancelar", 
+                visible: true, 
+                className: "btn-light" 
+            },
+            confirm: { 
+                text: isEdit ? "Sí, actualizar" : "Sí, registrar",
+                className: "btn-primary"
+            }
+        },
+        dangerMode: false,
+        closeOnEsc: false,
+        closeOnClickOutside: false
+    }).then((willConfirm) => {
+        if (willConfirm) {
+            // 6. Deshabilitar botón durante el envío
+            const submitBtn = isEdit ? $('#edi_asistencia') : $('#reg_asistencia');
+            const originalBtnHtml = submitBtn.html();
+            submitBtn.prop('disabled', true)
+                    .html('<i class="fas fa-spinner fa-spin"></i> Procesando...');
+
+            // 7. Enviar datos
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: formData,
+                dataType: "json",
+                success: function(response) {
+                    // Restaurar botón
+                    submitBtn.prop('disabled', false).html(originalBtnHtml);
+                    
+                    // Mostrar notificación
+                    if (response.Alerta) {
+                        showNotify(response.Tipo, response.Titulo, response.Texto);
+                    } else if (response.status) {
+                        showNotify(response.status, response.title || "Respuesta", response.message);
+                    }
+                    
+                    // Manejar respuesta exitosa
+                    if ((response.Alerta && response.Alerta === "recargar") || response.status === "success") {
+                        // Actualizar la tabla si la función existe
+                        if (typeof listar_asistencia === 'function') {
+                            listar_asistencia();
+                        }
+                        
+                        // Cerrar modal después de 1.5 segundos
+                        setTimeout(() => {
+                            $('#modal_registrar_asistencia').modal('hide');
+                            
+                            // Resetear formulario y estado
+                            $('#formAsistencia')[0].reset();
+                            $('#reg_asistencia').hide();
+                            $('#edi_asistencia').hide();
+                            $('#formAsistencia').attr('data-form', '');
+                            
+                            // Mostrar campos apropiados
+                            $('#grupoHora').show();
+                            $('#grupoHorai').hide();
+                            $('#grupoHoraf').hide();
+                        }, 1500);
+                    }
+                    
+                    // Resaltar campos con error si existen
+                    if (response.missing_fields) {
+                        $('.is-invalid').removeClass('is-invalid');
+                        response.missing_fields.forEach(field => {
+                            $(`[name="${field}"], #${field}`).addClass('is-invalid');
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    // Restaurar botón
+                    submitBtn.prop('disabled', false).html(originalBtnHtml);
+                    
+                    // Manejo de errores mejorado
+                    let errorMsg = "Error al procesar la solicitud";
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        errorMsg = errorResponse.message || errorResponse.Texto || errorMsg;
+                    } catch (e) {
+                        console.error("Error parsing response:", e);
+                    }
+                    
+                    showNotify("error", "Error de conexión", errorMsg);
+                    console.error("Detalles del error:", xhr.responseText);
+                }
+            });
+        }
+    });
+});
+
 $('#formAsistencia #asistencia_empleado').on('change', function() {
     if ($('#formAsistencia #marcarAsistencia_id').val() == 1) {
         $('#formAsistencia #registro_hora').html(getHoraInicio($('#formAsistencia #asistencia_empleado')
@@ -2121,145 +2291,346 @@ $('#formAsistencia #asistencia_empleado').on('change', function() {
 
 //FIN MARCAR ASISTENCIA
 
-//INICIO MODIFICAR PERFIL USUARIO SISTEMA
-//CONSULTAR CODIGO DE CLIENTE
-function getCodigoCliente() {
-    var url = '<?php echo SERVERURL; ?>core/getCodigoCliente.php';
+// Función para cargar código de cliente y PIN - Versión Final
+async function cargarDatosCliente() {
+    try {
+        const response = await $.ajax({
+            url: '<?php echo SERVERURL; ?>core/getCodigoCliente.php',
+            type: 'POST',
+            dataType: 'json'
+        });
 
-    $.ajax({
-        type: 'POST',
-        url: url,
-        success: function(valores) {
-            var datos = eval(valores);
-            $('#formColaboradores #cliente_codigo_colaborador').val(datos[0]);
-            return false;
+        // Ocultar/mostrar elementos según si es DB_MAIN
+        if (response.is_main_db) {
+            // Si es la base de datos principal, ocultamos todo relacionado con PIN
+            $('#badge-codigo-cliente').addClass('d-none');
+            $('#ver-pin-usuario').addClass('d-none');
+            return null;
+        }
+
+        // Validación del código de cliente para bases de datos no principales
+        if (response.success && response.codigo_cliente && !isNaN(response.codigo_cliente)) {
+            const codigo = String(response.codigo_cliente).trim();
+            
+            // Actualizar UI del código de cliente
+            $('#badge-codigo-cliente')
+                .text('CLIENTE: ' + codigo)
+                .removeClass('d-none bg-secondary bg-danger')
+                .addClass('bg-primary');
+            
+            // Mostrar opción de PIN y cargarlo
+            $('#ver-pin-usuario').removeClass('d-none');
+            await cargarPinCliente(codigo, false);
+            
+            return codigo;
+        } else {
+            // Manejar caso cuando no hay código de cliente válido
+            $('#badge-codigo-cliente')
+                .text('Sin código')
+                .removeClass('bg-primary d-none')
+                .addClass('bg-warning');
+                
+            $('#ver-pin-usuario').addClass('d-none');
+            
+            throw new Error(response.error || 'Código de cliente no disponible para esta base de datos');
+        }
+    } catch (error) {        
+        $('#ver-pin-usuario').addClass('d-none');
+        $('#badge-codigo-cliente')
+            .text('Error')
+            .removeClass('d-none bg-primary')
+            .addClass('bg-danger');
+            
+        mostrarErrorCliente(error.message || 'Error al cargar datos del cliente');
+        return null;
+    }
+}
+
+// Función para cargar/actualizar el PIN - Versión Final
+async function cargarPinCliente(codigoCliente, generateNew = false) {
+    // Validación robusta del código de cliente
+    if (!codigoCliente || isNaN(codigoCliente)) {
+        mostrarErrorBadgePin('Código inválido');
+        return null;
+    }
+
+    try {
+        const response = await $.ajax({
+            url: '<?php echo SERVERURL;?>core/generarPinCliente.php',
+            type: 'POST',
+            data: {
+                codigoCliente: codigoCliente,
+                generateNew: generateNew ? 1 : 0
+            },
+            dataType: 'json'
+        });
+
+        if (response.success && response.pin) {
+            const pin = String(response.pin);
+            actualizarUIPin(pin);
+            return pin;
+        } else {
+            throw new Error(response.error || 'PIN no generado');
+        }
+    } catch (error) {        
+        mostrarErrorBadgePin(error.message);
+        return null;
+    }
+}
+
+// Helper para actualizar la UI del PIN
+function actualizarUIPin(pin) {
+    $('#badge-pin-cliente')
+        .text(pin.slice(-4) + '...')
+        .removeClass('bg-danger d-none')
+        .addClass('bg-info');
+        
+    $('#ver-pin-usuario').attr('data-content', `
+        <div class="pin-popover-content">
+            <div class="pin-header">
+                <i class="fas fa-lock mr-2"></i>
+                <span>Tu PIN de acceso</span>
+            </div>
+            <div class="pin-value">${pin}</div>
+            <div class="pin-footer">
+                <small class="text-muted">Válido por 5 minutos</small>
+                <button class="btn btn-sm btn-outline-primary btn-regenerate-pin mt-2">
+                    <i class="fas fa-sync-alt mr-1"></i> Regenerar
+                </button>
+            </div>
+        </div>
+    `);
+}
+
+// Helper para mostrar errores en el badge del PIN
+function mostrarErrorBadgePin(mensaje) {
+    $('#badge-pin-cliente')
+        .text('Error')
+        .removeClass('bg-info')
+        .addClass('bg-danger');
+        
+    if (mensaje) {        
+        mostrarErrorCliente(mensaje);
+    }
+}
+
+// Mostrar error con notificación
+function mostrarErrorCliente(mensaje) {
+    if (typeof showNotify !== 'undefined') {
+        showNotify("error", "Error", mensaje);
+    } else {
+        alert(mensaje);
+    }
+}
+
+// Inicializar popover
+function inicializarPopoverPIN() {
+    $('#ver-pin-usuario').popover({
+        html: true,
+        placement: 'right',
+        trigger: 'click',
+        container: 'body',
+        template: `
+            <div class="popover pin-popover" role="tooltip">
+                <div class="popover-arrow"></div>
+                <div class="popover-body"></div>
+            </div>
+        `
+    });
+    
+    // Cerrar popover al hacer clic fuera
+    $(document).on('click', function(e) {
+        if ($(e.target).data('toggle') !== 'popover'
+            && $(e.target).parents('[data-toggle="popover"]').length === 0
+            && $(e.target).parents('.popover.in').length === 0) { 
+            $('#ver-pin-usuario').popover('hide');
+        }
+    });
+    
+    // Manejar regeneración de PIN desde el popover
+    $(document).on('click', '.btn-regenerate-pin', async function() {
+        const codigoCliente = $('#badge-codigo-cliente').text().replace('CLIENTE: ', '');
+        if (codigoCliente) {
+            await cargarPinCliente(codigoCliente, true);
+            $('#ver-pin-usuario').popover('hide');
+            showNotify("success", "PIN actualizado", "Se ha generado un nuevo PIN");
         }
     });
 }
 
-//GENERAR PIN
-function generatePin(generateNew) {
-    var codigoCliente = $('#formColaboradores #cliente_codigo_colaborador').val();
+// GENERAR PIN - Versión Final
+async function generatePin(generateNew) {
+    const codigoCliente = $('#formColaboradores #cliente_codigo_colaborador').val();
+    const main_db = $('#formColaboradores #main_db').val();
 
-    // Realizar la solicitud Ajax para generar el PIN
-    $.ajax({
-        url: '<?php echo SERVERURL; ?>core/generarPinCliente.php',
-        type: 'POST',
-        data: {
-            codigoCliente: codigoCliente,
-            generateNew: generateNew // Envía el parámetro generateNew al servidor
-        },
-        dataType: 'json',
-        success: function(response) {
-            var pin = response.pin;
+    // No generar PIN si es la base de datos principal
+    if (main_db === "true") {
+        return;
+    }
 
-            // Actualizar el valor del input con el nuevo PIN
-            $('#pin_colaborador').val(pin);
-        },
-        error: function(error) {
-            console.error('Error al generar el PIN: ', error);
+    // Validación estricta para bases de datos no principales
+    if (!codigoCliente || isNaN(codigoCliente)) {
+        showNotify("error", "Error", "Código de cliente no válido");
+        return;
+    }
+
+    try {
+        const response = await $.ajax({
+            url: '<?php echo SERVERURL; ?>core/generarPinCliente.php',
+            type: 'POST',
+            data: {
+                codigoCliente: codigoCliente,
+                generateNew: generateNew
+            },
+            dataType: 'json'
+        });
+
+        // Verificación robusta de la respuesta
+        if (response && response.pin !== undefined && response.pin !== null) {
+            const pinDisplay = String(response.pin);
+            
+            // Actualizar UI
+            $('#formColaboradores #pin_colaborador').val(pinDisplay);
+            actualizarUIPin(pinDisplay);
+            
+            showNotify("success", "PIN generado", "Se ha creado un nuevo PIN");
+        } else {
+            throw new Error(response.error || 'No se recibió un PIN válido del servidor');
         }
-    });
+    } catch (error) {        
+        mostrarErrorBadgePin(error.message);
+        showNotify("error", "Error de conexión", "No se pudo generar el PIN");
+    }
 }
 
-function updateDatePin(newPin) {
-    $.ajax({
-        url: '<?php echo SERVERURL; ?>core/updatePin.php.php', // Reemplaza con la URL correcta para actualizar el PIN
-        type: 'POST',
-        data: {
-            pin: newPin
-        }, // Envía el nuevo PIN al servidor
-        success: function(response) {
-            // Verificar si la actualización fue exitosa
-            if (response.success) {
-                console.log('PIN actualizado correctamente en la base de datos.');
-            } else {
-                console.error('Error al actualizar el PIN en la base de datos.');
+// CONSULTAR CÓDIGO DE CLIENTE - Versión Final
+async function getCodigoCliente() {
+    try {
+        const response = await $.ajax({
+            url: '<?php echo SERVERURL; ?>core/getCodigoCliente.php',
+            type: 'POST',
+            dataType: 'json'
+        });
+
+        // Asignar valores con validación
+        const codigoCliente = response.codigo_cliente || '';
+        $('#formColaboradores #cliente_codigo_colaborador').val(codigoCliente); 
+        $('#formColaboradores #main_db').val(response.is_main_db);
+
+        // Mostrar/ocultar sección de PIN según el tipo de DB
+        if (response.is_main_db) {
+            $('#formColaboradores #datosClientes').hide();
+            $('#badge-codigo-cliente').addClass('d-none');
+        } else {
+            $('#formColaboradores #datosClientes').show();
+            
+            // Generar PIN solo si hay código de cliente válido
+            if (response.success && codigoCliente && !isNaN(codigoCliente)) {
+                await generatePin(0);
             }
-        },
-        error: function(error) {
-            console.error('Error al actualizar el PIN: ', error);
         }
-    });
+    } catch (error) {
+        
+    }
 }
 
-// Asignar la función al evento click del botón "Generar"
-$('#generarPin').on('click', function(event) {
-    event.preventDefault();
-    generatePin(1);
-});
-
-$('#modificar_perfil_usuario_sistema').on('click', function(e) {
+// MODIFICAR PERFIL USUARIO SISTEMA - Versión Final
+$('#modificar_perfil_usuario_sistema').on('click', async function(e) {
     e.preventDefault();
-
     $('#formColaboradores')[0].reset();
-
     $('#estado_colaboradores').hide();
-    $("#datosClientes").show();
-    getCodigoCliente();
 
-    var url = '<?php echo SERVERURL; ?>core/editarColaboradoresUsuario.php';
+    try {
+        // 1. Cargar código de cliente (espera a que termine)
+        await getCodigoCliente();
+        
+        // 2. Cargar datos del colaborador
+        const registro = await $.ajax({
+            url: '<?php echo SERVERURL;?>core/editarColaboradoresUsuario.php',
+            type: 'POST'
+        });
 
-    $.ajax({
-        type: 'POST',
-        url: url,
-        success: function(registro) {
-            var valores = eval(registro);
-            $('#formColaboradores').attr({
-                'data-form': 'update'
-            });
-            $('#formColaboradores').attr({
-                'action': '<?php echo SERVERURL; ?>ajax/modificarColaboradorAjaxMain.php'
-            });
-            $('#reg_colaborador').hide();
-            $('#edi_colaborador').show();
-            $('#delete_colaborador').hide();
-            $('#formColaboradores #nombre_colaborador').val(valores[0]);
-            $('#formColaboradores #apellido_colaborador').val(valores[1]);
-            $('#formColaboradores #identidad_colaborador').val(valores[2]);
-            $('#formColaboradores #telefono_colaborador').val(valores[3]);
-            $('#formColaboradores #puesto_colaborador').val(valores[4]);
-            $('#formColaboradores #colaborador_empresa_id').val(valores[5]);
-            $('#formColaboradores #colaborador_id').val(valores[7]);
-            $('#formColaboradores #fecha_ingreso_colaborador').val(valores[8]);
-            $('#formColaboradores #fecha_egreso_colaborador').val(valores[9]);
+        const valores = JSON.parse(registro);
+        
+        // Configurar formulario
+        $('#formColaboradores').attr({
+            'data-form': 'update',
+            'action': '<?php echo SERVERURL;?>ajax/modificarColaboradorAjaxMain.php'
+        });
+        
+        // Mostrar/ocultar elementos
+        $('#reg_colaborador').hide();
+        $('#edi_colaborador').show();
+        $('#delete_colaborador').hide();
+        
+        // Llenar valores del formulario
+        $('#formColaboradores #nombre_colaborador').val(valores[0]).attr('readonly', false);
+        $('#formColaboradores #identidad_colaborador').val(valores[1]).attr('readonly', false);
+        $('#formColaboradores #telefono_colaborador').val(valores[2]).attr('readonly', false);
+        $('#formColaboradores #puesto_colaborador').val(valores[3]).attr('disabled', true);
+        $('#formColaboradores #colaborador_empresa_id').val(valores[4]).attr('disabled', true);
+        $('#formColaboradores #colaborador_id').val(valores[9]);
+        $('#formColaboradores #fecha_ingreso_colaborador').val(valores[6]).attr('disabled', true);
+        $('#formColaboradores #fecha_egreso_colaborador').val(valores[7]).attr('disabled', true);
+        
+        // Configurar checkbox
+        $('#formColaboradores #colaboradores_activo').prop('checked', valores[5] == 1);
 
-            if (valores[6] == 1) {
-                $('#formColaboradores #colaboradores_activo').attr('checked', true);
-            } else {
-                $('#formColaboradores #colaboradores_activo').attr('checked', false);
-            }
+        $('#formColaboradores #estado_colaborador').hide();
+        
+        // Mostrar modal
+        $('#modal_registrar_colaboradores').modal({
+            show: true,
+            keyboard: false,
+            backdrop: 'static'
+        });
 
-            //HABILITAR OBJETOS
-            $('#formColaboradores #nombre_colaborador').attr('readonly', false);
-            $('#formColaboradores #apellido_colaborador').attr('readonly', false);
-            $('#formColaboradores #identidad_colaborador').attr('readonly', false);
-            $('#formColaboradores #telefono_colaborador').attr('readonly', false);
-            $('#formColaboradores #estado_colaborador').attr('disabled', false);
+    } catch (error) {
+        
+        showNotify("error", "Error", "No se pudo cargar el perfil");
+    }
+});
 
-            //DESHABILITAR OBJETOS
-            $('#formColaboradores #puesto_colaborador').attr('disabled', true);
-            $('#formColaboradores #colaborador_empresa_id').attr('disabled', true);
+// Evento para regenerar PIN desde botón
+$(document).on('click', '#regenerar-pin', async function() {
+    const codigoCliente = $('#badge-codigo-cliente').text().replace('CLIENTE: ', '');
+    if (codigoCliente) {
+        await cargarPinCliente(codigoCliente, true);
+        showNotify("success", "PIN actualizado", "Se ha generado un nuevo PIN");
+    }
+});
 
-            $('#formColaboradores #fecha_ingreso_colaborador').attr('disabled', true);
-            $('#formColaboradores #fecha_egreso_colaborador').attr('disabled', true);
-            $('#formColaboradores #buscar_colaborador_empresa').hide();
+// Evento para mostrar modal del PIN
+$(document).on('click', '#ver-pin-usuario', function(e) {
+    e.preventDefault();
+    $('#pinModal').modal('show');
+});
 
-            $('#formColaboradores #proceso_colaboradores').val("Editar");
-            generatePin(0);
-            $('#modal_registrar_colaboradores').modal({
-                show: true,
-                keyboard: false,
-                backdrop: 'static'
-            });
+// Inicialización al cargar la página
+$(document).ready(function() {
+    inicializarPopoverPIN();
+    cargarDatosCliente();
+    
+    // Actualizar PIN periódicamente (cada minuto) solo si no es DB_MAIN
+    setInterval(async function() {
+        const main_db = $('#formColaboradores #main_db').val();
+        if (main_db === "true") return;
+        
+        const codigoCliente = $('#badge-codigo-cliente').text().replace('CLIENTE: ', '');
+        if (codigoCliente) {
+            await cargarPinCliente(codigoCliente, false);
         }
+    }, 60000);
+    
+    // Evento para botón Generar PIN
+    $('#generarPin').on('click', function(event) {
+        event.preventDefault();
+        generatePin(1);
     });
 });
-//FIN MODIFICAR PERFIL USUARIO SISTEMA
-
 
 function getImagenHeaderConsulta(callback) {
-    var url = '<?php echo SERVERURL; ?>core/get_image.php';
+    var url = '<?php echo SERVERURL;?>core/get_image.php';
 
     // Obtener la URL de la imagen usando Ajax
     $.ajax({
@@ -2270,7 +2641,6 @@ function getImagenHeaderConsulta(callback) {
             callback(imageUrl);
         },
         error: function() {
-            console.error("Error al obtener la URL de la imagen");
             // Puedes manejar errores aquí también, si es necesario.
         }
     });
@@ -2309,7 +2679,7 @@ function validarAperturaCajaUsuario() {
 }
 
 function getConsultarAperturaCaja() {
-    var url = '<?php echo SERVERURL; ?>core/getAperturaCajaUsuario.php';
+    var url = '<?php echo SERVERURL;?>core/getAperturaCajaUsuario.php';
 
     var estado_apertura;
 
@@ -2324,23 +2694,6 @@ function getConsultarAperturaCaja() {
     });
     return estado_apertura;
 }
-
-//INICIO CUENTAS POR COBRAR CLIENTES
-$('#form_main_cobrar_clientes #cobrar_clientes_estado').on("change", function(e) {
-    listar_cuentas_por_cobrar_clientes();
-});
-
-$('#form_main_cobrar_clientes #cobrar_clientes').on("change", function(e) {
-    listar_cuentas_por_cobrar_clientes();
-});
-
-$('#form_main_cobrar_clientes #fechai').on("change", function(e) {
-    listar_cuentas_por_cobrar_clientes();
-});
-
-$('#form_main_cobrar_clientes #fechaf').on("change", function(e) {
-    listar_cuentas_por_cobrar_clientes();
-});
 
 var listar_cuentas_por_cobrar_clientes = function() {
     var estado = "";
@@ -2360,7 +2713,7 @@ var listar_cuentas_por_cobrar_clientes = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL; ?>core/llenarDataTableCobrarClientes.php",
+            "url": "<?php echo SERVERURL;?>core/llenarDataTableCobrarClientes.php",
             "data": {
                 "estado": estado,
                 "clientes_id": clientes_id,
@@ -2375,7 +2728,32 @@ var listar_cuentas_por_cobrar_clientes = function() {
                 "data": "cliente"
             },
             {
-                "data": "numero"
+                "data": "tipo_factura",
+                "render": function(data, type, row) {
+                    if (type === 'display') {
+                        var text = data == 1 ? 'Contado' : 'Crédito';
+                        var icon = data == 1 
+                            ? '<i class="fas fa-clock mr-1"></i>' 
+                            : '<i class="fas fa-check-circle mr-1"></i>';
+                        var badgeClass = data == 1 
+                            ? 'badge badge-pill badge-success' 
+                            : 'badge badge-pill badge-warning';
+                        return '<span class="' + badgeClass + '" style="font-size: 0.95rem; padding: 0.5em 0.8em; font-weight: 600;">' + 
+                            icon + text + '</span>';
+                    }
+                    return data;
+                }
+            },        
+            {
+                "data": "numero",
+                "render": function(data, type, row) {
+                    if (type === 'sort') {
+                        // Para ordenamiento, usamos el número base (row.numero_ordenamiento)
+                        return parseInt(row.numero_ordenamiento);
+                    }
+                    // Para visualización, usamos el formato completo
+                    return data;
+                }
             },
             {
                 data: 'credito',
@@ -2438,13 +2816,13 @@ var listar_cuentas_por_cobrar_clientes = function() {
                 "data": "vendedor"
             },
             {
-                "defaultContent": "<button class='table_abono btn btn-dark'><span class='fas fa-cash-register fa-lg'></span>Abonar</button>"
+                "defaultContent": "<button class='table_abono btn btn-primary'><span class='fas fa-cash-register fa-lg'></span>Abonar</button>"
             },
             {
-                "defaultContent": "<button class='table_reportes abono_factura btn btn-dark ocultar'><span class='fa fa-money-bill-wave fa-solid'></span>Abonos</button>"
+                "defaultContent": "<button class='table_reportes abono_factura btn btn-secondary ocultar'><span class='fa fa-money-bill-wave fa-solid'></span>Abonos</button>"
             },
             {
-                "defaultContent": "<button class='table_reportes print_factura btn btn-dark ocultar'><span class='fas fa-file-download fa-lg'></span>Factura</button>"
+                "defaultContent": "<button class='table_reportes print_factura btn btn-success ocultar'><span class='fas fa-file-download fa-lg'></span>Factura</button>"
             }
         ],
         "pageLength": 10,
@@ -2453,52 +2831,62 @@ var listar_cuentas_por_cobrar_clientes = function() {
         "bDestroy": true,
         "language": idioma_español,
         "dom": dom,
-        "columnDefs": [{
+        "order": [[3, "desc"]], // Ordenar por la columna 3 (número) de forma descendente
+        "orderFixed": {
+            "pre": [[3, "desc"]] // Mantener este orden incluso después de búsquedas/filtros
+        },
+        "columnDefs": [
+            {
                 width: "10%",
-                targets: 0
+                targets: 0 // Fecha
             },
             {
-                width: "16%",
-                targets: 1
+                width: "14%",
+                targets: 1 // Cliente
             },
             {
-                width: "16%",
-                targets: 2
-            },
-            {
-                width: "12%",
-                targets: 3,
+                width: "8%",
+                targets: 2, // Estado (Crédito/Contado)
                 className: "text-center"
             },
             {
                 width: "12%",
-                targets: 4,
+                targets: 3, // Número
                 className: "text-center"
             },
             {
                 width: "12%",
-                targets: 5,
+                targets: 4, // Crédito
                 className: "text-center"
             },
             {
-                width: "16%",
-                targets: 6
+                width: "12%",
+                targets: 5, // Abono
+                className: "text-center"
+            },
+            {
+                width: "12%",
+                targets: 6, // Saldo
+                className: "text-center"
+            },
+            {
+                width: "14%",
+                targets: 7 // Vendedor
             },
             {
                 width: "2%",
-                targets: 7
+                targets: 8 // Botón abono
             },
             {
                 width: "2%",
-                targets: 8
+                targets: 9 // Botón abono factura
             },
             {
                 width: "2%",
-                targets: 9
+                targets: 10 // Botón imprimir factura
             }
         ],
         "footerCallback": function(row, data, start, end, display) {
-            // Aquí puedes calcular los totales y actualizar el footer
             var totalCredito = data.reduce(function(acc, row) {
                 return acc + (parseFloat(row.credito) || 0);
             }, 0);
@@ -2511,21 +2899,15 @@ var listar_cuentas_por_cobrar_clientes = function() {
                 return acc + (parseFloat(row.saldo) || 0);
             }, 0);
 
-            // Formatear los totales con separadores de miles y coma para decimales
             var formatter = new Intl.NumberFormat('es-HN', {
                 style: 'currency',
                 currency: 'HNL',
                 minimumFractionDigits: 2,
             });
 
-            var totalCreditoFormatted = formatter.format(totalCredito);
-            var totalAbonoFormatted = formatter.format(totalAbono);
-            var totalPendienteFormatted = formatter.format(totalPendiente);
-
-            // Asignar los totales a los elementos HTML
-            $('#credito-cxc').html(totalCreditoFormatted);
-            $('#abono-cxc').html(totalAbonoFormatted);
-            $('#total-footer-cxc').html(totalPendienteFormatted);
+            $('#credito-cxc').html(formatter.format(totalCredito));
+            $('#abono-cxc').html(formatter.format(totalAbono));
+            $('#total-footer-cxc').html(formatter.format(totalPendiente));
         },
         "buttons": [{
                 text: '<i class="fas fa-sync-alt fa-lg"></i> Actualizar',
@@ -2558,7 +2940,7 @@ var listar_cuentas_por_cobrar_clientes = function() {
                     columns: [2, 3, 4, 5, 6]
                 },
                 customize: function(doc) {
-                    if (imagen) { // Solo agrega la imagen si 'imagen' tiene contenido válido
+                    if (imagen) {
                         doc.content.splice(0, 0, {
                             image: imagen,  
                             width: 100,
@@ -2598,17 +2980,12 @@ var registrar_abono_cxc_clientes_dataTable = function(tbody, table) {
         var data = table.row($(this).parents("tr")).data();
         if (data.estado == 2 || data.saldo <=
             0) { //no tiene acceso a la accion si la factura ya fue cancelada
-            swal({
-                title: 'Error',
-                text: 'No puede realizar esta accion a las facturas canceladas!',
-                icon: 'error',
-                dangerMode: true,
-                closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-            });
+            showNotify('error', 'Error', 'No puede realizar esta accion a las facturas canceladas!');
         } else {
             $("#GrupoPagosMultiplesFacturas").hide();
             pago(data.facturas_id, 2);
+            // Para facturas
+            //openPaymentModal('factura', 1250.00, 'Cliente Ejemplo', 12345);
         }
     });
 }
@@ -2618,7 +2995,13 @@ var ver_abono_cxc_clientes_dataTable = function(tbody, table) {
     $(tbody).on("click", "button.abono_factura", function(e) {
         e.preventDefault();
         var data = table.row($(this).parents("tr")).data();
-        $('#ver_abono_cxc').modal('show');
+        
+        // Configuración del modal para evitar cierre no deseado
+        $('#ver_abono_cxc').modal({
+            backdrop: 'static', // Evita que se cierre al hacer clic fuera
+            keyboard: false    // Evita que se cierre al presionar ESC
+        }).modal('show');
+        
         $("#formulario_ver_abono_cxc #abono_facturas_id").val(data.facturas_id);
         listar_AbonosCXC();
     });
@@ -2636,7 +3019,7 @@ var ver_abono_cxp_proveedor_dataTable = function(tbody, table) {
 }
 
 function getClientesCXC() {
-    var url = '<?php echo SERVERURL; ?>core/getClientesCXC.php';
+    var url = '<?php echo SERVERURL;?>core/getClientesCXC.php';
 
     $.ajax({
         type: "POST",
@@ -2651,7 +3034,7 @@ function getClientesCXC() {
 }
 
 function getProveedoresCXP() {
-    var url = '<?php echo SERVERURL; ?>core/getProveedoresCXP.php';
+    var url = '<?php echo SERVERURL;?>core/getProveedoresCXP.php';
 
     $.ajax({
         type: "POST",
@@ -2665,32 +3048,42 @@ function getProveedoresCXP() {
     });
 }
 
-//INICIO CUENTAS POR PAGAR PROVEEDORES
-$('#form_main_pagar_proveedores #pagar_proveedores_estado').on("change", function(e) {
-    listar_cuentas_por_pagar_proveedores();
-});
+$(() => {
+    // Evento para el botón de Generar Reporte
+    $('#form_main_cobrar_clientes').on('submit', function(e) {
+        e.preventDefault();
+        listar_cuentas_por_cobrar_clientes();
+    });
 
-$('#form_main_pagar_proveedores #pagar_proveedores').on("change", function(e) {
-    listar_cuentas_por_pagar_proveedores();
-});
+    // Evento para el botón de Limpiar (reset)
+    $('#form_main_cobrar_clientes').on('reset', function() {
+        // Limpia y refresca los selects
+        $(this).find('.selectpicker')  // Usa `this` para referenciar el formulario actual
+            .val('')
+            .selectpicker('refresh');
 
-$('#form_main_pagar_proveedores #fechai').on("change", function(e) {
-    listar_cuentas_por_pagar_proveedores();
-});
+			listar_cuentas_por_cobrar_clientes();
+    });	    
 
-$('#form_main_pagar_proveedores #fechaf').on("change", function(e) {
-    listar_cuentas_por_pagar_proveedores();
+    // Evento para el botón de Generar Reporte
+    $('#form_main_pagar_proveedores').on('submit', function(e) {
+        e.preventDefault();
+        listar_cuentas_por_pagar_proveedores();
+    });
+
+    // Evento para el botón de Limpiar (reset)
+    $('#form_main_pagar_proveedores').on('reset', function() {
+        // Limpia y refresca los selects
+        $(this).find('.selectpicker')  // Usa `this` para referenciar el formulario actual
+            .val('')
+            .selectpicker('refresh');
+
+			listar_cuentas_por_pagar_proveedores();
+    });	       
 });
 
 var listar_cuentas_por_pagar_proveedores = function() {
-    var estado = "";
-
-    if ($("#form_main_pagar_proveedores #pagar_proveedores_estado").val() == "" || $(
-            "#form_main_pagar_proveedores #pagar_proveedores_estado").val() == null) {
-        estado = 1;
-    } else {
-        estado = $("#form_main_pagar_proveedores #pagar_proveedores_estado").val();
-    }
+    var estado = $('#form_main_pagar_proveedores #pagar_proveedores_estado').val();
 
     var proveedores_id = $("#form_main_pagar_proveedores #pagar_proveedores").val();
     var fechai = $("#form_main_pagar_proveedores #fechai").val();
@@ -2700,7 +3093,7 @@ var listar_cuentas_por_pagar_proveedores = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL; ?>core/llenarDataTablePagarProveedores.php",
+            "url": "<?php echo SERVERURL;?>core/llenarDataTablePagarProveedores.php",
             "data": {
                 "estado": estado,
                 "proveedores_id": proveedores_id,
@@ -2715,7 +3108,30 @@ var listar_cuentas_por_pagar_proveedores = function() {
                 "data": "proveedores"
             },
             {
-                "data": "factura"
+                "data": "estado",
+                "render": function(data, type, row) {
+                    if (type === 'display') {
+                        var text = data == 1 ? 'Crédito' : 'Contado';
+                        var icon = data == 1 
+                            ? '<i class="fas fa-clock mr-1"></i>' 
+                            : '<i class="fas fa-check-circle mr-1"></i>';
+                        var badgeClass = data == 1 
+                            ? 'badge badge-pill badge-warning' 
+                            : 'badge badge-pill badge-success';
+                        return '<span class="' + badgeClass + '" style="font-size: 0.95rem; padding: 0.5em 0.8em; font-weight: 600;">' + 
+                            icon + text + '</span>';
+                    }
+                    return data;
+                }
+            },             
+            {
+                "data": "factura",
+                "render": function(data, type, row) {
+                    if (type === 'sort') {
+                        return parseInt(row.numero_ordenamiento);
+                    }
+                    return data;
+                }
             },
             {
                 "data": "credito",
@@ -2775,15 +3191,19 @@ var listar_cuentas_por_pagar_proveedores = function() {
                 },
             },
             {
-                "defaultContent": "<button class='table_pay btn btn-dark ocultar'><span class='fas fa-hand-holding-usd fa-lg'></span>Pagar</button>"
+                "defaultContent": "<button class='table_pay btn btn-primary ocultar'><span class='fas fa-hand-holding-usd fa-lg'></span>Abonar</button>"
             },
             {
-                "defaultContent": "<button class='abono_proveedor btn btn-dark'><span class='fa fa-money-bill-wave fa-solid'></span>Abonar</button>"
+                "defaultContent": "<button class='abono_proveedor btn btn-secondary'><span class='fa fa-money-bill-wave fa-solid'></span>Abonos</button>"
             },
             {
-                "defaultContent": "<button class='table_reportes print_factura btn btn-dark ocultar'><span class='fas fa-file-download fa-lg'></span>Factura</button>"
+                "defaultContent": "<button class='table_reportes print_factura btn btn-success ocultar'><span class='fas fa-file-download fa-lg'></span>Factura</button>"
             }
         ],
+        "order": [[3, "desc"]], // Ordenar por número de factura descendente
+        "orderFixed": {
+            "pre": [[3, "desc"]]
+        },
         "pageLength": 10,
         "lengthMenu": lengthMenu10,
         "stateSave": true,
@@ -2827,34 +3247,27 @@ var listar_cuentas_por_pagar_proveedores = function() {
             }
         ],
         "footerCallback": function(row, data, start, end, display) {
-            // Calcular los totales
             var totalCredito = data.reduce(function(acc, row) {
-                return acc + (parseFloat(row.credito) || 0); // Asegurar que sea numérico
-            }, 0).toFixed(2);
+                return acc + (parseFloat(row.credito) || 0);
+            }, 0);
 
             var totalAbono = data.reduce(function(acc, row) {
                 return acc + (parseFloat(row.abono) || 0);
-            }, 0).toFixed(2);
+            }, 0);
 
             var totalPendiente = data.reduce(function(acc, row) {
                 return acc + (parseFloat(row.saldo) || 0);
-            }, 0).toFixed(2);
+            }, 0);
 
-            // Formatear los totales con separadores de miles y coma para decimales
             var formatter = new Intl.NumberFormat('es-HN', {
                 style: 'currency',
                 currency: 'HNL',
                 minimumFractionDigits: 2,
             });
 
-            var totalCreditoFormatted = formatter.format(totalCredito);
-            var totalAbonoFormatted = formatter.format(totalAbono);
-            var totalPendienteFormatted = formatter.format(totalPendiente);
-
-            // Asignar los totales a los elementos HTML
-            $('#credito-cxp').html(totalCreditoFormatted);
-            $('#abono-cxp').html(totalAbonoFormatted);
-            $('#total-footer-cxp').html(totalPendienteFormatted);
+            $('#credito-cxp').html(formatter.format(totalCredito));
+            $('#abono-cxp').html(formatter.format(totalAbono));
+            $('#total-footer-cxp').html(formatter.format(totalPendiente));
         },
         "buttons": [{
                 text: '<i class="fas fa-sync-alt fa-lg"></i> Actualizar',
@@ -2880,15 +3293,14 @@ var listar_cuentas_por_pagar_proveedores = function() {
                 text: '<i class="fas fa-file-pdf fa-lg"></i> PDF',
                 titleAttr: 'PDF',
                 title: 'Reporte Cuentas por Pagar Proveedores',
-                messageTop: 'Fecha desde: ' + convertDateFormat(fechai) + ' Fecha hasta: ' +
-                    convertDateFormat(fechaf),
+                messageTop: 'Fecha desde: ' + convertDateFormat(fechai) + ' Fecha hasta: ' + convertDateFormat(fechaf),
                 messageBottom: 'Fecha de Reporte: ' + convertDateFormat(today()),
                 className: 'table_reportes btn btn-danger ocultar',
                 exportOptions: {
                     columns: [1, 2, 3, 4, 5, 6]
                 },
                 customize: function(doc) {
-                    if (imagen) { // Solo agrega la imagen si 'imagen' tiene contenido válido
+                    if (imagen) {
                         doc.content.splice(0, 0, {
                             image: imagen,  
                             width: 100,
@@ -2906,12 +3318,9 @@ var listar_cuentas_por_pagar_proveedores = function() {
     table_cuentas_por_pagar_proveedores.search('').draw();
     $('#buscar').focus();
 
-    registrar_pago_proveedores_dataTable("#dataTableCuentasPorPagarProveedores tbody",
-        table_cuentas_por_pagar_proveedores);
-    ver_abono_cxp_proveedor_dataTable("#dataTableCuentasPorPagarProveedores tbody",
-        table_cuentas_por_pagar_proveedores);
-    ver_reporte_facturas_cxp_proveedor_dataTable("#dataTableCuentasPorPagarProveedores tbody",
-        table_cuentas_por_pagar_proveedores);
+    registrar_pago_proveedores_dataTable("#dataTableCuentasPorPagarProveedores tbody", table_cuentas_por_pagar_proveedores);
+    ver_abono_cxp_proveedor_dataTable("#dataTableCuentasPorPagarProveedores tbody", table_cuentas_por_pagar_proveedores);
+    ver_reporte_facturas_cxp_proveedor_dataTable("#dataTableCuentasPorPagarProveedores tbody", table_cuentas_por_pagar_proveedores);
 }
 
 var ver_reporte_facturas_cxp_proveedor_dataTable = function(tbody, table) {
@@ -2927,15 +3336,8 @@ var registrar_pago_proveedores_dataTable = function(tbody, table) {
     $(tbody).off("click", "button.table_pay");
     $(tbody).on("click", "button.table_pay", function() {
         var data = table.row($(this).parents("tr")).data();
-        console.log('saldo', data.saldo)
         if (data.saldo <= 0) {
-            swal({
-                title: "Alerta",
-                text: "Esta Factura ya fue Cancelada",
-                icon: "info",
-                closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-            });
+            showNotify('info', 'Alerta', 'Esta Factura ya fue Cancelada');
         } else {
             $("#GrupoPagosMultiples").hide();
             pagoCompras(data.compras_id, data.saldo, 2);
@@ -2946,7 +3348,7 @@ var registrar_pago_proveedores_dataTable = function(tbody, table) {
 
 /*INICIO FUNCION OBTENER MUNICIPIOS*/
 function getMunicipiosClientes(municipios_id) {
-    var url = '<?php echo SERVERURL; ?>core/getMunicipios.php';
+    var url = '<?php echo SERVERURL;?>core/getMunicipios.php';
 
     var departamentos_id = $('#formClientes #departamento_cliente').val();
 
@@ -2967,7 +3369,7 @@ function getMunicipiosClientes(municipios_id) {
 }
 
 $('#formClientes #departamento_cliente').on('change', function() {
-    var url = '<?php echo SERVERURL; ?>core/getMunicipios.php';
+    var url = '<?php echo SERVERURL;?>core/getMunicipios.php';
 
     var departamentos_id = $('#formClientes #departamento_cliente').val();
 
@@ -2984,43 +3386,113 @@ $('#formClientes #departamento_cliente').on('change', function() {
     return false;
 });
 
-$(document).ready(function() {
+$(() => {
     $("#modal_registrar_clientes").on('shown.bs.modal', function() {
         $(this).find('#formClientes #nombre_clientes').focus();
     });
 });
 
-//INICIO ACCIONES FROMULARIO CLIENTES
+// Evento para el botón de Buscar (submit)
+$('#form_main_clientes').on('submit', function(e) {
+    e.preventDefault();
+    listar_clientes(); 
+});
+
+// Evento para el botón de Limpiar (reset)
+$('#form_main_clientes').on('reset', function() {
+    // Limpia y refresca los selects
+    $('#form_main_clientes .selectpicker')
+        .val('')
+        .selectpicker('refresh');
+    listar_clientes();
+});
+
+//INICIO ACCIONES FORMULARIO CLIENTES
 var listar_clientes = function(estado) {
+    var estado = $('#form_main_clientes #estado_clientes').val();
+
     var table_clientes = $("#dataTableClientes").DataTable({
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL; ?>core/llenarDataTableClientes.php",
+            "url": "<?php echo SERVERURL;?>core/llenarDataTableClientes.php",
             "data": {
-                "estado": estado // nuevo parámetro
+                "estado": estado
             }
         },
-        "columns": [{
-                "data": "cliente"
+        "columns": [
+            {"data": "cliente"},
+            {"data": "rtn"},
+            {"data": "telefono"},
+            {"data": "correo"},
+            {"data": "departamento"},
+            {"data": "municipio"},
+            {
+                "data": "sistema",
+                "render": function (data, type, row) {
+                    if (type === 'display') {
+                        let badgeClass = 'badge badge-pill ';
+                        let label = '';
+                        let icon = '<i class="fas fa-cogs mr-1"></i>';
+
+                        if (!data) {
+                            badgeClass += 'badge-secondary';
+                            label = 'Sin sistema';
+                            icon = '<i class="fas fa-ban mr-1"></i>'; // ícono de prohibido
+                        } else {
+                            switch (data) {
+                                case 'IZZY':
+                                    badgeClass += 'badge-primary';
+                                    label = data;
+                                    break;
+                                case 'CAMI':
+                                    badgeClass += 'badge-success';
+                                    label = data;
+                                    break;
+                                case 'MONISYS':
+                                    badgeClass += 'badge-warning';
+                                    label = data;
+                                    break;
+                                default:
+                                    badgeClass += 'badge-info';
+                                    label = data;
+                            }
+                        }
+
+                        return '<span class="' + badgeClass +
+                            '" style="font-size: 0.9rem; padding: 0.45em 0.75em; font-weight: 600;">' +
+                            icon + label + '</span>';
+                    }
+                    return data || 'Sin sistema';
+                }
             },
             {
-                "data": "rtn"
-            },
+                "data": "estado",
+                "render": function(data, type, row) {
+                    if (type === 'display') {
+                        var estadoText = data == 1 ? 'Activo' : 'Inactivo';
+                        var icon = data == 1 ? 
+                            '<i class="fas fa-check-circle mr-1"></i>' : 
+                            '<i class="fas fa-times-circle mr-1"></i>';
+                        var badgeClass = data == 1 ? 
+                            'badge badge-pill badge-success' : 
+                            'badge badge-pill badge-danger';
+                        
+                        return '<span class="' + badgeClass + 
+                            '" style="font-size: 0.95rem; padding: 0.5em 0.8em; font-weight: 600;">' +
+                            icon + estadoText + '</span>';
+                    }
+                    return data;
+                }
+            },            
             {
-                "data": "telefono"
-            },
-            {
-                "data": "correo"
-            },
-            {
-                "data": "departamento"
-            },
-            {
-                "data": "municipio"
-            },
-            {
-                "data": "sistema"
+                "data": "puntos",
+                "render": function(data, type, row) {
+                    var clienteId = row.id || row.clientes_id || 0;
+                    return '<span class="badge badge-primary">' + (data || 0) + '</span> ' +
+                        '<button class="btn btn-sm btn-info ver-historial" title="Ver historial" data-id="'+clienteId+'">' +
+                        '<i class="fas fa-history" style="color: white;"></i></button>';
+                }
             },
             {
                 "defaultContent": "<button class='table_crear btn btn-dark ocultar generar'><span class='fab fa-centos fa-lg'></span>Generar</button>"
@@ -3037,53 +3509,26 @@ var listar_clientes = function(estado) {
         "bDestroy": true,
         "language": idioma_español,
         "dom": dom,
-        "columnDefs": [{
-                width: "30%",
-                targets: 0
-            },
-            {
-                width: "10%",
-                targets: 1
-            },
-            {
-                width: "14%",
-                targets: 2
-            },
-            {
-                width: "10%",
-                targets: 3
-            },
-            {
-                width: "10%",
-                targets: 4
-            },
-            {
-                width: "10%",
-                targets: 5
-            },
-            {
-                width: "10%",
-                targets: 6
-            },
-            {
-                width: "2%",
-                targets: 7
-            },
-            {
-                width: "2%",
-                targets: 8
-            },
-            {
-                width: "2%",
-                targets: 9
-            }
+        "columnDefs": [
+            {width: "30%", targets: 0},
+            {width: "10%", targets: 1},
+            {width: "14%", targets: 2},
+            {width: "10%", targets: 3},
+            {width: "10%", targets: 4},
+            {width: "10%", targets: 5},
+            {width: "8%", targets: 6},
+            {width: "10%", targets: 7},
+            {width: "2%", targets: 8},
+            {width: "2%", targets: 9}
         ],
         "createdRow": function(row, data, dataIndex) {
-            var cells = $(row).find("td"); // Obtén todas las celdas en la fila
+            var cells = $(row).find("td");
             $(cells[7]).addClass("generar");
             $(cells[6]).addClass("sistema");
+            $(cells[8]).addClass("puntos");
         },
-        "buttons": [{
+        "buttons": [
+            {
                 text: '<i class="fas fa-sync-alt fa-lg"></i> Actualizar',
                 titleAttr: 'Actualizar Clientes',
                 className: 'table_actualizar btn btn-secondary ocultar',
@@ -3094,7 +3539,7 @@ var listar_clientes = function(estado) {
             {
                 text: '<i class="fas fas fa-plus fa-lg crear"></i> Ingresar',
                 titleAttr: 'Agregar Clientes',
-                className: 'table_crear btn btn-primary ocultar',
+                className: 'btn btn-primary ocultar',
                 action: function() {
                     modal_clientes();
                 }
@@ -3106,7 +3551,7 @@ var listar_clientes = function(estado) {
                 title: 'Reporte de Clientes',
                 messageBottom: 'Fecha de Reporte: ' + convertDateFormat(today()),
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 6]
+                    columns: [0, 1, 2, 3, 4, 5, 6]
                 },
                 className: 'table_reportes btn btn-success ocultar'
             },
@@ -3123,7 +3568,7 @@ var listar_clientes = function(estado) {
                     columns: [0, 1, 2, 3, 4, 5, 6]
                 },
                 customize: function(doc) {
-                    if (imagen) { // Solo agrega la imagen si 'imagen' tiene contenido válido
+                    if (imagen) {
                         doc.content.splice(0, 0, {
                             image: imagen,  
                             width: 100,
@@ -3137,9 +3582,8 @@ var listar_clientes = function(estado) {
         "drawCallback": function(settings) {
             getPermisosTipoUsuarioAccesosTable(getPrivilegioTipoUsuario());
 
-            //Ocultamos el boton generar si el permiso no es super administrator, administrador o reseller
-            if (getPrivilegioUsuario() !== 1 || getPrivilegioUsuario() !== 2 ||
-                getPrivilegioUsuario() !== 3) {
+            // Verificación para columnas generar y sistema
+            if (getPrivilegioUsuario() !== 1 || getPrivilegioUsuario() !== 2 || getPrivilegioUsuario() !== 3) {
                 var db_consulta = getSessionUser() === "" ? DB_MAIN : getSessionUser();
                 if (db_consulta === DB_MAIN) {
                     $('.generar').show();
@@ -3150,8 +3594,41 @@ var listar_clientes = function(estado) {
             } else {
                 $('.generar').hide();
             }
+
+            // Verificación para puntos (AJAX SINCRÓNICO como lo necesitas)
+            $.ajax({
+                url: '<?php echo SERVERURL;?>core/programaPuntos/verificarProgramaPuntos.php',
+                type: 'POST',
+                dataType: 'json',
+                async: false, // Importante para que espere la respuesta
+                success: function(response) {
+                    if(response.mostrar_puntos) {
+                        $('.puntos').show();
+                    } else {
+                        $('.puntos').hide();
+                    }
+                    
+                    // Para debug (puedes eliminar esto)
+                    console.log("Respuesta permisos puntos:", response);
+                },
+                error: function() {
+                    $('.puntos').hide();
+                    console.error("Error verificando programa de puntos");
+                }
+            });
         }
     });
+
+    // Evento para el botón de historial (DELEGACIÓN DE EVENTOS)
+    $('#dataTableClientes').off('click', '.ver-historial').on('click', '.ver-historial', function() {
+        var cliente_id = $(this).data('id');       
+        // Mostrar el modal inmediatamente
+        $('#modal_historial_puntos').modal('show');
+        
+        // Luego cargar los datos
+        cargarHistorialPuntos(cliente_id);
+    });
+
     table_clientes.search('').draw();
     $('#buscar').focus();
 
@@ -3160,66 +3637,108 @@ var listar_clientes = function(estado) {
     eliminar_clientes_dataTable("#dataTableClientes tbody", table_clientes);
 }
 
+function cargarHistorialPuntos(cliente_id) {
+    console.log('Cargando historial para cliente ID:', cliente_id);
+    
+    // Mostrar loader
+    $('#tabla_historial_puntos tbody').html('<tr><td colspan="4" class="text-center"><i class="fas fa-spinner fa-spin"></i> Cargando historial...</td></tr>');
+    
+    $.ajax({
+        url: '<?php echo SERVERURL;?>core/programaPuntos/llenarDataTableHistoricoPuntos.php', // <-- URL CORRECTA
+        method: 'POST',
+        data: { 
+            cliente_id: cliente_id,
+            programa_puntos_id: 1
+        },
+        dataType: 'json',
+        success: function(response) {
+            console.log('Respuesta recibida:', response);
+            
+            if(response.success) {
+                $('#nombre_cliente_puntos').text(response.nombre_cliente || 'Cliente no identificado');
+                
+                // Mostrar total con 2 decimales
+                var totalPuntos = parseFloat(response.total_puntos || 0).toFixed(2);
+                $('#total_puntos_historial').text(totalPuntos);
+                
+                var tbody = $('#tabla_historial_puntos tbody');
+                tbody.empty();
+                
+                if(response.historial && response.historial.length > 0) {
+                    $.each(response.historial, function(index, item) {
+                        var puntos = parseFloat(item.puntos) || 0;
+                        var signo = item.tipo === 'Acumulación' ? '+' : '-';
+                        var clase = item.tipo === 'Acumulación' ? 'text-success' : 'text-danger';
+                        
+                        var row = '<tr>' +
+                            '<td>' + (item.fecha || '--') + '</td>' +
+                            '<td>' + (item.tipo || '--') + '</td>' +
+                            '<td class="'+clase+'">' + signo + puntos.toFixed(2) + '</td>' +
+                            '<td>' + (item.descripcion || '--') + '</td>' +
+                            '</tr>';
+                        tbody.append(row);
+                    });
+                } else {
+                    tbody.append('<tr><td colspan="4" class="text-center">No hay registros de puntos</td></tr>');
+                }
+            } else {
+                console.error('Error en la respuesta:', response.message);
+                toastr.error(response.message || 'Error al cargar el historial de puntos');
+                $('#tabla_historial_puntos tbody').html(
+                    '<tr><td colspan="4" class="text-center text-danger">Error al cargar el historial</td></tr>'
+                );
+                $('#total_puntos_historial').text('0.00'); // <-- Mostrar 0.00 en caso de error
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error en AJAX:', status, error);
+            toastr.error('Error al conectar con el servidor');
+            $('#tabla_historial_puntos tbody').html(
+                '<tr><td colspan="4" class="text-center text-danger">Error de conexión</td></tr>'
+            );
+            $('#total_puntos_historial').text('0.00'); // <-- Mostrar 0.00 en caso de error
+        }
+    });
+}
+
 var listar_generar_clientes = function() {
     var clientes_id = $("#formGenerarSistema #clientes_id").val();
 
     // Destruir la tabla si ya existe
-    if (table_generar_clientes) {
-        table_generar_clientes.destroy();
+    if ($.fn.DataTable.isDataTable("#DatatableGenerarSistema")) {
+        $("#DatatableGenerarSistema").DataTable().destroy();
     }
 
     var table_generar_clientes = $("#DatatableGenerarSistema").DataTable({
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL; ?>core/llenarDataTableGenerarSistema.php",
+            "url": "<?php echo SERVERURL;?>core/llenarDataTableGenerarSistema.php",
             "data": {
                 "clientes_id": clientes_id,
             }
         },
-        "columns": [{
-                "data": "nombre"
-            },
-            {
-                "data": "db"
-            },
-            {
-                "data": "sistema"
-            },
-            {
-                "data": "plan"
-            },
-            {
-                "data": "validar"
-            },
+        "columns": [
+            {"data": "nombre"},
+            {"data": "db"},
+            {"data": "sistema"},
+            {"data": "plan"},
+            {"data": "validar"}
         ],
         "lengthMenu": lengthMenu20,
         "stateSave": true,
-        "bDestroy": true,
         "language": idioma_español,
         "dom": dom,
-        "columnDefs": [{
-                width: "60%",
-                targets: 0
-            },
-            {
-                width: "10%",
-                targets: 1
-            },
-            {
-                width: "5%",
-                targets: 2
-            },
-            {
-                width: "5%",
-                targets: 3
-            },
-            {
-                width: "20%",
-                targets: 4
-            }
+        "autoWidth": false,
+        "columnDefs": [
+            {width: "40%", targets: 0},
+            {width: "20%", targets: 1},
+            {width: "15%", targets: 2},
+            {width: "15%", targets: 3},
+            {width: "10%", targets: 4}
         ],
-        "buttons": [{
+        "buttons": [
+            {
                 text: '<i class="fas fa-sync-alt fa-lg"></i> Actualizar',
                 titleAttr: 'Actualizar Clientes',
                 className: 'btn btn-secondary',
@@ -3236,7 +3755,7 @@ var listar_generar_clientes = function() {
                 className: 'btn btn-success',
                 exportOptions: {
                     columns: [0, 1, 2, 3, 4]
-                },
+                }
             },
             {
                 extend: 'pdf',
@@ -3249,7 +3768,7 @@ var listar_generar_clientes = function() {
                     columns: [0, 1, 2, 3, 4]
                 },
                 customize: function(doc) {
-                    if (imagen) { // Solo agrega la imagen si 'imagen' tiene contenido válido
+                    if (imagen) {
                         doc.content.splice(0, 0, {
                             image: imagen,  
                             width: 100,
@@ -3260,207 +3779,133 @@ var listar_generar_clientes = function() {
                 }
             }
         ],
+        "initComplete": function() {
+            // Redimensionar la tabla cuando se complete la inicialización
+            $(window).trigger('resize');
+        },
         "drawCallback": function(settings) {
             getPermisosTipoUsuarioAccesosTable(getPrivilegioTipoUsuario());
+            // Forzar redimensionamiento después de dibujar
+            setTimeout(function() {
+                table_generar_clientes.columns.adjust().draw();
+            }, 100);
         }
     });
 
-    table_generar_clientes.search('').draw();
-
-    $('#buscar').focus();
-}
-
-$(document).ready(function() {
-    $("#modal_generar_sistema").on('shown.bs.modal', function() {
-        $(this).find('#formGenerarSistema #empresa').focus();
+    // Ajustar tabla cuando el modal se muestre completamente
+    $('#modal_generar_sistema').on('shown.bs.modal', function () {
+        table_generar_clientes.columns.adjust().draw();
     });
+
+    table_generar_clientes.search('').draw();
+    $('#buscar').focus();
+};
+
+$("#modal_generar_sistema").on('shown.bs.modal', function () {
+    $(this).find('#formGenerarSistema #empresa').focus();
 });
 
-// Definir un mapa que asocie los valores de sistema_id con las URLs
-const sistemaUrls = {
-    1: '<?php echo SERVERURL; ?>core/scriptDataBaseIZZY.php',
-    2: '<?php echo SERVERURL; ?>core/scriptDataBaseCAMI.php',
-};
+// Validar input texto
+$('#formGenerarSistema #empresa, #formGenerarSistema #clientes_correo').on('input', function () {
+    if ($(this).val().trim() !== '') {
+        $(this).removeClass('is-invalid');
+    }
+});
+
+// Validar selects (con selectpicker o normales)
+$('#formGenerarSistema #sistema, #formGenerarSistema #plan').on('change', function () {
+    if ($(this).val()) {
+        $(this).removeClass('is-invalid');
+    }
+});
 
 $("#reg_generarSitema").click(function(e) {
     e.preventDefault();
 
     var clientes_id = $("#formGenerarSistema #clientes_id").val();
-    var db = $("#formGenerarSistema #db").val();
     var validar = $("#formGenerarSistema #validar").val();
     var sistema_id = $("#formGenerarSistema #sistema").val();
     var planes_id = $("#formGenerarSistema #plan").val();
-    var url = "";
 
-    if (sistemaUrls.hasOwnProperty(sistema_id)) {
-        url = sistemaUrls[sistema_id];
-    }
-
-    var razon_social = $("#formGenerarSistema #cliente").val();
+    var cliente = $("#formGenerarSistema #cliente").val();
     var rtn = $("#formGenerarSistema #rtn").val();
     var empresa = $("#formGenerarSistema #empresa").val();
     var correo = $("#formGenerarSistema #clientes_correo").val();
+    var telefono = $("#formGenerarSistema #clientes_telefono").val();
     var eslogan = $("#formGenerarSistema #eslogan").val();
     var otra_informacion = $("#formGenerarSistema #otra_informacion").val();
     var celular = $("#formGenerarSistema #whatsApp").val();
     var ubicacion = $("#formGenerarSistema #clientes_ubicacion").val();
+    var pass = "";
 
-    var telefono = $("#formGenerarSistema #clientes_telefono").val();
+    // Resetear clases de error
+    $('.form-control, .selectpicker').removeClass('is-invalid');
 
-    var estado = 1;
+    if (!empresa) {
+        $('#formGenerarSistema #empresa').addClass('is-invalid').focus();
+        showNotify('error', 'Error', 'La empresa es obligatoria, por favor ingrese el nombre de la empresa');
+        return;
+    }
+
+    if (!sistema_id) {
+        $('#formGenerarSistema #sistema').addClass('is-invalid').focus();
+        showNotify('error', 'Error', 'El sistema es obligatorio, por favor seleccione un sistema');
+        return;
+    }
+
+    if (!planes_id) {
+        $('#formGenerarSistema #plan').addClass('is-invalid').focus();
+        showNotify('error', 'Error', 'El plan es obligatorio, por favor seleccione un plan');
+        return;
+    }
+
+    if (!correo) {
+        $('#formGenerarSistema #clientes_correo').addClass('is-invalid').focus();
+        showNotify('error', 'Error', 'El correo es obligatorio');
+        return;
+    }
 
     $.ajax({
-        url: url,
+        url: '<?php echo SERVERURL; ?>ajax/registrarClienteAutonomoAjax.php',
         type: "POST",
         data: {
             clientes_id: clientes_id,
-            db: db,
-            validar: validar,
+            user_empresa: empresa,
+            user_name: cliente,
+            user_telefono: telefono,
+            email: correo,
+            user_pass:pass,
             sistema_id: sistema_id,
             planes_id: planes_id,
-            estado: estado,
-            razon_social: razon_social,
-            rtn: rtn,
-            empresa: empresa,
-            correo: correo,
-            telefono: telefono,
             eslogan: eslogan,
             otra_informacion: otra_informacion,
             celular: celular,
-            ubicacion: ubicacion
+            ubicacion: ubicacion,
+            validar: validar,
+            rtn: rtn,
         },
         beforeSend: function() {
-            // Mostrar modal de carga antes de la solicitud AJAX
-            $('#loadingMessage').text('Por favor espere, Generando Sistema...');
-            $('#loadingModal').modal('show');
+            showLoading("Registrando usuario...");
         },
-        success: function(response) {
-            // Verificar la respuesta del servidor
-            if (response.startsWith("Éxito: ")) {
-                var Message = response.substring(7);
-
-                swal({
-                    title: "Success",
-                    text: Message,
-                    icon: "success",
-                    confirmButtonClass: "btn-primary",
-                    timer: 3000,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                     
-                });
-
-                // Cerrar el modal de carga después de un breve retraso
-                setTimeout(function() {
-                    $('#loadingModal').modal('hide');
-                }, 1000);
-
+        success: function(resp) {
+            if (resp.estado) {
+                showNotify(resp.type, resp.title, resp.mensaje);
                 listar_generar_clientes();
-            } else if (response.startsWith("Error DB: ")) {
-                var Message = response.substring(10);
-
-                swal({
-                    title: "Error",
-                    text: Message,
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-
-                setTimeout(function() {
-                    $('#loadingModal').modal('hide');
-                }, 1000);
-            } else if (response.startsWith("Error Sistema Existe: ")) {
-                var Message = response.substring(22);
-
-                swal({
-                    title: "Error",
-                    text: Message,
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-
-                setTimeout(function() {
-                    $('#loadingModal').modal('hide');
-                }, 1000);
-            } else if (response.startsWith("Error de conexión: ")) {
-                var Message = response.substring(19);
-
-                swal({
-                    title: "Error",
-                    text: Message,
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-
-                setTimeout(function() {
-                    $('#loadingModal').modal('hide');
-                }, 1000);
-            } else if (response.startsWith("Error al seleccionar la base de datos: ")) {
-                var Message = response.substring(19);
-
-                swal({
-                    title: "Error",
-                    text: Message,
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-
-                setTimeout(function() {
-                    $('#loadingModal').modal('hide');
-                }, 1000);
-            } else if (response.startsWith("Error Correo Existe: ")) {
-                var Message = response.substring(21);
-
-                swal({
-                    title: "Error",
-                    text: Message,
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-
-                setTimeout(function() {
-                    $('#loadingModal').modal('hide');
-                }, 1000);
+                listar_clientes();
             } else {
-                swal({
-                    title: "Error",
-                    text: "Error al generar el sistema",
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-
-                setTimeout(function() {
-                    $('#loadingModal').modal('hide');
-                }, 1000);
+                showNotify(resp.type, resp.title, resp.mensaje);
             }
-
-            // Cerrar el modal de carga en caso de error
-            $('#loadingModal').modal('hide');
         },
         error: function(xhr, status, error) {
-            // Ocultar modal de carga en caso de error
-            $('#loadingModal').modal('hide');
-            console.error(xhr.responseText);
-
-            swal({
-                title: "Error",
-                text: "Error al ejecutar el sistema",
-                icon: "error",
-                dangerMode: true,
-                closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-            });
+            try {
+                const errResponse = JSON.parse(xhr.responseText);
+                showNotify('error', 'Error', errResponse.mensaje || 'Error en el servidor');
+            } catch (e) {
+                showNotify('error', 'Error', 'Error de conexión: ' + error);
+            }
+        },
+        complete: function() {
+            
         }
     });
 });
@@ -3489,27 +3934,15 @@ var generar_clientes_dataTable = function(tbody, table) {
         $('#formGenerarSistema #plan').val(data.planes_id);
         $('#formGenerarSistema #plan').selectpicker('refresh');
 
-        if ($('#formGenerarSistema #db').val() === "") {
-            $('#formGenerarSistema #db').val(data.db);
-        }
-
         $('#formGenerarSistema #cliente').attr('disabled', true);
         $('#formGenerarSistema #rtn').attr('disabled', true);
-        $('#formGenerarSistema #db').attr('disabled', true);
 
         $('#formGenerarSistema #proceso_GenerarSistema').val("Generar Sistema");
 
         getValidarFacturacion();
 
         if (data.correo === "") {
-            swal({
-                title: "Error",
-                text: "Lo sentimos el cliente no tiene registrado un correo, es recomendable registrar uno, por favor diríjase al perfil del cliente y agregue el correo antes de generarle una cuenta",
-                icon: "error",
-                dangerMode: true,
-                closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-            });
+            showNotify('error', 'Correo requerido', 'El cliente no tiene correo registrado. Agregue uno en su perfil antes de continuar');
 
             $('#reg_generarSitema').attr('disabled', true);
         } else {
@@ -3525,7 +3958,7 @@ var generar_clientes_dataTable = function(tbody, table) {
 }
 
 function getPlanes() {
-    var url = '<?php echo SERVERURL; ?>core/getPlanes.php';
+    var url = '<?php echo SERVERURL;?>core/getPlanes.php';
 
     $.ajax({
         type: "POST",
@@ -3540,7 +3973,7 @@ function getPlanes() {
 }
 
 function getValidarFacturacion() {
-    var url = '<?php echo SERVERURL; ?>core/getValidarFacturacion.php';
+    var url = '<?php echo SERVERURL;?>core/getValidarFacturacion.php';
 
     $.ajax({
         type: "POST",
@@ -3559,7 +3992,7 @@ function getValidarFacturacion() {
 
 
 function getSistemas() {
-    var url = '<?php echo SERVERURL; ?>core/getSistemas.php';
+    var url = '<?php echo SERVERURL;?>core/getSistemas.php';
 
     $.ajax({
         type: "POST",
@@ -3577,135 +4010,177 @@ var editar_clientes_dataTable = function(tbody, table) {
     $(tbody).off("click", "button.table_editar");
     $(tbody).on("click", "button.table_editar", function() {
         var data = table.row($(this).parents("tr")).data();
-        var url = '<?php echo SERVERURL; ?>core/editarClientes.php';
-        $('#formClientes #clientes_id').val(data.clientes_id)
-
-        $.ajax({
-            type: 'POST',
-            url: url,
-            data: $('#formClientes').serialize(),
-            success: function(registro) {
-                var valores = eval(registro);
-                $('#formClientes').attr({
-                    'data-form': 'update'
-                });
-                $('#formClientes').attr({
-                    'action': '<?php echo SERVERURL; ?>ajax/modificarClientesAjax.php'
-                });
-                $('#formClientes')[0].reset();
-                $('#reg_cliente').hide();
-                $('#edi_cliente').show();
-                $('#delete_cliente').hide();
-
-                $('#formClientes #nombre_clientes').val(valores[0]);
-                $('#formClientes #identidad_clientes').val(valores[1]);
-                $('#formClientes #fecha_clientes').attr('disabled', true);
-                $('#formClientes #fecha_clientes').val(valores[2]);
-                $('#formClientes #departamento_cliente').val(valores[3]);
-                $('#formClientes #departamento_cliente').selectpicker('refresh');
-                getMunicipiosClientes(valores[4]);
-                $('#formClientes #municipio_cliente').val(valores[4]);
-                $('#formClientes #municipio_cliente').selectpicker('refresh');
-                $('#formClientes #dirección_clientes').val(valores[5]);
-                $('#formClientes #telefono_clientes').val(valores[6]);
-                $('#formClientes #correo_clientes').val(valores[7]);
-
-                if (valores[8] == 1) {
-                    $('#formClientes #clientes_activo').attr('checked', true);
-                } else {
-                    $('#formClientes #clientes_activo').attr('checked', false);
-                }
-
-                //HABILITAR OBJETOS
-                $('#formClientes #nombre_clientes').attr("readonly", false);
-                $('#formClientes #departamento_cliente').attr("disabled", false);
-                $('#formClientes #municipio_cliente').attr("disabled", false);
-                $('#formClientes #dirección_clientes').attr("disabled", false);
-                $('#formClientes #telefono_clientes').attr("readonly", false);
-                $('#formClientes #correo_clientes').attr("readonly", false);
-                $('#formClientes #clientes_activo').attr("disabled", false);
-                $('#formClientes #grupo_editar_rtn').show();
-
-                //DESHABILITAR
-                $('#formClientes #identidad_clientes').attr("readonly", true);
-                $('#formClientes #fecha_clientes').attr("readonly", true);
-                $('#formClientes #estado_clientes').show();
-
-                $('#formClientes #proceso_clientes').val("Editar");
-                $('#modal_registrar_clientes').modal({
-                    show: true,
-                    keyboard: false,
-                    backdrop: 'static'
-                });
-            }
-        });
-    });
-}
-
-var eliminar_clientes_dataTable = function(tbody, table) {
-    $(tbody).off("click", "button.table_eliminar");
-    $(tbody).on("click", "button.table_eliminar", function() {
-        var data = table.row($(this).parents("tr")).data();
-        var url = '<?php echo SERVERURL; ?>core/editarClientes.php';
+        var url = '<?php echo SERVERURL;?>core/editarClientes.php';
         $('#formClientes #clientes_id').val(data.clientes_id);
 
         $.ajax({
             type: 'POST',
             url: url,
             data: $('#formClientes').serialize(),
-            success: function(registro) {
-                var valores = eval(registro);
+            dataType: 'json',
+            success: function(respuesta) {
+                // Configuración básica del formulario
                 $('#formClientes').attr({
-                    'data-form': 'delete'
-                });
-                $('#formClientes').attr({
-                    'action': '<?php echo SERVERURL; ?>ajax/eliminarClientesAjax.php'
-                });
-                $('#formClientes')[0].reset();
+                    'data-form': 'update',
+                    'action': '<?php echo SERVERURL;?>ajax/modificarClientesAjax.php'
+                }).trigger('reset');
+                
                 $('#reg_cliente').hide();
-                $('#edi_cliente').hide();
-                $('#delete_cliente').show();
+                $('#edi_cliente').show();
+                $('#delete_cliente').hide();
 
-                $('#formClientes #nombre_clientes').val(valores[0]);
-                $('#formClientes #identidad_clientes').val(valores[1]);
-                $('#formClientes #fecha_clientes').attr('disabled', true);
-                $('#formClientes #fecha_clientes').val(valores[2]);
-                $('#formClientes #departamento_cliente').val(valores[3]);
-                $('#formClientes #departamento_cliente').selectpicker('refresh');
-                getMunicipiosClientes(valores[4]);
-                $('#formClientes #municipio_cliente').val(valores[4]);
-                $('#formClientes #municipio_cliente').selectpicker('refresh');
-                $('#formClientes #dirección_clientes').val(valores[5]);
-                $('#formClientes #telefono_clientes').val(valores[6]);
-                $('#formClientes #correo_clientes').val(valores[7]);
+                // Llenar datos del cliente
+                $('#formClientes #nombre_clientes').val(respuesta.nombre || '');
+                $('#formClientes #identidad_clientes').val(respuesta.rtn || '');
+                $('#formClientes #fecha_clientes').attr('disabled', true).val(respuesta.fecha || '');
+                $('#formClientes #departamento_cliente').val(respuesta.departamentos_id || '').selectpicker('refresh');
+                getMunicipiosClientes(respuesta.municipios_id);
+                $('#formClientes #municipio_cliente').val(respuesta.municipios_id || '').selectpicker('refresh');
+                $('#formClientes #dirección_clientes').val(respuesta.localidad || '');
+                $('#formClientes #telefono_clientes').val(respuesta.telefono || '');
+                $('#formClientes #correo_clientes').val(respuesta.correo || '');
+                $('#formClientes #clientes_activo').prop('checked', respuesta.estado == 1);
 
-                if (valores[8] == 1) {
-                    $('#formClientes #clientes_activo').attr('checked', true);
+                /* SECCIÓN DE PUNTOS - CAMBIOS CLAVE */
+                $('#card_puntos_cliente').show();
+                
+                // Manejo de puntos (siempre mostrar valor, 0 por defecto)
+                var puntos = respuesta.puntos || 0;
+                $('#puntos_acumulados').val(puntos);
+                
+                // Manejo de fecha (formato correcto o "No existe")
+                var fechaActualizacion = 'No existe';
+                if (respuesta.ultima_actualizacion && respuesta.ultima_actualizacion !== 'No existe') {
+                    var fecha = new Date(respuesta.ultima_actualizacion);
+                    if (!isNaN(fecha.getTime())) {
+                        fechaActualizacion = fecha.toLocaleDateString('es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+                }
+                $('#puntos_ultima_actualizacion').val(fechaActualizacion);
+                
+                // Estilos condicionales
+                if (puntos == 0) {
+                    $('#puntos_acumulados').addClass('text-muted');
                 } else {
-                    $('#formClientes #clientes_activo').attr('checked', false);
+                    $('#puntos_acumulados').removeClass('text-muted').addClass('text-success');
+                }
+                
+                if (fechaActualizacion === 'No existe') {
+                    $('#puntos_ultima_actualizacion').addClass('text-muted');
+                } else {
+                    $('#puntos_ultima_actualizacion').removeClass('text-muted');
                 }
 
-                //DESHABILITAR OBJETOS
-                $('#formClientes #nombre_clientes').attr("readonly", true);
+                // Configurar botón de historial
+                $('#btn_ver_historial_puntos').off('click').on('click', function() {
+                    $('#modal_historial_puntos').modal('show');
+                    cargarHistorialPuntos(data.clientes_id);
+                });
+
+                // Manejo de estados de los campos
+                $('#formClientes #nombre_clientes').attr("readonly", false);
+                $('#formClientes #departamento_cliente, #formClientes #municipio_cliente, #formClientes #dirección_clientes').attr("disabled", false);
+                $('#formClientes #telefono_clientes, #formClientes #correo_clientes').attr("readonly", false);
+                $('#formClientes #clientes_activo').attr("disabled", false);
+                $('#formClientes #grupo_editar_rtn').show();
                 $('#formClientes #identidad_clientes').attr("readonly", true);
                 $('#formClientes #fecha_clientes').attr("readonly", true);
-                $('#formClientes #departamento_cliente').attr("disabled", true);
-                $('#formClientes #municipio_cliente').attr("disabled", true);
-                $('#formClientes #dirección_clientes').attr("disabled", true);
-                $('#formClientes #telefono_clientes').attr("readonly", true);
-                $('#formClientes #correo_clientes').attr("readonly", true);
-                $('#formClientes #clientes_activo').attr("disabled", true);
-                $('#formClientes #estado_clientes').hide();
-                $('#formClientes #grupo_editar_rtn').hide();
 
-                $('#formClientes #proceso_clientes').val("Eliminar");
+                // Mostrar modal
+                $('#formClientes #proceso_clientes').val("Editar");
                 $('#modal_registrar_clientes').modal({
                     show: true,
                     keyboard: false,
                     backdrop: 'static'
                 });
+            },
+            error: function(xhr, status, error) {
+                console.error("Error al cargar datos del cliente:", error);
+                showNotify('error', 'Error', 'No se pudieron cargar los datos del cliente');
+                $('#modal_registrar_clientes').modal('hide');
             }
         });
+    });
+};
+
+var eliminar_clientes_dataTable = function(tbody, table) {
+    $(tbody).off("click", "button.table_eliminar");
+    $(tbody).on("click", "button.table_eliminar", function() {
+        var data = table.row($(this).parents("tr")).data();
+        var clientes_id = data.clientes_id;
+        var nombreCliente = data.cliente; 
+        var rtnCliente = data.rtn || 'No registrado'; // Manejo de RTN vacío
+        
+        // Construir el mensaje de confirmación con HTML
+        var mensajeHTML = `¿Desea eliminar permanentemente al cliente?<br><br>
+                        <strong>Nombre:</strong> ${nombreCliente}<br>
+                        <strong>RTN:</strong> ${rtnCliente}`;
+        
+        swal({
+            title: "Confirmar eliminación",
+            content: {
+                element: "span",
+                attributes: {
+                    innerHTML: mensajeHTML
+                }
+            },
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "Cancelar",
+                    value: null,
+                    visible: true,
+                    className: "btn-light"
+                },
+                confirm: {
+                    text: "Sí, eliminar",
+                    value: true,
+                    className: "btn-danger",
+                    closeModal: false
+                }
+            },
+            dangerMode: true,
+            closeOnEsc: false,
+            closeOnClickOutside: false
+        }).then((confirmar) => {
+            if (confirmar) {
+               
+                $.ajax({
+                    type: 'POST',
+                    url: '<?php echo SERVERURL;?>ajax/eliminarClientesAjax.php',
+                    data: {
+                        clientes_id: clientes_id
+                    },
+                    dataType: 'json', // Esperamos respuesta JSON
+                    before: function(){
+                        // Mostrar carga mientras se procesa
+                        showLoading("Eliminando registro...");
+                    },
+                    success: function(response) {
+                        swal.close();
+                        
+                        if(response.status === "success") {
+                            showNotify("success", response.title, response.message);
+                            table.ajax.reload(null, false); // Recargar tabla sin resetear paginación
+                            table.search('').draw();                    
+                        } else {
+                            showNotify("error", response.title, response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        swal.close();
+                        showNotify("error", "Error", "Ocurrió un error al procesar la solicitud");
+                    }
+                });
+            }
+        });
+
     });
 }
 
@@ -3763,58 +4238,46 @@ function editRTNClient(clientes_id, rtn) {
             },
             confirm: {
                 text: "¡Sí, deseo editarlo!",
-                className: "btn-primary",
-                closeModal: false
+                className: "btn-primary"
             }
         },
-        closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-        closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-    }).then((isConfirm) => {
-        if (isConfirm) {
-            editRTNCliente(clientes_id, rtn);
+        closeOnClickOutside: false,
+        closeOnEsc: false
+    }).then((willEdit) => {
+        if (willEdit) {
+            return editRTNCliente(clientes_id, rtn); // Retorna la promesa del AJAX
         }
     });
 }
 
 function editRTNCliente(clientes_id, rtn) {
     var url = '<?php echo SERVERURL; ?>core/editRTNCliente.php';
-
-    $.ajax({
+    
+    // Convertir a AJAX asíncrono (recomendado)
+    return $.ajax({
         type: 'POST',
         url: url,
-        async: false,
-        data: 'clientes_id=' + clientes_id + '&rtn=' + rtn,
-        success: function(data) {
-            if (data == 1) {
-                swal({
-                    title: "Success",
-                    text: "El RTN ha sido actualizado satisfactoriamente",
-                    icon: "success",
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-                listar_clientes();
-                $('#formClientes #identidad_clientes').val(rtn);
-            } else if (data == 2) {
-                swal({
-                    title: "Error",
-                    text: "Error el RTN no se puede actualizar",
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-            } else if (data == 3) {
-                swal({
-                    title: "Error",
-                    text: "El RTN ya existe",
-                    icon: "error",
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-            }
+        async: true, // Cambiado a true (elimina el bloqueo)
+        data: { 
+            clientes_id: clientes_id, 
+            rtn: rtn 
         }
+    }).then(function(data) {
+        if (data == 1) {
+            swal.close(); // Cierra manualmente el SweetAlert
+            showNotify('success', 'Success', 'El RTN ha sido actualizado satisfactoriamente');
+            listar_clientes();
+            $('#formClientes #identidad_clientes').val(rtn);
+        } else if (data == 2) {
+            swal.close();
+            showNotify('error', 'Error', 'Error el RTN no se puede actualizar');
+        } else if (data == 3) {
+            swal.close();
+            showNotify('error', 'Error', 'El RTN ya existe');
+        }
+    }).fail(function() {
+        swal.close();
+        showNotify('error', 'Error', 'Error en la solicitud');
     });
 }
 
@@ -3840,7 +4303,7 @@ function getNombreCliente(clientes_id) {
 //funcion aplicar nuevo saldo
 function saldoFactura(facturas_id) {
     //IMPORTE NUEVO EFECTIVO
-    var url = '<?php echo SERVERURL; ?>core/getSaldoFactura.php';
+    var url = '<?php echo SERVERURL;?>core/getSaldoFactura.php';
 
     $.ajax({
         type: 'POST',
@@ -3856,7 +4319,7 @@ function saldoFactura(facturas_id) {
 //funcion aplicar nuevo saldo compras CXP
 function saldoCompras(compras_id) {
     //IMPORTE NUEVO EFECTIVO
-    var url = '<?php echo SERVERURL; ?>core/getSaldoCompras.php';
+    var url = '<?php echo SERVERURL;?>core/getSaldoCompras.php';
 
     $.ajax({
         type: 'POST',
@@ -3870,185 +4333,258 @@ function saldoCompras(compras_id) {
 }
 //FIN ACCIONES FROMULARIO CLIENTES
 
-//INICIO MODAL REGSITRAR PAGO FACTURACIÓN CLIENTES
+// INICIO MODAL REGISTRAR PAGO FACTURACIÓN CLIENTES
 function customRound(number) {
-    var truncated = Math.floor(number * 100) / 100; // Trunca a dos decimales
-    var secondDecimal = Math.floor((number * 100) % 10); // Obtiene el segundo decimal
-
-    if (secondDecimal >= 5) { // Si el segundo decimal es mayor o igual a 5, redondea hacia arriba
-        return parseFloat((truncated + 0.01).toFixed(2)); // Redondea hacia arriba
-    } else { // Si el segundo decimal es menor que 5, no redondea
-        return parseFloat(truncated.toFixed(2)); // No redondea
-    }
+    const truncated = Math.floor(number * 100) / 100;
+    const secondDecimal = Math.floor((number * 100) % 10);
+    return secondDecimal >= 5 ? parseFloat((truncated + 0.01).toFixed(2)) : parseFloat(truncated.toFixed(2));
 }
 
 function pago(facturas_id, tipoPago) {
-    var url = '<?php echo SERVERURL; ?>core/editarPagoFacturas.php';
+    const url = '<?php echo SERVERURL;?>core/editarPagoFacturas.php';
 
-    $('#pagos_multiples_switch').attr('checked', false);
+    // Resetear el switch de pagos múltiples
+    $('#pagos_multiples_switch').prop('checked', false).val(0);
     getCollaboradoresModalPagoFacturas();
+    getBanco();
 
     $.ajax({
         type: 'POST',
         url: url,
-        data: {
-            facturas_id: facturas_id
-        },
-        dataType: 'json', // Asegúrate de que el servidor devuelve JSON
+        data: { facturas_id: facturas_id },
+        dataType: 'json',
         success: function(datos) {
-            // Verifica que datos sea un array o un objeto
-            if (!Array.isArray(datos)) {
-                console.error('Formato de datos inesperado:', datos);
-                return;
-            }
+            if (!Array.isArray(datos)) return;
 
+            // Configuración inicial
             $('#formEfectivoBill .border-right a:eq(0) a').tab('show');
-            $("#customer-name-bill").html("<b>Cliente:</b> " + datos[0]);
+            $("#customer-name-bill").html(`<b>Cliente:</b> ${datos[0]}`);
             $("#customer_bill_pay").val(datos[6]);
-            $('#bill-pay').html("L. " + parseFloat(datos[6]).toFixed(2));
+            $('#bill-pay').html(`L. ${parseFloat(datos[6]).toFixed(2)}`);
 
-            //EFECTIVO
-            $('#formEfectivoBill')[0].reset();
-            $('#formEfectivoBill #monto_efectivo').val(parseFloat(datos[6]));
+            // Configurar formularios
+            configurarFormularioEfectivo(facturas_id, tipoPago, datos[6]);
+            configurarFormularioTarjeta(facturas_id, tipoPago, datos[6]);
+            configurarFormularioTransferencia(facturas_id, tipoPago, datos[6]);
+            configurarFormularioCheque(facturas_id, tipoPago, datos[6]);
 
-            $('#formEfectivoBill #factura_id_efectivo').val(facturas_id);
-            $('#formEfectivoBill #tipo_factura').val(tipoPago);
-            $('#formEfectivoBill #pago_efectivo').attr('disabled', true);
-
-            if (tipoPago == 2) {
-                $('#bill-pay').html("L. " + parseFloat(datos[6]));
-                $('#tab5').hide();
-                $("#formEfectivoBill #tipo_factura_efectivo").val(tipoPago);
-
-                $('#formTarjetaBill #monto_efectivo_tarjeta').show();
-                $('#formTransferenciaBill #importe_transferencia').show();
-                $('#formChequeBill #importe_cheque').show();
-                $("#formEfectivoBill #grupo_cambio_efectivo").hide();
-            }
-
-            //TARJETA
-            $('#formTarjetaBill')[0].reset();
-            $('#formTarjetaBill #monto_efectivo').val(parseFloat(datos[6]));
-            $('#formTarjetaBill #importe_tarjeta').val(parseFloat(datos[6]));
-            $('#formTarjetaBill #factura_id_tarjeta').val(facturas_id);
-            $('#formTarjetaBill #tipo_factura').val(tipoPago);
-            $('#formTarjetaBill #pago_efectivo').attr('disabled', true);
-
-            //TRANSFERENCIA
-            $('#formTransferenciaBill')[0].reset();
-            $('#formTransferenciaBill #monto_efectivo').val(parseFloat(datos[6]));
-            $('#formTransferenciaBill #factura_id_transferencia').val(facturas_id);
-            $('#formTransferenciaBill #tipo_factura_transferencia').val(tipoPago);
-            $('#formTransferenciaBill #pago_efectivo').attr('disabled', true);
-
-            //CHEQUES
-            $('#formChequeBill')[0].reset();
-            $('#formChequeBill #monto_efectivo').val(parseFloat(datos[6]));
-            $('#formChequeBill #factura_id_cheque').val(facturas_id);
-            $('#formChequeBill #pago_efectivo').attr('disabled', true);
-            $('#formChequeBill #tipo_factura_cheque').val(tipoPago);
-
-            $('#modal_pagos').modal({
-                show: true,
-                keyboard: false,
-                backdrop: 'static'
+            // Mostrar modal
+            $('#modal_pagos').modal({ 
+                show: true, 
+                keyboard: false, 
+                backdrop: 'static' 
             });
+            
+            // Inicializar el cálculo del cambio
+            calcularCambioEfectivo();
         },
-        error: function(xhr, status, error) {
-            console.error('Error al realizar la solicitud:', status, error);
+        error: (xhr, status, error) => {
+            console.error("Error al cargar datos de pago:", error);
+            showNotify("error", "Error", "No se pudieron cargar los datos del pago");
         }
     });
 }
 
-$(document).ready(function() {
-    $("#tab1").on("click", function() {
-        $("#modal_pagos").on('shown.bs.modal', function() {
-            $(this).find('#formTarjetaBill #efectivo_bill').focus();
+// Funciones auxiliares para configuración de formularios
+function configurarFormularioEfectivo(facturas_id, tipoPago, monto) {
+    const $form = $('#formEfectivoBill');
+    $form[0].reset();
+    $form.find('#monto_efectivo').val(parseFloat(monto).toFixed(2));
+    $form.find('#factura_id_efectivo').val(facturas_id);
+    $form.find('#tipo_factura').val(tipoPago);
+    $form.find('#pago_efectivo').attr('disabled', true);
+
+    if (tipoPago == 2) { // Pago múltiple
+        $('#bill-pay').html(`L. ${parseFloat(monto).toFixed(2)}`);
+        $('#tab5').hide();
+        $form.find('#grupo_cambio_efectivo').hide();
+        $form.find('#cambio_efectivo').val("0.00");
+    } else { // Pago normal
+        $form.find('#grupo_cambio_efectivo').show();
+    }
+}
+
+function configurarFormularioTarjeta(facturas_id, tipoPago, monto) {
+    const $form = $('#formTarjetaBill');
+    $form[0].reset();
+    $form.find('#monto_efectivo, #importe_tarjeta').val(parseFloat(monto).toFixed(2));
+    $form.find('#factura_id_tarjeta').val(facturas_id);
+    $form.find('#tipo_factura').val(tipoPago);
+    $form.find('#pago_tarjeta').attr('disabled', false);
+}
+
+function configurarFormularioTransferencia(facturas_id, tipoPago, monto) {
+    const $form = $('#formTransferenciaBill');
+    $form[0].reset();
+    $form.find('#monto_efectivo').val(parseFloat(monto).toFixed(2));
+    $form.find('#factura_id_transferencia').val(facturas_id);
+    $form.find('#tipo_factura_transferencia').val(tipoPago);
+    $form.find('#pago_transferencia').attr('disabled', false);
+}
+
+function configurarFormularioCheque(facturas_id, tipoPago, monto) {
+    const $form = $('#formChequeBill');
+    $form[0].reset();
+    $form.find('#monto_efectivo').val(parseFloat(monto).toFixed(2));
+    $form.find('#factura_id_cheque').val(facturas_id);
+    $form.find('#tipo_factura_cheque').val(tipoPago);
+    $form.find('#pago_cheque').attr('disabled', false);
+}
+
+// Inicialización cuando el DOM está listo
+$(function() {
+    // Configuración de focus en los tabs
+    $("#tab1, #tab2, #tab3, #tab4").on("click", function() {
+        const targetMap = {
+            'tab1': '#formEfectivoBill #efectivo_bill',
+            'tab2': '#formTarjetaBill #cr_bill',
+            'tab3': '#formTransferenciaBill #bk_nm',
+            'tab4': '#formChequeBill #bk_nm_chk'
+        };
+        
+        $("#modal_pagos").on('shown.bs.modal', () => {
+            $(targetMap[this.id]).focus();
         });
     });
 
-    $("#tab2").on("click", function() {
-        $("#modal_pagos").on('shown.bs.modal', function() {
-            $(this).find('#formTarjetaBill #cr_bill').focus();
-        });
-    });
-
-    $("#tab3").on("click", function() {
-        $("#modal_pagos").on('shown.bs.modal', function() {
-            $(this).find('#formTarjetaBill #bk_nm').focus();
-        });
-    });
-
-    $("#tab4").on("click", function() {
-        $("#modal_pagos").on('shown.bs.modal', function() {
-            $(this).find('#formChequeBill #bk_nm_chk').focus();
-        });
-    });
-});
-
-$(document).ready(function() {
+    // Máscaras para los inputs
     $('#formTarjetaBill #cr_bill').inputmask("9999");
-});
-
-$(document).ready(function() {
     $('#formTarjetaBill #exp').inputmask("99/99");
-});
-
-$(document).ready(function() {
     $('#formTarjetaBill #cvcpwd').inputmask("999999");
-});
 
-$(document).ready(function() {
-    $("#formEfectivoBill #efectivo_bill").on("keyup", function() {
-        var efectivo = parseFloat($("#formEfectivoBill #efectivo_bill").val()).toFixed(2);
-        var monto = parseFloat($("#formEfectivoBill #monto_efectivo").val()).toFixed(2);
-        var credito = $("#formEfectivoBill #tipo_factura").val();
-        var pagos_multiples = $('#pagos_multiples_switch').val();
-
-        if (credito == 2) {
-            $("#formEfectivoBill #cambio_efectivo").val(0)
-            $("#formEfectivoBill #grupo_cambio_efectivo").hide();
-        }
-
-        var total = efectivo - monto;
-
-        if (Math.floor(efectivo * 100) >= Math.floor(monto * 100) || credito == 2 || pagos_multiples ==
-            1) {
-            $('#formEfectivoBill #cambio_efectivo').val(parseFloat(total).toFixed(2));
-            $('#formEfectivoBill #pago_efectivo').attr('disabled', false);
-
-            //aqi
+    // Evento para el switch de pagos múltiples
+    $('#pagos_multiples_switch').change(function() {
+        const isChecked = $(this).is(':checked');
+        const tipoPago = isChecked ? 2 : 1;
+        
+        // Actualizar todos los formularios con el nuevo tipo de pago
+        $('[id^="form"] [id*="tipo_factura"]').val(tipoPago);
+        $('.multiple_pago').val(isChecked ? 1 : 0);
+        
+        // Mostrar/ocultar grupo de cambio según el tipo de pago
+        const $cambioGroup = $('#formEfectivoBill #grupo_cambio_efectivo');
+        if (isChecked) {
+            $cambioGroup.hide();
+            $('#formEfectivoBill #cambio_efectivo').val("0.00");
         } else {
-            $('#formEfectivoBill #cambio_efectivo').val(parseFloat(0).toFixed(2));
-            $('#formEfectivoBill #pago_efectivo').attr('disabled', true);
+            $cambioGroup.show();
         }
+        
+        // Recalcular el cambio y estado del botón
+        calcularCambioEfectivo();
+    });
 
-        if (parseFloat(efectivo) > parseFloat(monto)) {
-            $('#formEfectivoBill #pago_efectivo').attr('disabled', true);
+    // Evento mejorado para el input de efectivo
+    $("#formEfectivoBill #efectivo_bill").on("input", function() {
+        // Obtener valor actual
+        let value = $(this).val();
+        
+        // Limpiar y formatear el valor
+        value = value.replace(/[^0-9.]/g, '')
+                     .replace(/(\..*)\./g, '$1') // Evitar múltiples puntos
+                     .replace(/^\./, '0.'); // Agregar 0 si empieza con punto
+        
+        // Limitar a 2 decimales
+        const parts = value.split('.');
+        if (parts.length > 1) {
+            value = parts[0] + '.' + parts[1].slice(0, 2);
+        }
+        
+        // Actualizar valor
+        $(this).val(value);
+        
+        // Calcular el cambio
+        calcularCambioEfectivo();
+    });
+    
+    // Evento para cuando el modal se muestra
+    $('#modal_pagos').on('shown.bs.modal', function() {
+        // Inicializar el cálculo del cambio
+        calcularCambioEfectivo();
+        
+        // Enfocar el input de efectivo si está visible
+        if ($('#formEfectivoBill').is(':visible')) {
+            setTimeout(() => {
+                $('#formEfectivoBill #efectivo_bill').focus();
+            }, 300);
         }
     });
 });
 
-function getBanco() {
-    var url = '<?php echo SERVERURL; ?>core/getBanco.php';
+// Función mejorada para calcular el cambio en efectivo
+function calcularCambioEfectivo() {
+    const $form = $('#formEfectivoBill');
+    const efectivoStr = $form.find('#efectivo_bill').val().replace(/,/g, '');
+    const montoStr = $form.find('#monto_efectivo').val().replace(/,/g, '');
+    
+    const efectivo = parseFloat(efectivoStr) || 0;
+    const monto = parseFloat(montoStr) || 0;
+    const tipoPago = parseInt($form.find('#tipo_factura').val()) || 1;
 
+    if (tipoPago === 1) { // Pago completo
+        const cambio = efectivo - monto;
+        $form.find('#cambio_efectivo').val(cambio >= 0 ? cambio.toFixed(2) : "0.00");
+        $form.find('#pago_efectivo').attr('disabled', efectivo < monto);
+    } else { // Pago múltiple
+        $form.find('#cambio_efectivo').val("0.00");
+        $form.find('#pago_efectivo').attr('disabled', efectivo <= 0 || efectivo > monto);
+    }
+}
+
+// Función para obtener los colaboradores
+function getCollaboradoresModalPagoFacturas() {
     $.ajax({
-        type: "POST",
-        url: url,
-        async: true,
-        success: function(data) {
-            $('#formTransferenciaBill #bk_nm').html("");
-            $('#formTransferenciaBill #bk_nm').html(data);
-            $('#formTransferenciaBill #bk_nm').selectpicker('refresh');
-
-            $('#formChequeBill #bk_nm_chk').html("");
-            $('#formChequeBill #bk_nm_chk').html(data);
-            $('#formChequeBill #bk_nm_chk').selectpicker('refresh');
+        url: '<?php echo SERVERURL; ?>core/getCollaboradores.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            const $selects = $('[id^="usuario_"]');
+            $selects.empty();
+            
+            if(response.success && response.data?.length) {
+                response.data.forEach(user => {
+                    $selects.append(`<option value="${user.id}">${user.nombre}</option>`);
+                });
+            } else {
+                $selects.append('<option value="">No hay usuarios disponibles</option>');
+            }
+            
+            $selects.selectpicker('refresh');
+        },
+        error: (xhr, status, error) => {
+            console.error("Error al cargar usuarios:", error);
+            showNotify("error", "Error", "No se pudieron cargar los usuarios");
         }
-
     });
 }
-//FIN MODAL REGSITRAR PAGO FACTURACIÓN CLIENTES
+
+// Función para obtener los bancos
+function getBanco() {
+    $.ajax({
+        url: '<?php echo SERVERURL; ?>core/getBanco.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            const $selects = $('#formTransferenciaBill #bk_nm, #formChequeBill #bk_nm_chk');
+            $selects.empty();
+            
+            if(response.success && response.data?.length) {
+                response.data.forEach(banco => {
+                    $selects.append(`<option value="${banco.id || banco.bancos_id}">${banco.nombre}</option>`);
+                });
+            } else {
+                $selects.append('<option value="">No hay bancos disponibles</option>');
+            }
+            
+            $selects.selectpicker('refresh');
+        },
+        error: (xhr, status, error) => {
+            console.error("Error al cargar bancos:", error);
+            showNotify("error", "Error", "No se pudieron cargar los bancos");
+        }
+    });
+}
+// FIN MODAL REGISTRAR PAGO FACTURACIÓN CLIENTES
 
 //INICIO ABONO CXC
 $(document).ready(function() {
@@ -4064,7 +4600,7 @@ var listar_AbonosCXC = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL; ?>core/getAbonosCXC.php",
+            "url": "<?php echo SERVERURL;?>core/getAbonosCXC.php",
             "data": {
                 "factura_id": factura_id
             }
@@ -4092,7 +4628,7 @@ var listar_AbonosCXC = function() {
         "language": idioma_español,
         "dom": dom,
         "columnDefs": [{
-                width: "10%",
+                width: "20%",
                 targets: 0
             },
             {
@@ -4100,7 +4636,7 @@ var listar_AbonosCXC = function() {
                 targets: 1
             },
             {
-                width: "35%",
+                width: "25%",
                 targets: 2
             },
             {
@@ -4108,7 +4644,7 @@ var listar_AbonosCXC = function() {
                 targets: 3
             },
             {
-                width: "50%",
+                width: "25%",
                 targets: 4
             }
         ],
@@ -4215,7 +4751,7 @@ var listar_AbonosCXP = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL; ?>core/getAbonosCXP.php",
+            "url": "<?php echo SERVERURL;?>core/getAbonosCXP.php",
             "data": {
                 "compras_id": compras_id
             },
@@ -4433,7 +4969,7 @@ $(document).ready(function() {
 
 //INICIO MODAL REGSITRAR PAGO COMPRAS PROVEEDORES
 function pagoCompras(compras_id, saldo, tipo) {
-    var url = '<?php echo SERVERURL; ?>core/editarPagoCompras.php';
+    var url = '<?php echo SERVERURL;?>core/editarPagoCompras.php';
 
     $('#pagos_multiples_switch').attr('checked', false);
     getCollaboradoresModalPagoFacturasCompras();
@@ -4556,75 +5092,172 @@ $(document).ready(function() {
 });
 
 function getBancoPurchase() {
-    var url = '<?php echo SERVERURL; ?>core/getBanco.php';
-
     $.ajax({
+        url: "<?php echo SERVERURL; ?>core/getBanco.php",
         type: "POST",
-        url: url,
-        async: true,
-        success: function(data) {
-            $('#formTransferenciaPurchase #bk_nm').html("");
-            $('#formTransferenciaPurchase #bk_nm').html(data);
+        dataType: "json",
+        success: function(response) {
+            const selectTransferencia = $('#formTransferenciaPurchase #bk_nm');
+            const selectCheque = $('#formChequePurchase #bk_nm_chk');
+            
+            selectTransferencia.empty();
+            selectCheque.empty();
+            
+            if(response.success) {
+                response.data.forEach(banco => {
+                    const option = `
+                        <option value="${banco.bancos_id}" 
+                                data-subtext="${banco.cuenta || 'Sin cuenta'}">
+                            ${banco.nombre}
+                        </option>
+                    `;
+                    selectTransferencia.append(option);
+                    selectCheque.append(option);
+                });
+            } else {
+                const errorOption = '<option value="">No hay bancos disponibles</option>';
+                selectTransferencia.append(errorOption);
+                selectCheque.append(errorOption);
+            }
+            
+            selectTransferencia.selectpicker('refresh');
+            selectCheque.selectpicker('refresh');
+        },
+        error: function(xhr) {
+            showNotify("error", "Error", "Error de conexión al cargar bancos");
+            const errorOption = '<option value="">Error al cargar</option>';
+            
+            $('#formTransferenciaPurchase #bk_nm').html(errorOption);
+            $('#formChequePurchase #bk_nm_chk').html(errorOption);
+            
             $('#formTransferenciaPurchase #bk_nm').selectpicker('refresh');
-
-            $('#formChequePurchase #bk_nm_chk').html("");
-            $('#formChequePurchase #bk_nm_chk').html(data);
             $('#formChequePurchase #bk_nm_chk').selectpicker('refresh');
         }
     });
 }
-//FIN MODAL REGSITRAR PAGO COMPRAS PROVEEDORES
 
+// Versión adaptada para colaboradores en facturas
 function getCollaboradoresModalPagoFacturas() {
-    var url = '<?php echo SERVERURL; ?>core/getColaboradores.php';
-
     $.ajax({
+        url: "<?php echo SERVERURL; ?>core/getColaboradores.php",
         type: "POST",
-        url: url,
-        async: true,
-        success: function(data) {
-            $('#formEfectivoBill #usuario_efectivo').html("");
-            $('#formEfectivoBill #usuario_efectivo').html(data);
-            $('#formEfectivoBill #usuario_efectivo').selectpicker('refresh');
-
-            $('#formTarjetaBill #usuario_tarjeta').html("");
-            $('#formTarjetaBill #usuario_tarjeta').html(data);
-            $('#formTarjetaBill #usuario_tarjeta').selectpicker('refresh');
-
-            $('#formTransferenciaBill #usuario_transferencia').html("");
-            $('#formTransferenciaBill #usuario_transferencia').html(data);
-            $('#formTransferenciaBill #usuario_transferencia').selectpicker('refresh');
-
-            $('#formChequeBill #usuario_cheque').html("");
-            $('#formChequeBill #usuario_cheque').html(data);
-            $('#formChequeBill #usuario_cheque').selectpicker('refresh');
+        dataType: "json",
+        success: function(response) {
+            const selects = [
+                '#formEfectivoBill #usuario_efectivo',
+                '#formTarjetaBill #usuario_tarjeta',
+                '#formTransferenciaBill #usuario_transferencia',
+                '#formChequeBill #usuario_cheque'
+            ];
+            
+            // Limpiar todos los selects
+            selects.forEach(selector => {
+                $(selector).empty();
+            });
+            
+            if(response.success) {
+                response.data.forEach(colaborador => {
+                    const option = `
+                        <option value="${colaborador.colaboradores_id}" 
+                                data-subtext="${colaborador.identidad || 'Sin identidad'}">
+                            ${colaborador.nombre}
+                        </option>
+                    `;
+                    
+                    // Agregar a todos los selects
+                    selects.forEach(selector => {
+                        $(selector).append(option);
+                    });
+                });
+            } else {
+                const errorOption = '<option value="">No hay colaboradores disponibles</option>';
+                selects.forEach(selector => {
+                    $(selector).append(errorOption);
+                });
+            }
+            
+            // Refrescar todos los selects
+            selects.forEach(selector => {
+                $(selector).selectpicker('refresh');
+            });
+        },
+        error: function(xhr) {
+            showNotify("error", "Error", "Error de conexión al cargar colaboradores");
+            const errorOption = '<option value="">Error al cargar</option>';
+            
+            const selects = [
+                '#formEfectivoBill #usuario_efectivo',
+                '#formTarjetaBill #usuario_tarjeta',
+                '#formTransferenciaBill #usuario_transferencia',
+                '#formChequeBill #usuario_cheque'
+            ];
+            
+            selects.forEach(selector => {
+                $(selector).html(errorOption).selectpicker('refresh');
+            });
         }
     });
 }
 
+// Versión adaptada para colaboradores en compras
 function getCollaboradoresModalPagoFacturasCompras() {
-    var url = '<?php echo SERVERURL; ?>core/getColaboradores.php';
-
     $.ajax({
+        url: "<?php echo SERVERURL; ?>core/getColaboradores.php",
         type: "POST",
-        url: url,
-        async: true,
-        success: function(data) {
-            $('#formEfectivoPurchase #usuario_efectivo_compras').html("");
-            $('#formEfectivoPurchase #usuario_efectivo_compras').html(data);
-            $('#formEfectivoPurchase #usuario_efectivo_compras').selectpicker('refresh');
-
-            $('#formTarjetaPurchase #usuario_tarjeta_compras').html("");
-            $('#formTarjetaPurchase #usuario_tarjeta_compras').html(data);
-            $('#formTarjetaPurchase #usuario_tarjeta_compras').selectpicker('refresh');
-
-            $('#formTransferenciaPurchase #usuario_transferencia_compras').html("");
-            $('#formTransferenciaPurchase #usuario_transferencia_compras').html(data);
-            $('#formTransferenciaPurchase #usuario_transferencia_compras').selectpicker('refresh');
-
-            $('#formChequePurchase #usuario_cheque_compras').html("");
-            $('#formChequePurchase #usuario_cheque_compras').html(data);
-            $('#formChequePurchase #usuario_cheque_compras').selectpicker('refresh');
+        dataType: "json",
+        success: function(response) {
+            const selects = [
+                '#formEfectivoPurchase #usuario_efectivo_compras',
+                '#formTarjetaPurchase #usuario_tarjeta_compras',
+                '#formTransferenciaPurchase #usuario_transferencia_compras',
+                '#formChequePurchase #usuario_cheque_compras'
+            ];
+            
+            // Limpiar todos los selects
+            selects.forEach(selector => {
+                $(selector).empty();
+            });
+            
+            if(response.success) {
+                response.data.forEach(colaborador => {
+                    const option = `
+                        <option value="${colaborador.colaboradores_id}" 
+                                data-subtext="${colaborador.identidad || 'Sin identidad'}">
+                            ${colaborador.nombre}
+                        </option>
+                    `;
+                    
+                    // Agregar a todos los selects
+                    selects.forEach(selector => {
+                        $(selector).append(option);
+                    });
+                });
+            } else {
+                const errorOption = '<option value="">No hay colaboradores disponibles</option>';
+                selects.forEach(selector => {
+                    $(selector).append(errorOption);
+                });
+            }
+            
+            // Refrescar todos los selects
+            selects.forEach(selector => {
+                $(selector).selectpicker('refresh');
+            });
+        },
+        error: function(xhr) {
+            showNotify("error", "Error", "Error de conexión al cargar colaboradores");
+            const errorOption = '<option value="">Error al cargar</option>';
+            
+            const selects = [
+                '#formEfectivoPurchase #usuario_efectivo_compras',
+                '#formTarjetaPurchase #usuario_tarjeta_compras',
+                '#formTransferenciaPurchase #usuario_transferencia_compras',
+                '#formChequePurchase #usuario_cheque_compras'
+            ];
+            
+            selects.forEach(selector => {
+                $(selector).html(errorOption).selectpicker('refresh');
+            });
         }
     });
 }
@@ -4643,14 +5276,7 @@ $('input[type="file"]').change(function(e) {
     var imagefile = file.type;
     var match = ["image/jpeg", "image/png", "image/jpg"];
     if (!((imagefile == match[0]) || (imagefile == match[1]) || (imagefile == match[2]))) {
-        swal({
-            title: "Error",
-            text: "Por favor seleccione una archivo valido con el formato (JPEG/JPG/PNG)",
-            icon: "error",
-            dangerMode: true,
-            closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-            closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-        });
+        showNotify('error', 'Error', 'Por favor seleccione una archivo valido con el formato (JPEG/JPG/PNG)');
         $("#file").val('');
         return false;
     } else {
@@ -4687,7 +5313,7 @@ var listar_asistencia = function() {
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL; ?>core/llenarDataTableAsistencia.php",
+            "url": "<?php echo SERVERURL;?>core/asistencia/llenarDataTableAsistencia.php",
             "data": {
                 "fechai": fechai,
                 "fechaf": fechaf,
@@ -4708,7 +5334,7 @@ var listar_asistencia = function() {
                 "data": "horaf"
             },
             {
-                "data": "horat"
+                "data": "horas_trabajadas"
             },
             {
                 "data": "comentario"
@@ -4717,10 +5343,10 @@ var listar_asistencia = function() {
                 "defaultContent": "<button class='table_editar editar_asistencia btn btn-dark ocultar'><span class='fas fa-edit fa-lg'></span>Editar</button>"
             },
             {
-                "defaultContent": "<button class='table_eliminar eliminar_salida btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span>Eliminar</button>"
+                "defaultContent": "<button class='table_eliminar eliminar_salida btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span>Eliminar Marcaje</button>"
             },
             {
-                "defaultContent": "<button class='table_eliminar eliminar_marcaje btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span>Marcaje</button>"
+                "defaultContent": "<button class='table_eliminar eliminar_marcaje btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span>Eliminar Asistencia</button>"
             }
         ],
         "lengthMenu": lengthMenu10,
@@ -4809,7 +5435,7 @@ var listar_asistencia = function() {
                     columns: [0, 1, 2, 3, 4, 5, 6, 7, 8]
                 },
                 customize: function(doc) {
-                    if (imagen) { // Solo agrega la imagen si 'imagen' tiene contenido válido
+                    if (imagen) {
                         doc.content.splice(0, 0, {
                             image: imagen,  
                             width: 100,
@@ -4838,25 +5464,42 @@ var delete_salida_asistencia_colaboradores_dataTable = function(tbody, table) {
         e.preventDefault();
         var data = table.row($(this).parents("tr")).data();
 
+        var nombre = data.colaborador;
+        var fecha = data.fecha;
+        
+        // Construir el mensaje de confirmación con HTML
+        var mensajeHTML = `¿Desea eliminar permanentemente la asistencia?<br><br>
+                <strong>Nombre:</strong> ${nombre}<br>
+                <strong>Fecha:</strong> ${fecha}`;
+
         swal({
-            title: "¿Estas seguro?",
-            text: "¿Desea eliminar la asistencia para el colaborador: # " + data.colaborador +
-                    ", para la fecha " + data.fecha + "?",
+            title: "Confirmar eliminación",
+            content: {
+                element: "span",
+                attributes: {
+                    innerHTML: mensajeHTML
+                }
+            },
             icon: "warning",
             buttons: {
                 cancel: {
                     text: "Cancelar",
-                    visible: true
+                    value: null,
+                    visible: true,
+                    className: "btn-light"
                 },
                 confirm: {
-                    text: "¡Sí, eliminar la asistencia!",
+                    text: "Sí, eliminar",
+                    value: true,
+                    className: "btn-danger",
+                    closeModal: false
                 }
             },
             dangerMode: true,
-            closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-            closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-        }).then((willConfirm) => {
-            if (willConfirm === true) {
+            closeOnEsc: false,
+            closeOnClickOutside: false
+        }).then((confirmar) => {
+            if (confirmar) {               
                 deleteAsistenciaMarcajeSalidaColaborador(data.asistencia_id);
             }
         });
@@ -4864,33 +5507,39 @@ var delete_salida_asistencia_colaboradores_dataTable = function(tbody, table) {
 }
 
 function deleteAsistenciaMarcajeSalidaColaborador(asistencia_id) {
-    var url = '<?php echo SERVERURL; ?>core/deleteAsistenciaColaborador.php';
+    var url = '<?php echo SERVERURL;?>core/asistencia/deleteAsistenciaAjax.php';
 
     $.ajax({
         type: "POST",
         url: url,
         async: true,
         data: 'asistencia_id=' + asistencia_id,
-        success: function(data) {
-            if (data == 1) {
-                swal({
-                    title: "Success",
-                    text: "La asitencia ha sido eliminada correctamente",
-                    icon: "success",
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                     
-                });
-                listar_asistencia();
-            } else {
-                swal({
-                    title: 'Error',
-                    text: 'Lo sentimos no se puede eliminar la asistencia',
-                    icon: 'error',
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
+        success: function(response) {
+            // Parsear la respuesta JSON
+            try {
+                var data = typeof response === 'string' ? JSON.parse(response) : response;
+                
+                if (data.Alerta === "recargar") {
+                    showNotify('success', data.Titulo, data.Texto);
+                    listar_asistencia();
+                } else {
+                    showNotify(data.Tipo, data.Titulo, data.Texto);
+                }
+                swal.close();
+            } catch (e) {
+                // Manejo de respuestas no JSON (backward compatibility)
+                if (response == 1) {
+                    showNotify('success', 'Éxito', 'La asistencia ha sido eliminada correctamente');
+                    listar_asistencia();
+                } else {
+                    showNotify('error', 'Error', 'No se pudo eliminar la asistencia');
+                }
+                swal.close();
             }
+        },
+        error: function() {
+            showNotify('error', 'Error', 'Error al conectar con el servidor');
+            swal.close();
         }
     });
 }
@@ -4901,25 +5550,50 @@ var delete_marcaje_asistencia_colaboradores_dataTable = function(tbody, table) {
         e.preventDefault();
         var data = table.row($(this).parents("tr")).data();
 
+        var Colaborador = data.colaborador;
+        var Fecha = data.fecha;
+        var horaSalida = data.horaf;
+
+        // Validar si existe hora de salida
+        if (!horaSalida || horaSalida === '--:--' || horaSalida === 'N/A') {
+            showNotify('warning', 'Advertencia', 'No hay marcaje de salida para eliminar');
+            return false;
+        }
+
+        // Construir el mensaje de confirmación con HTML
+        var mensajeHTML = `¿Desea eliminar permanentemente el marcaje?<br><br>
+                <strong>Nombre:</strong> ${Colaborador}<br>
+                <strong>Fecha:</strong> ${Fecha}<br>
+                <strong>Hora Salida:</strong> ${horaSalida}`;
+
         swal({
-            title: "¿Estas seguro?",
-            text: "¿Desea eliminar el marcaje de salida para el colaborador: # " + data
-                    .colaborador + ", para la fecha " + data.fecha + "?",
+            title: "Confirmar eliminación",
+            content: {
+                element: "span",
+                attributes: {
+                    innerHTML: mensajeHTML
+                }
+            },
             icon: "warning",
             buttons: {
                 cancel: {
                     text: "Cancelar",
-                    visible: true
+                    value: null,
+                    visible: true,
+                    className: "btn-light"
                 },
                 confirm: {
-                    text: "¡Sí, eliminar el marcaje de salida!",
+                    text: "Sí, eliminar",
+                    value: true,
+                    className: "btn-danger",
+                    closeModal: false
                 }
             },
             dangerMode: true,
-            closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-            closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-        }).then((willConfirm) => {
-            if (willConfirm === true) {
+            closeOnEsc: false,
+            closeOnClickOutside: false
+        }).then((confirmar) => {
+            if (confirmar) {               
                 deleteMarcajeSalida(data.asistencia_id);
             }
         });
@@ -4927,42 +5601,25 @@ var delete_marcaje_asistencia_colaboradores_dataTable = function(tbody, table) {
 }
 
 function deleteMarcajeSalida(asistencia_id) {
-    var url = '<?php echo SERVERURL; ?>core/deleteMarcajeSalidaColaborador.php';
+    var url = '<?php echo SERVERURL;?>core/asistencia/deleteMarcajeSalidaColaborador.php';
 
     $.ajax({
         type: "POST",
         url: url,
-        async: true,
-        data: 'asistencia_id=' + asistencia_id,
-        success: function(data) {
-            if (data == 1) {
-                swal({
-                    title: "Success",
-                    text: "El marcaje de salida ha sido eliminado correctamente",
-                    icon: "success",
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera                     
-                });
+        data: {asistencia_id: asistencia_id},
+        dataType: "json",
+        success: function(response) {
+            showNotify(response.Tipo, response.Titulo, response.Texto);
+            
+            if(response.Alerta === "recargar") {
                 listar_asistencia();
-            } else if (data == 3) {
-                swal({
-                    title: 'Error',
-                    text: 'No hay marcaje de salida',
-                    icon: 'error',
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
-            } else {
-                swal({
-                    title: 'Error',
-                    text: 'Lo sentimos no se puede eliminar el marcaje de salida',
-                    icon: 'error',
-                    dangerMode: true,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
             }
+
+            swal.close();
+        },
+        error: function(xhr, status, error) {
+            showNotify("error", "Error", "Ocurrió un problema al conectar con el servidor");
+            swal.close();
         }
     });
 }
@@ -4971,7 +5628,7 @@ var edit_asistencia_colaboradores_dataTable = function(tbody, table) {
     $(tbody).off("click", "button.editar_asistencia");
     $(tbody).on("click", "button.editar_asistencia", function() {
         var data = table.row($(this).parents("tr")).data();
-        var url = '<?php echo SERVERURL; ?>core/editarAsistencia.php';
+        var url = '<?php echo SERVERURL;?>core/asistencia/editarAsistencia.php';
         $('#formAsistencia')[0].reset();
         $('#formAsistencia #asistencia_id').val(data.asistencia_id);
 
@@ -4979,66 +5636,97 @@ var edit_asistencia_colaboradores_dataTable = function(tbody, table) {
             type: 'POST',
             url: url,
             data: $('#formAsistencia').serialize(),
-            success: function(registro) {
-                var valores = eval(registro);
-                $('#formAsistencia').attr({
-                    'data-form': 'update'
-                });
-                $('#formAsistencia').attr({
-                    'action': '<?php echo SERVERURL; ?>ajax/updateAsistenciaAjax.php'
-                });
-                $('#reg_asistencia').hide();
-                $('#edi_asistencia').show();
+            dataType: 'json', // Asegurar que esperamos JSON
+            success: function(response) {
+                if(response && response.length > 0) {
+                    $('#formAsistencia').attr({
+                        'data-form': 'update'
+                    });
+                    $('#formAsistencia').attr({
+                        'action': '<?php echo SERVERURL;?>core/asistencia/updateAsistenciaAjax.php'
+                    });
+                    $('#reg_asistencia').hide();
+                    $('#edi_asistencia').show();
 
-                $('#formAsistencia #asistencia_empleado').val(valores[0]);
-                $('#formAsistencia #asistencia_empleado').selectpicker('refresh');
-                $('#formAsistencia #fecha').val(valores[1]);
-                $('#formAsistencia #horagi').val(valores[2]);
-                $('#formAsistencia #horagf').val(valores[3]);
-                $('#formAsistencia #comentario').val(valores[5]);
+                    $('#formAsistencia #asistencia_empleado').val(response[0]);
+                    $('#formAsistencia #asistencia_empleado').selectpicker('refresh');
+                    $('#formAsistencia #fecha').val(response[1]);
+                    $('#formAsistencia #horagi').val(response[2]);
+                    $('#formAsistencia #horagf').val(response[3]);
+                    $('#formAsistencia #comentario').val(response[4]); // Corregido el índice
 
-                $('#formAsistencia #grupoHora').hide();
-                $('#formAsistencia #grupoHorai').show();
-                $('#formAsistencia #grupoHoraf').show();
-                $('#formAsistencia #grupoHoraComentario').show();
+                    $('#formAsistencia #grupoHora').hide();
+                    $('#formAsistencia #grupoHorai').show();
+                    $('#formAsistencia #grupoHoraf').show();
+                    $('#formAsistencia #grupoHoraComentario').show();
 
-                $('#formAsistencia #proceso_asistencia').val("Editar");
-                $('#modal_registrar_asistencia').modal({
-                    show: true,
-                    keyboard: false,
-                    backdrop: 'static'
-                });
+                    $('#formAsistencia #proceso_asistencia').val("Editar");
+                    $('#modal_registrar_asistencia').modal({
+                        show: true,
+                        keyboard: false,
+                        backdrop: 'static'
+                    });
+                } else {                    
+                    showNotify('error', 'Error', 'No se pudieron cargar los datos para editar');
+                }
+            },
+            error: function(xhr, status, error) {                
+                showNotify('error', 'Error', 'Ocurrió un problema al cargar los datos');
             }
         });
     });
 }
 
 function getColaboradores() {
-    var url = '<?php echo SERVERURL; ?>core/getColaboradores.php';
-
     $.ajax({
+        url: "<?php echo SERVERURL; ?>core/asistencia/getColaboradoresAsistencia.php",
         type: "POST",
-        url: url,
-        async: true,
-        success: function(data) {
-            $('#form_main_asistencia #colaborador').html("");
-            $('#form_main_asistencia #colaborador').html(data);
-            $('#form_main_asistencia #colaborador').selectpicker('refresh');
-
-            $('#formAsistencia #asistencia_empleado').html("");
-            $('#formAsistencia #asistencia_empleado').html(data);
-            $('#formAsistencia #asistencia_empleado').selectpicker('refresh');
+        dataType: "json",
+        success: function(response) {
+            const selects = [
+                '#form_main_asistencia #colaborador',
+                '#formAsistencia #asistencia_empleado'
+            ];
+            
+            selects.forEach(selector => {
+                $(selector).empty();
+            });
+            
+            if(response.success) {
+                response.data.forEach(colaborador => {
+                    const option = `
+                        <option value="${colaborador.colaboradores_id}" 
+                                data-subtext="${colaborador.identidad || 'Sin identidad'}">
+                            ${colaborador.nombre}
+                        </option>
+                    `;
+                    
+                    selects.forEach(selector => {
+                        $(selector).append(option);
+                    });
+                });
+            } else {
+                const errorOption = '<option value="">No hay colaboradores disponibles</option>';
+                selects.forEach(selector => {
+                    $(selector).append(errorOption);
+                });
+            }
+            
+            selects.forEach(selector => {
+                $(selector).selectpicker('refresh');
+            });
+        },
+        error: function(xhr) {
+            showNotify("error", "Error", "Error de conexión al cargar colaboradores");
+            const errorOption = '<option value="">Error al cargar</option>';
+            
+            $('#form_main_asistencia #colaborador').html(errorOption).selectpicker('refresh');
+            $('#formAsistencia #asistencia_empleado').html(errorOption).selectpicker('refresh');
         }
     });
 }
 
 function modal_asistencia() {
-    $('#formAsistencia').attr({
-        'data-form': 'save'
-    });
-    $('#formAsistencia').attr({
-        'action': '<?php echo SERVERURL; ?>ajax/addAsistenciaAjax.php'
-    });
     $('#formAsistencia')[0].reset();
     $('#reg_asistencia').show();
     $('#edi_asistencia').hide();
@@ -5086,7 +5774,7 @@ function showTime() {
 }
 
 function getColaboradorAsistencia() {
-    var url = '<?php echo SERVERURL; ?>core/editarUsarioSistema.php';
+    var url = '<?php echo SERVERURL;?>core/editarUsarioSistema.php';
 
     var colaboradores_id;
 
@@ -5104,7 +5792,7 @@ function getColaboradorAsistencia() {
 }
 
 function getHoraInicio(colaborador_id) {
-    var url = '<?php echo SERVERURL; ?>core/getHoraInicio.php';
+    var url = '<?php echo SERVERURL;?>core/getHoraInicio.php';
 
     var tipo;
 
@@ -5124,7 +5812,7 @@ function getHoraInicio(colaborador_id) {
 //FIN ASISTENCIA
 
 function getImagenHeader() {
-    var url = '<?php echo SERVERURL; ?>core/get_image.php';
+    var url = '<?php echo SERVERURL;?>core/get_image.php';
 
     // Obtener la URL de la imagen usando Ajax
     $.ajax({
@@ -5136,13 +5824,13 @@ function getImagenHeader() {
             logoElement.attr("src", imageUrl);
         },
         error: function() {
-            console.error("Error al obtener la URL de la imagen");
+
         }
     });
 }
 
 function getGithubVersion() {
-    var url = '<?php echo SERVERURL; ?>core/getGithubVersion.php';
+    var url = '<?php echo SERVERURL;?>core/getGithubVersion.php';
 
     $.ajax({
         url: url,
@@ -5157,7 +5845,7 @@ function getGithubVersion() {
 }
 
 function getEstadoClientes() {
-    var url = '<?php echo SERVERURL; ?>core/getEstado.php';
+    var url = '<?php echo SERVERURL;?>core/getEstado.php';
 
     $.ajax({
         type: "POST",
@@ -5172,7 +5860,7 @@ function getEstadoClientes() {
 }
 
 function getCuentasProveedores() {
-    var url = '<?php echo SERVERURL; ?>core/getCuenta.php';
+    var url = '<?php echo SERVERURL;?>core/getCuenta.php';
 
     $.ajax({
         type: "POST",

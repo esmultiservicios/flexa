@@ -1,25 +1,64 @@
 <script>
 $(document).ready(function() {
     listar_puestos();
+
+
+	$('#form_main_puestos #search').on("click", function (e) {
+		e.preventDefault();
+		listar_puestos();
+	});
+
+	// Evento para el botón de Limpiar (reset)
+	$('#form_main_puestos').on('reset', function () {
+		// Limpia y refresca los selects
+		$(this).find('.selectpicker') // Usa `this` para referenciar el formulario actual
+			.val('')
+			.selectpicker('refresh');
+
+			listar_puestos();
+	}); 	
 });
 
 //INICIO ACCIONES FROMULARIO PUESTOS
 var listar_puestos = function(){
+	var estado = $('#form_main_puestos #estado_puestos').val();
+
 	var table_puestos  = $("#dataTablePuestos").DataTable({
 		"destroy":true,
 		"ajax":{
 			"method":"POST",
-			"url":"<?php echo SERVERURL;?>core/llenarDataTablePuestos.php"
+			"url":"<?php echo SERVERURL;?>core/llenarDataTablePuestos.php",
+			"data": {
+                "estado": estado
+            }
 		},
 		"columns":[
 			{"data":"puestos_id"},
 			{"data":"nombre"},
-			{"defaultContent":"<button class='table_editar btn btn-dark ocultar'><span class='fas fa-edit fa-lg'></span></button>"},
-			{"defaultContent":"<button class='table_eliminar btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span></button>"}
+            {
+                "data": "estado",
+                "render": function(data, type, row) {
+                    if (type === 'display') {
+                        var estadoText = data == 1 ? 'Activo' : 'Inactivo';
+                        var icon = data == 1 ? 
+                            '<i class="fas fa-check-circle mr-1"></i>' : 
+                            '<i class="fas fa-times-circle mr-1"></i>';
+                        var badgeClass = data == 1 ? 
+                            'badge badge-pill badge-success' : 
+                            'badge badge-pill badge-danger';
+                        
+                        return '<span class="' + badgeClass + 
+                            '" style="font-size: 0.95rem; padding: 0.5em 0.8em; font-weight: 600;">' +
+                            icon + estadoText + '</span>';
+                    }
+                    return data;
+                }
+            },			
+			{"defaultContent":"<button class='table_editar btn ocultar'><span class='fas fa-edit fa-lg'></span>Editar</button>"},
+			{"defaultContent":"<button class='table_eliminar btn ocultar'><span class='fa fa-trash fa-lg'></span>Eliminar</button>"}
 		],
         "lengthMenu": lengthMenu,
 		"stateSave": true,
-		"bDestroy": true,
 		"language": idioma_español,
 		"dom": dom,
 		"columnDefs": [
@@ -136,68 +175,75 @@ var eliminar_puestos_dataTable = function(tbody, table){
 	$(tbody).off("click", "button.table_eliminar");
 	$(tbody).on("click", "button.table_eliminar", function(){
 		var data = table.row( $(this).parents("tr") ).data();
-		var url = '<?php echo SERVERURL;?>core/editarPuestos.php';
-		$('#formPuestos #puestos_id').val(data.puestos_id);
 
-		$.ajax({
-			type:'POST',
-			url:url,
-			data:$('#formPuestos').serialize(),
-			success: function(registro){
-				var valores = eval(registro);
-				$('#formPuestos').attr({ 'data-form': 'delete' });
-				$('#formPuestos').attr({ 'action': '<?php echo SERVERURL;?>ajax/eliminarPuestosAjax.php' });
-				$('#formPuestos')[0].reset();
-				$('#reg_puestos').hide();
-				$('#edi_puestos').hide();
-				$('#delete_puestos').show();
-				$('#formPuestos #puesto').val(valores[0]);
-
-				if(valores[1] == 1){
-					$('#formPuestos #puestos_activo').attr('checked', true);
-				}else{
-					$('#formPuestos #puestos_activo').attr('checked', false);
-				}
-
-				//DESHABILITAR OBJETOS
-				$('#formPuestos #puesto').attr('readonly', true);
-				$('#formPuestos #puestos_activo').attr('disabled', true);
-				$('#formPuestos #estado_puestos').hide();
-
-				$('#formPuestos #proceso_puestos').val("Eliminar");
-				$('#modal_registrar_puestos').modal({
-					show:true,
-					keyboard: false,
-					backdrop:'static'
-				});
-			}
-		});
+		var puestos_id = data.puestos_id;
+        var nombrePuesto = data.nombre; 
+        
+        // Construir el mensaje de confirmación con HTML
+        var mensajeHTML = `¿Desea eliminar permanentemente el puesto?<br><br>
+                        <strong>Nombre:</strong> ${nombrePuesto}`;
+        
+        swal({
+            title: "Confirmar eliminación",
+            content: {
+                element: "span",
+                attributes: {
+                    innerHTML: mensajeHTML
+                }
+            },
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "Cancelar",
+                    value: null,
+                    visible: true,
+                    className: "btn-light"
+                },
+                confirm: {
+                    text: "Sí, eliminar",
+                    value: true,
+                    className: "btn-danger",
+                    closeModal: false
+                }
+            },
+            dangerMode: true,
+            closeOnEsc: false,
+            closeOnClickOutside: false
+        }).then((confirmar) => {
+            if (confirmar) {
+               
+                $.ajax({
+                    type: 'POST',
+                    url: '<?php echo SERVERURL;?>ajax/eliminarPuestosAjax.php',
+                    data: {
+                        puestos_id: puestos_id
+                    },
+                    dataType: 'json', // Esperamos respuesta JSON
+                    before: function(){
+                        // Mostrar carga mientras se procesa
+                        showLoading("Eliminando registro...");
+                    },
+                    success: function(response) {
+                        swal.close();
+                        
+                        if(response.status === "success") {
+                            showNotify("success", response.title, response.message);
+                            table.ajax.reload(null, false); // Recargar tabla sin resetear paginación
+                            table.search('').draw();                    
+                        } else {
+                            showNotify("error", response.title, response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        swal.close();
+                        showNotify("error", "Error", "Ocurrió un error al procesar la solicitud");
+                    }
+                });
+            }
+        });
 	});
 }
 //FIN ACCIONES FROMULARIO PUESTOS
-
-/*INICIO FORMULARIO PUESTO DE COLABORADORES*/
-function modal_puestos(){
-	  $('#formPuestos').attr({ 'data-form': 'save' });
-	  $('#formPuestos').attr({ 'action': '<?php echo SERVERURL;?>ajax/agregarPuestosAjax.php' });
-	  $('#formPuestos')[0].reset();
-	  $('#reg_puestos').show();
-	  $('#edi_puestos').hide();
-	  $('#delete_puestos').hide();
-
-	  //HABILITAR OBJETOS
-	  $('#formPuestos #puesto').attr('readonly', false);
-	  $('#formPuestos #puestos_activo').attr('disabled', false);
-	  $('#formPuestos #estado_puestos').hide();
-
-	  $('#formPuestos #proceso_puestos').val("Registro");
-	  $('#modal_registrar_puestos').modal({
-		show:true,
-		keyboard: false,
-		backdrop:'static'
-	  });
-}
-/*FIN FORMULARIO PUESTO DE COLABORADORES*/
 
 $(document).ready(function(){
     $("#modal_registrar_puestos").on('shown.bs.modal', function(){

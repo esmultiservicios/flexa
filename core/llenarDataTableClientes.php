@@ -1,4 +1,5 @@
 <?php	
+	//llenarDataTableClientes.php
 	$peticionAjax = true;
 	require_once "configGenerales.php";
 	require_once "mainModel.php";
@@ -7,13 +8,14 @@
 	$insMainModel = new mainModel();
 	$database = new Database();
 		
-	$estado = isset($_POST['estado']) ? $_POST['estado'] : 1;
+	$estado = (isset($_POST['estado']) && $_POST['estado'] !== '') ? $_POST['estado'] : 1;
+
 	$result = $insMainModel->getClientes($estado);
 	
 	$arreglo = array();
 	$data = array();
 	
-	while($row = $result->fetch_assoc()){		
+	while($row = $result->fetch_assoc()){        
 		$data[] = array( 
 			"clientes_id"=>$row['clientes_id'],
 			"cliente"=>$row['cliente'],
@@ -28,7 +30,9 @@
 			"otra_informacion" => $row['otra_informacion'],
 			"whatsapp" => $row['whatsapp'],
 			"empresa" => $row['empresa'],
-		);		
+			"estado" => $row['estado'],
+			"puntos" => $row['puntos'] // Agregar este campo
+		);        
 	}
 	
 	$arreglo = array(

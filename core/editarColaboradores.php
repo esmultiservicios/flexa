@@ -1,36 +1,24 @@
 <?php	
-$peticionAjax = true;
-require_once "configGenerales.php";
-require_once "mainModel.php";
-
-$insMainModel = new mainModel();
-
-$colaborador_id = $_POST['colaborador_id'];
-$result = $insMainModel->getColaboradoresEdit($colaborador_id);
-
-if($result && $result->num_rows > 0) {
-    $valores2 = $result->fetch_assoc();
-    
-    $data = array(
-        "nombre" => $valores2['nombre'],
-        "identidad" => $valores2['identidad'],
-        "telefono" => $valores2['telefono'],						
-        "puestos_id" => $valores2['puestos_id'],
-        "empresa_id" => $valores2['empresa_id'],		
-        "estado" => $valores2['estado'],
-        "colaboradores_id" => $valores2['colaboradores_id'],	
-        "fecha_ingreso" => $valores2['fecha_ingreso'],
-        "fecha_egreso" => $valores2['fecha_egreso'],
-        "nombre_completo" => $valores2['nombre']
-    );
-
-    echo json_encode([
-        "success" => true,
-        "data" => $data
-    ]);
-} else {
-    echo json_encode([
-        "success" => false,
-        "message" => "No se encontró el colaborador"
-    ]);
-}
+	$peticionAjax = true;
+	require_once "configGenerales.php";
+	require_once "mainModel.php";
+	
+	$insMainModel = new mainModel();
+	
+	$colaborador_id = $_POST['colaborador_id'];
+	$result = $insMainModel->getColaboradoresEdit($colaborador_id);
+	$valores2 = $result->fetch_assoc();
+	
+	$datos = array(
+		0 => $valores2['nombre'], 
+		1 => $valores2['identidad'],
+		2 => $valores2['telefono'],						
+		3 => $valores2['puestos_id'],
+		4 => $valores2['empresa_id'],		
+		5 => $valores2['estado'],
+		6 => $valores2['colaboradores_id'],	
+		7 => $valores2['fecha_ingreso'],
+		8 => $valores2['fecha_egreso'],
+	);
+	
+	echo json_encode($datos);

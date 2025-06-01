@@ -1,80 +1,83 @@
-<div class="container-fluid">	
-	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
-		<div class="container-fluid">
-			<ol class="breadcrumb mb-0">
-				<li class="breadcrumb-item">
-					<a class="text-decoration-none text-primary" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a>
-				</li>
-				<li class="breadcrumb-item active fw-bold">Reporte de Compras</li>
-			</ol>
-		</div>
-	</nav>	
-	
+<div class="container-fluid">
+    <ol class="breadcrumb mt-2 mb-4">
+        <li class="breadcrumb-item"><a class="breadcrumb-link" href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>dashboard/">Dashboard</a></li>
+        <li class="breadcrumb-item active">Reporte de Compras</li>
+    </ol>
+
     <div class="card mb-4">
         <div class="card-body">
-            <form class="form-inline" id="form_main_compras">
-                <div class="form-group mx-sm-3 mb-1">
-                    <div class="input-group">
-                        <div class="input-group-append">
-                            <span class="input-group-text">
-                                <div class="sb-nav-link-icon"></div>Tipo Factura
-                            </span>
-                            <select id="tipo_compras_reporte" name="tipo_compras_reporte" class="selectpicker"
-                                title="Tipo de Factura" data-live-search="true">
+            <form id="form_main_compras">
+                <div class="row">
+                    <div class="col-md-4 col-sm-6 mb-3">
+                        <div class="form-group">
+                            <label class="small mb-1">Tipo Factura</label>
+                            <select id="tipo_compras_reporte" name="tipo_compras_reporte" 
+                                class="form-control selectpicker" title="Tipo de Factura" data-live-search="true">
                                 <option value="">Seleccione</option>
                             </select>
                         </div>
                     </div>
-                </div>
-                <div class="form-group mx-sm-3 mb-1">
-                    <div class="input-group">
-                        <div class="input-group-append">
-                            <span class="input-group-text">
-                                <div class="sb-nav-link-icon"></div>Inicio
-                            </span>
-                        </div>
-                        <input type="date" required id="fechai" name="fechai" value="<?php 
-						$fecha = date ("Y-m-d");
-						
-						$año = date("Y", strtotime($fecha));
-						$mes = date("m", strtotime($fecha));
-						$dia = date("d", mktime(0,0,0, $mes+1, 0, $año));
+                    
+					<div class="col-md-4 col-sm-6 mb-3">
+						<div class="form-group">
+							<label class="small mb-1">Fecha Inicio</label>
+							<div class="input-group">
+								<div class="input-group-prepend">
+									<span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+								</div>
+								<input type="date" class="form-control" id="fechai" name="fechai" value="<?php 
+									$fecha = date ("Y-m-d");
+									
+									$año = date("Y", strtotime($fecha));
+									$mes = date("m", strtotime($fecha));
+									$dia = date("d", mktime(0,0,0, $mes+1, 0, $año));
 
-						$dia1 = date('d', mktime(0,0,0, $mes, 1, $año)); //PRIMER DIA DEL MES
-						$dia2 = date('d', mktime(0,0,0, $mes, $dia, $año)); // ULTIMO DIA DEL MES
+									$dia1 = date('d', mktime(0,0,0, $mes, 1, $año));
+									$dia2 = date('d', mktime(0,0,0, $mes, $dia, $año));
 
-						$fecha_inicial = date("Y-m-d", strtotime($año."-".$mes."-".$dia1));
-						$fecha_final = date("Y-m-d", strtotime($año."-".$mes."-".$dia2));						
-						
-						
-						echo $fecha_inicial;
-					?>" class="form-control" data-toggle="tooltip" data-placement="top" title="Fecha Inicio" tyle="width:165px;">
-                    </div>
+									$fecha_inicial = date("Y-m-d", strtotime($año."-".$mes."-".$dia1));
+									echo $fecha_inicial;
+								?>">
+							</div>
+						</div>
+					</div>
+                    
+					<div class="col-md-4 col-sm-6 mb-3">
+						<div class="form-group">
+							<label class="small mb-1">Fecha Fin</label>
+							<div class="input-group">
+								<div class="input-group-prepend">
+									<span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+								</div>
+								<input type="date" class="form-control" id="fechaf" name="fechaf" value="<?php echo date('Y-m-d');?>">
+							</div>
+						</div>
+					</div>
                 </div>
-                <div class="form-group mx-sm-3 mb-1">
-                    <div class="input-group">
-                        <div class="input-group-append">
-                            <span class="input-group-text">
-                                <div class="sb-nav-link-icon"></div>Fin
-                            </span>
-                        </div>
-                        <input type="date" required id="fechaf" name="fechaf" value="<?php echo date ("Y-m-d");?>"
-                            class="form-control" data-toggle="tooltip" data-placement="top" title="Fecha Fin"
-                            tyle="width:165px;">
+                
+                <div class="row">
+                    <div class="col-12 text-right">
+                        <button type="submit" class="btn btn-primary mr-2" id="search">
+                            <i class="fas fa-filter fa-lg"></i> Filtrar
+                        </button>
+                        <button type="reset" id="btn-limpiar-filtros" class="btn btn-secondary">
+                            <i class="fas fa-broom fa-lg"></i> Limpiar
+                        </button>                           
                     </div>
                 </div>
             </form>
         </div>
     </div>
+
     <div class="card mb-4">
         <div class="card mb-4">
             <div class="card-header">
-                <i class="fas fa-file-invoice-dollar mr-1"></i>
+                <i class="fas fa-shopping-cart fa-lg mr-1"></i>
                 Reporte de Compras
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table id="dataTablaReporteCompras" class="table table-striped table-condensed table-hover"
+                    <table id="dataTablaReporteCompras" class="table table-header-gradient table-striped table-condensed table-hover"
                         style="width:100%">
                         <thead>
                             <tr>
@@ -91,7 +94,7 @@
                                 <th>Anular</th>
                             </tr>
                         </thead>
-                        <tfoot class="bg-info text-white font-weight-bold">
+                        <tfoot class="bg-secondary">
                             <tr>
                                 <td colspan='1'>Total</td>
                                 <td colspan="4"></td>

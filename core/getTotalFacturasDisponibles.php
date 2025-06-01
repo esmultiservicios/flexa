@@ -1,30 +1,39 @@
 <?php
+// getTotalFacturasDisponibles.php
 $peticionAjax = true;
 require_once 'configGenerales.php';
 require_once 'mainModel.php';
 
-if (!isset($_SESSION['user_sd'])) {
-	session_start(['name' => 'SD']);
+$insMainModel = new mainModel();
+
+// Validar sesión
+$validacion = $insMainModel->validarSesion();
+if ($validacion['error']) {
+    echo $insMainModel->showNotification([
+        "title" => "Error de sesión",
+        "text" => $validacion['mensaje'],
+        "type" => "error",
+        "funcion" => "window.location.href = '" . $validacion['redireccion'] . "'"
+    ]);
+    exit;
 }
 
 $empresa_id = $_SESSION['empresa_id_sd'];
-$insMainModel = new mainModel();
 
-// Inicializar variables
 $ultimoNumeroUsado = 0;
 $rango_inicial = 0;
 $rango_final = 0;
 $contador = 0;
 $fecha_limite = 'Sin definir';
 
-// Obtener último número usado
+// Obtener siguiente (último usado)
 $resultNumero = $insMainModel->getTotalFacturasDisponiblesDB($empresa_id);
 if ($resultNumero->num_rows > 0) {
     $row = $resultNumero->fetch_assoc();
     $ultimoNumeroUsado = (int)$row['numero'];
 }
 
-// Obtener rango de facturación
+// Obtener rango inicial y final
 $resultRango = $insMainModel->getNumeroMaximoPermitido($empresa_id);
 if ($resultRango->num_rows > 0) {
     $row = $resultRango->fetch_assoc();
@@ -32,10 +41,13 @@ if ($resultRango->num_rows > 0) {
     $rango_inicial = (int)$row['rango_inicial'];
 }
 
-// Calcular facturas pendientes
+// Calcular total de facturas disponibles
 if ($ultimoNumeroUsado === 0 || $ultimoNumeroUsado === $rango_inicial) {
-    $facturasPendientes = $rango_final - $rango_inicial + 1;
+    // No se ha usado ninguna factura o estamos en el primer número
+    $totalFacturas = $rango_final - $rango_inicial + 1;
+    $facturasPendientes = $totalFacturas;
 } else {
+    // Ya se han usado algunas
     $facturasPendientes = max(0, $rango_final - $ultimoNumeroUsado);
 }
 
@@ -47,12 +59,11 @@ if ($resultFecha->num_rows > 0) {
     $fecha_limite = $row['fecha_limite'];
 }
 
-// Preparar respuesta
+// Devolver datos en formato JSON
 $datos = [
     'facturasPendientes' => $facturasPendientes,
     'contador' => $contador,
-    'fechaLimite' => $fecha_limite,
-    'error' => false
+    'fechaLimite' => $fecha_limite
 ];
 
 echo json_encode($datos);

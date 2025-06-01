@@ -5,7 +5,7 @@ require_once "mainModel.php";
 
 $insMainModel = new mainModel();
 
-$usuarios_id  = $_POST['usuarios_id']; // Asegúrate que coincida con el nombre en el JS
+$usuarios_id  = $_POST['users_id']; // Asegúrate que coincida con el nombre en el JS
 $result = $insMainModel->getUsersEdit($usuarios_id);
 $valores2 = $result->fetch_assoc();
 

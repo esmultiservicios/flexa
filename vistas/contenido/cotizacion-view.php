@@ -2,7 +2,7 @@
     <div class="container-fluid">
         <div class="card mb-4">
             <div class="card-header">
-                <i class="fas fa-file-invoice-dollar mr-1"></i>
+                <i class="fas fa-file-invoice-dollar fa-lg mr-1"></i>
                 Cotización
             </div>
             <div class="card-body">
@@ -10,16 +10,13 @@
                     method="POST" data-form="save" autocomplete="off" enctype="multipart/form-data">
                     <div class="form-group row customer-bill-box-left">
                         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <span id="rtn-customers-quote"></span> <span id="client-customers-quote"></span>
-                        </div>
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            </span> <span id="vendedor-customers-quote"></span>
-                        </div>
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <span id="comentario-customers-quote"></span>
-                        </div>
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-
+                            <div class="bill-header-row">
+                                <span id="rtn-customers-quote"></span>
+                                <span id="client-customers-quote"></span>
+                            </div>
+                            <div class="bill-row"> <!-- Si necesitas otra fila para Vendedor -->
+                                <span id="vendedor-customers-quote"></span>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group row customer-bill-box-right">
@@ -109,10 +106,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group row table-responsive-xl tableFixHead table table-hover">
+                        <div class="form-group row table-responsive-xl table table-hover">
                             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                                <table id="QuoteItem">
-                                    <thead class="align-center">
+                                <table id="QuoteItem" class="table-header-pro table-footer-pro">
+                                    <thead class="text-align: center">
                                         <tr>
                                             <th width="2%" scope="col"><input id="checkAllQuote" class="formcontrol"
                                                     type="checkbox"></th>
@@ -141,25 +138,25 @@
                                                 <input type="hidden" name="productosQuote_id[]" id="productosQuote_id_0"
                                                     class="form-control inputfield-details1"
                                                     placeholder="Código del Producto" autocomplete="off">
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-append">
-                                                        <span data-toggle="tooltip" data-placement="top"
-                                                            title="Búsqueda de Productos" id="icon-search-bar_0"><a
-                                                                data-toggle="modal" href="#"
-                                                                class="btn btn-link form-control buscar_productos_quote">
-                                                                <div class="sb-nav-link-icon"></div><i
-                                                                    class="fas fa-search fa-lg icon-color"></i>
-                                                            </a></span>
-                                                        <input type="text" name="bar-code-id[]" id="bar-code-id_0"
-                                                            class="form-control product-bar-code inputfield-details1"
-                                                            placeholder="Código del Producto" autocomplete="off">
+                                                    <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <button type="button" data-toggle="modal" 
+                                                                class="btn btn-link buscar_productos_quote p-0"
+                                                                data-toggle="tooltip" data-placement="top" 
+                                                                title="Búsqueda de Productos"
+                                                                id="icon-search-bar_0">
+                                                            <i class="fas fa-search icon-color" style="font-size: 0.875rem;"></i>
+                                                        </button>
                                                     </div>
+                                                    <input type="text" name="bar-code-id[]" id="bar-code-id_0"
+                                                        class="form-control product-bar-code inputfield-details1"
+                                                        placeholder="Código del Producto" autocomplete="off">
                                                 </div>
                                             </td>
                                             <td>
-                                                <input type="text" name="productNameQuote[]" id="productNameQuote_0"
-                                                    placeholder="Descripción del Producto" readonly
+                                                <input type="hidden" name="productNameQuote[]" id="productNameQuote_0" placeholder="Descripción del Producto" readonly
                                                     class="form-control inputfield-details1" autocomplete="off">
+                                                <span id="productNameQuote_text_0" class="product-description">Descripción del Producto</span>
                                             </td>
                                             <td>
                                                 <input type="number" name="quantityQuote[]" id="quantityQuote_0"
@@ -193,8 +190,7 @@
                                             </td>
                                             <td>
                                                 <div class="input-group mb-3">
-                                                    <input type="number" name="discountQuote[]" id="discountQuote_0"
-                                                        class="form-control" step="0.01" placeholder="Descuento"
+                                                    <input type="number" name="discountQuote[]" id="discountQuote_0" class="form-control" step="0.01" placeholder="Descuento"
                                                         readonly autocomplete="off">
                                                     <div id="suggestions_producto_0" class="suggestions"></div>
                                                     <div class="input-group-append">

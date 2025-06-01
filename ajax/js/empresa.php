@@ -2,15 +2,35 @@
 $(document).ready(function() {
     listar_empresa();
     GetEstadoBotonFirma();
+
+	$('#form_main_empresa #search').on("click", function (e) {
+		e.preventDefault();
+		listar_empresa();
+	});
+
+	// Evento para el botón de Limpiar (reset)
+	$('#form_main_empresa').on('reset', function () {
+		// Limpia y refresca los selects
+		$(this).find('.selectpicker') // Usa `this` para referenciar el formulario actual
+			.val('')
+			.selectpicker('refresh');
+
+			listar_empresa();
+	});    
 });
 
 //INICIO ACCIONES FROMULARIO EMPRESA
 var listar_empresa = function() {
+    var estado = $('#form_main_empresa #estado_empresa').val();
+
     var table_empresa = $("#dataTableEmpresa").DataTable({
         "destroy": true,
         "ajax": {
             "method": "POST",
-            "url": "<?php echo SERVERURL;?>core/llenarDataTableEmpresa.php"
+            "url": "<?php echo SERVERURL;?>core/llenarDataTableEmpresa.php",
+            "data": {
+                "estado": estado
+            }
         },
         "columns": [{
                 "data": "image"
@@ -34,10 +54,29 @@ var listar_empresa = function() {
                 "data": "ubicacion"
             },
             {
-                "defaultContent": "<button class='table_editar btn btn-dark ocultar'><span class='fas fa-edit fa-lg'></span></button>"
+                "data": "estado",
+                "render": function(data, type, row) {
+                    if (type === 'display') {
+                        var estadoText = data == 1 ? 'Activo' : 'Inactivo';
+                        var icon = data == 1 ? 
+                            '<i class="fas fa-check-circle mr-1"></i>' : 
+                            '<i class="fas fa-times-circle mr-1"></i>';
+                        var badgeClass = data == 1 ? 
+                            'badge badge-pill badge-success' : 
+                            'badge badge-pill badge-danger';
+                        
+                        return '<span class="' + badgeClass + 
+                            '" style="font-size: 0.95rem; padding: 0.5em 0.8em; font-weight: 600;">' +
+                            icon + estadoText + '</span>';
+                    }
+                    return data;
+                }
+            },            
+            {
+                "defaultContent": "<button class='table_editar btn ocultar'><span class='fas fa-edit fa-lg'></span>Editar</button>"
             },
             {
-                "defaultContent": "<button class='table_eliminar btn btn-dark ocultar'><span class='fa fa-trash fa-lg'></span></button>"
+                "defaultContent": "<button class='table_eliminar btn ocultar'><span class='fa fa-trash fa-lg'></span>Eliminar</button>"
             }
         ],
         "lengthMenu": lengthMenu,
@@ -49,7 +88,7 @@ var listar_empresa = function() {
             "targets": 0,
             "data": 'image',
             "render": function(data, type, row, meta) {
-                return '<img class="" src="<?php echo SERVERURL;?>vistas/plantilla/img/logos/' +
+                return '<img class="" src="<?php echo SERVERURLLOGO;?>/' +
                     data + '" alt="' + data + '"height="100px" width="100px"/>';
             }
         }],
@@ -184,60 +223,70 @@ var eliminar_empresa_dataTable = function(tbody, table) {
     $(tbody).off("click", "button.table_eliminar");
     $(tbody).on("click", "button.table_eliminar", function() {
         var data = table.row($(this).parents("tr")).data();
-        var url = '<?php echo SERVERURL;?>core/editarEmpresa.php';
-        $('#formEmpresa #empresa_id').val(data.empresa_id);
 
-        $.ajax({
-            type: 'POST',
-            url: url,
-            data: $('#formEmpresa').serialize(),
-            success: function(registro) {
-                var valores = eval(registro);
-                $('#formEmpresa').attr({
-                    'data-form': 'delete'
-                });
-                $('#formEmpresa').attr({
-                    'action': '<?php echo SERVERURL;?>ajax/eliminarEmpresaAjax.php'
-                });
-                $('#formEmpresa')[0].reset();
-                $('#reg_empresa').hide();
-                $('#edi_empresa').hide();
-                $('#delete_empresa').show();
-                $('#formEmpresa #empresa_empresa').val(valores[0]);
-                $('#formEmpresa #rtn_empresa').val(valores[1]);
-                $('#formEmpresa #telefono_empresa').val(valores[2]);
-                $('#formEmpresa #correo_empresa').val(valores[3]);
-                $('#formEmpresa #direccion_empresa').val(valores[4]);
-                $('#formEmpresa #empresa_razon_social').val(valores[6]);
-                $('#formEmpresa #empresa_otra_informacion').val(valores[7]);
-                $('#formEmpresa #empresa_eslogan').val(valores[8]);
-                $('#formEmpresa #empresa_celular').val(valores[9]);
-
-                if (valores[5] == 1) {
-                    $('#formEmpresa #empresa_activo').attr('checked', true);
-                } else {
-                    $('#formEmpresa #empresa_activo').attr('checked', false);
+        var empresa_id = data.empresa_id;
+        var nombreEmpresa = data.nombre; 
+        
+        // Construir el mensaje de confirmación con HTML
+        var mensajeHTML = `¿Desea eliminar permanentemente la empresa?<br><br>
+                        <strong>Nombre:</strong> ${nombreEmpresa}`;
+        
+        swal({
+            title: "Confirmar eliminación",
+            content: {
+                element: "span",
+                attributes: {
+                    innerHTML: mensajeHTML
                 }
-
-                //DESHABILITAR OBJETOS
-                $('#formEmpresa #empresa_empresa').attr('readonly', true);
-                $('#formEmpresa #rtn_empresa').attr('readonly', true);
-                $('#formEmpresa #telefono_empresa').attr('readonly', true);
-                $('#formEmpresa #correo_empresa').attr('readonly', true);
-                $('#formEmpresa #direccion_empresa').attr('readonly', true);
-                $('#formEmpresa #empresa_activo').attr('disabled', true);
-                $('#formEmpresa #empresa_razon_social').attr('readonly', true);
-                $('#formEmpresa #empresa_otra_informacion').attr('readonly', true);
-                $('#formEmpresa #empresa_eslogan').attr('disabled', true);
-                $('#formEmpresa #empresa_celular').attr('disabled', true);
-
-                $('#formEmpresa #proceso_empresa').val("Eliminar");
-                $('#modal_registrar_empresa').modal({
-                    show: true,
-                    keyboard: false,
-                    backdrop: 'static'
+            },
+            icon: "warning",
+            buttons: {
+                cancel: {
+                    text: "Cancelar",
+                    value: null,
+                    visible: true,
+                    className: "btn-light"
+                },
+                confirm: {
+                    text: "Sí, eliminar",
+                    value: true,
+                    className: "btn-danger",
+                    closeModal: false
+                }
+            },
+            dangerMode: true,
+            closeOnEsc: false,
+            closeOnClickOutside: false
+        }).then((confirmar) => {
+            if (confirmar) {
+               
+                $.ajax({
+                    type: 'POST',
+                    url: '<?php echo SERVERURL;?>ajax/eliminarEmpresasAjax.php',
+                    data: {
+                        empresa_id: empresa_id
+                    },
+                    dataType: 'json', // Esperamos respuesta JSON
+                    before: function(){
+                        // Mostrar carga mientras se procesa
+                        showLoading("Eliminando registro...");
+                    },
+                    success: function(response) {
+                        swal.close();
+                        
+                        if(response.status === "success") {
+                            showNotify("success", response.title, response.message);
+                            table.ajax.reload(null, false); // Recargar tabla sin resetear paginación
+                            table.search('').draw();                    
+                        } else {
+                            showNotify("error", response.title, response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        swal.close();
+                        showNotify("error", "Error", "Ocurrió un error al procesar la solicitud");
+                    }
                 });
-
             }
         });
     });
@@ -315,13 +364,7 @@ $('#toggle-firma').on('click', function(e) {
                 const jsonResponse = JSON.parse(response);
 
                 // Manejar la respuexsta del servidor
-                swal({
-                    icon: jsonResponse.type,
-                    title: jsonResponse.title,
-                    text: jsonResponse.text,
-                    closeOnEsc: false, // Desactiva el cierre con la tecla Esc
-                    closeOnClickOutside: false // Desactiva el cierre al hacer clic fuera 
-                });
+                showNotify(jsonResponse.type, jsonResponse.title, jsonResponse.text);
 
                 // Actualizar el estado del botón
                 GetEstadoBotonFirma();
