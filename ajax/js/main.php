@@ -71,14 +71,14 @@ function ajustarMenuResponsivo() {
     document.getElementById('facturaCompras').style.display = 'none';
 
     //MOSTRAMOS
-    document.getElementById('facturaMovil').style.display = '';
+    //document.getElementById('facturaMovil').style.display = '';
   } else { // Pantallas grandes
     document.getElementById('facturas').style.display = '';
     document.getElementById('cotizacion').style.display = '';
     document.getElementById('facturaCompras').style.display = '';
 
     //OCULAMOS
-    document.getElementById('facturaMovil').style.display = 'none';
+    //document.getElementById('facturaMovil').style.display = 'none';
   }
 }
 
