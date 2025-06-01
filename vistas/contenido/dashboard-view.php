@@ -1,273 +1,165 @@
 <div class="container-fluid">
-    <!-- Breadcrumb para Dashboard -->
-    <div class="breadcrumb-container">
-        <ol class="breadcrumb-harmony">
-            <li class="breadcrumb-item active">
-                <i class="fas fa-home breadcrumb-icon"></i>
-                <span>Dashboard</span>
-            </li>
-        </ol>
-    </div>
-        
-    <!-- Cards de Métricas - Versión Mejorada -->
-    <div class="row mb-4">
-        <!-- Card Clientes -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>clientes/" class="card-link">
-                <div class="card dashboard-card bg-gradient-primary hover-effect">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-subtitle mb-2">Total Clientes</h6>
-                                <h2 class="mb-0" id="main_clientes">0</h2>
-                            </div>
-                            <div class="icon-circle">
-                                <i class="fas fa-user-tie"></i>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <span class="card-footer-text">
-                                <i class="fas fa-info-circle mr-1"></i> Nuestros Clientes
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        
-        <!-- Card Proveedores -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>proveedores/" class="card-link">
-                <div class="card dashboard-card bg-gradient-success hover-effect">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-subtitle mb-2">Total Proveedores</h6>
-                                <h2 class="mb-0" id="main_proveedores">0</h2>
-                            </div>
-                            <div class="icon-circle">
-                                <i class="fas fa-user-alt"></i>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <span class="card-footer-text">
-                                <i class="fas fa-info-circle mr-1"></i> Nuestros Proveedores
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        
-        <!-- Card Facturas -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>reporteVentas/" class="card-link">
-                <div class="card dashboard-card bg-gradient-warning hover-effect">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-subtitle mb-2">Total Facturas</h6>
-                                <h2 class="mb-0" id="main_facturas">0</h2>
-                            </div>
-                            <div class="icon-circle">
-                                <i class="fas fa-file-invoice"></i>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <span class="card-footer-text" id="mes_factura">
-                                <i class="fas fa-calendar-alt mr-1"></i> <?= date('F Y'); ?>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        
-        <!-- Card Compras -->
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>reporteCompras/" class="card-link">
-                <div class="card dashboard-card bg-gradient-danger hover-effect">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-subtitle mb-2">Total Compras</h6>
-                                <h2 class="mb-0" id="main_compras">0</h2>
-                            </div>
-                            <div class="icon-circle">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <span class="card-footer-text" id="mes_compra">
-                                <i class="fas fa-calendar-alt mr-1"></i> <?= date('F Y'); ?>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        </div>
-    </div>
-    
-	<!-- Sección de Gráficos Mejorada -->
-	<div class="row mb-4">
-		<!-- Gráfico Ventas - Versión Premium -->
-		<div class="col-xl-6 col-md-12 mb-4">
-			<div class="chart-card h-100">
-				<div class="chart-header">
-					<h3 class="chart-title">
-						<i class="fas fa-chart-bar"></i>
-						Reporte Ventas
-					</h3>
-					<div class="chart-actions">
-						<div class="year-selector btn-group btn-group-sm">
-							<button class="btn btn-year-ventas active" data-year="<?php echo date("Y"); ?>">
-								<?php echo date("Y"); ?>
-							</button>
-							<button class="btn btn-year-ventas" data-year="<?php echo date("Y")-1; ?>">
-								<?php echo date("Y")-1; ?>
-							</button>
-						</div>
-						<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>reporteVentas/" 
-						class="chart-btn" data-toggle="tooltip" data-placement="top" title="Ver reporte completo">
-							<i class="fas fa-arrow-right"></i>
-						</a>
-						<button class="chart-btn download-ventas" data-toggle="tooltip" data-placement="top" title="Descargar gráfico">
-							<i class="fas fa-download"></i>
-						</button>
-					</div>
-				</div>
-				<div class="chart-container bar-chart">
-					<canvas id="graphVentas" height="250"></canvas>
-				</div>
-				<div class="chart-legend" id="ventas-legend">
-					<!-- Leyenda generada dinámicamente -->
-				</div>
-			</div>
+	<nav class="breadcrumb-container bg-white py-3 mb-4 shadow-sm">
+		<div class="container-fluid">
+			<ol class="breadcrumb mb-0">
+				<li class="breadcrumb-item active fw-bold text-primary">Dashboard</li>
+			</ol>
 		</div>
-		
-		<!-- Gráfico Compras - Versión Premium -->
-		<div class="col-xl-6 col-md-12 mb-4">
-			<div class="chart-card h-100">
-				<div class="chart-header">
-					<h3 class="chart-title">
-						<i class="fas fa-chart-bar"></i>
-						Reporte Compras
-					</h3>
-					<div class="chart-actions">
-						<div class="year-selector btn-group btn-group-sm">
-							<button class="btn btn-year-compras active" data-year="<?php echo date("Y"); ?>">
-								<?php echo date("Y"); ?>
-							</button>
-							<button class="btn btn-year-compras" data-year="<?php echo date("Y")-1; ?>">
-								<?php echo date("Y")-1; ?>
-							</button>
-						</div>
-						<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>reporteCompras/" 
-						class="chart-btn" data-toggle="tooltip" data-placement="top" title="Ver reporte completo">
-							<i class="fas fa-arrow-right"></i>
-						</a>
-						<button class="chart-btn download-compras" data-toggle="tooltip" data-placement="top" title="Descargar gráfico">
-							<i class="fas fa-download"></i>
-						</button>
-					</div>
-				</div>
-				<div class="chart-container bar-chart">
-					<canvas id="graphCompras" height="250"></canvas>
-				</div>
-				<div class="chart-legend" id="compras-legend">
-					<!-- Leyenda generada dinámicamente -->
-				</div>
-			</div>
+	</nav>
+	
+	<div class="card mb-4">
+		<div class="card-header">
+			<i class="fas fa-columns mr-1"></i>
+			Cards
 		</div>
-		
-		<!-- Gráfico Top Productos - Versión Premium -->
-		<div class="col-12 mb-4">
-			<div class="chart-card">
-				<div class="chart-header">
-					<h3 class="chart-title">
-						<i class="fas fa-star"></i>
-						Top 5 Productos Más Vendidos en 3 Meses
-					</h3>
-					<div class="chart-actions">
-						<div class="year-selector btn-group btn-group-sm">
-							<button class="btn btn-year-productos active" data-months="3">
-								Últimos 3 Meses
-							</button>
-							<button class="btn btn-year-productos" data-months="6">
-								Últimos 6 Meses
-							</button>
+		<div class="card-body"> 
+			<div class="row">
+				<div class="col-md-12 col-xl-3">
+					<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>clientes/">
+						<div class="stati card bg-c-blue order-card">
+							<div class="card-block">
+								<h6 class="m-b-20">Total Clientes</h6>
+								<h2 class="text-right"><i class="fas fa-user-tie f-left"></i><span id="main_clientes"></span></h2>
+								<p class="m-b-0"> <span class="f-right">Nuestros Clientes</span></p>
+							</div>
 						</div>
-						<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>transferencia/" 
-						class="chart-btn" data-toggle="tooltip" data-placement="top" title="Ver reporte completo">
-							<i class="fas fa-arrow-right"></i>
-						</a>
-						<button class="chart-btn download-top-productos" data-toggle="tooltip" data-placement="top" title="Descargar gráfico">
-							<i class="fas fa-download"></i>
-						</button>
-					</div>
+					</a>
 				</div>
-				<div class="chart-container bar-chart">
-					<canvas id="graphTopProductosporAno" height="120"></canvas>
+				
+				<div class="col-md-12 col-xl-3">
+					<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>proveedores/">
+						<div class="stati card bg-c-green order-card">
+							<div class="card-block">
+								<h6 class="m-b-20">Total Proveedores</h6>
+								<h2 class="text-right"><i class="fas fa-user-alt f-left"></i><span id="main_proveedores"></span></h2>
+								<p class="m-b-0"><span class="f-right">Nuestros Proveedores</span></p>
+							</div>
+						</div>
+					</a>
 				</div>
-				<div class="chart-legend" id="top-products-legend">
-					<!-- La leyenda se generará dinámicamente con JavaScript -->
+				
+				<div class="col-md-12 col-xl-3">
+					<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>reporteVentas/">
+						<div class="stati card bg-c-yellow order-card">
+							<div class="card-block">
+								<h6 class="m-b-20">Total Facturas</h6>
+								<h2 class="text-right"><i class="fas fa-file-invoice f-left"></i><span id="main_facturas"></span></h2>
+								<p class="m-b-0"><span class="f-right" id="mes_factura"</span></p>
+							</div>
+						</div>
+					</a>
 				</div>
-			</div>
+				
+				<div class="col-md-12 col-xl-3">
+					<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>reporteCompras/">
+						<div class="stati card bg-c-pink order-card">
+							<div class="card-block">
+								<h6 class="m-b-20">Total Compras</h6>
+								<h2 class="text-right"><i class="fas fa-shopping-cart f-left"></i><span id="main_compras"></span></h2>
+								<p class="m-b-0"><span class="f-right" id="mes_compra"></span></p>
+							</div>
+						</div>
+					</a>
+				</div>		
+			</div>             
 		</div>
-
 	</div>
-    
-    <!-- Tabla Documentos Fiscales -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="fas fa-sliders-h mr-1"></i>
-                            Documentos Fiscales
-                        </h6>
-						<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>secuencia/" 
-						class="chart-btn" data-toggle="tooltip" data-placement="top" title="Ver reporte completo">
-							<i class="fas fa-arrow-right"></i>
-						</a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="dataTableSecuenciaDashboard" class="table table-header-gradient table-striped table-condensed table-hover" style="width:100%">
-                            <thead>
-                                <tr>
-                                    <th>Empresa</th>
-                                    <th>Documento</th>
-                                    <th>Rango Inicio</th>
-                                    <th>Rango Fin</th>    
-                                    <th>Actual</th>                                        
-                                    <th>Fecha Expiración</th>                    
-                                </tr>
-                            </thead>
-                        </table>  
-                    </div>
-                </div>
-                <div class="card-footer small text-muted">
-                    <?php
-                        require_once "./core/mainModel.php";
-                        
-                        $insMainModel = new mainModel();
-                        $entidad = "secuencia_facturacion";
-                        
-                        if($insMainModel->getlastUpdate($entidad)->num_rows > 0){
-                            $consulta_last_update = $insMainModel->getlastUpdate($entidad)->fetch_assoc();
-                            $fecha_registro = htmlspecialchars($consulta_last_update['fecha_registro'], ENT_QUOTES, 'UTF-8');
-                            $hora = htmlspecialchars(date('g:i:s a', strtotime($fecha_registro)), ENT_QUOTES, 'UTF-8');
-                            echo "Última Actualización ".htmlspecialchars($insMainModel->getTheDay($fecha_registro, $hora), ENT_QUOTES, 'UTF-8');
-                        } else {
-                            echo "No se encontraron registros ";
-                        }                
-                    ?>
-                </div>
-            </div>
-        </div>
-    </div>
+	
+	<div class="card mb-4">
+		<div class="card-header">
+			<i class="fab fa-sellsy mr-1"></i>
+			Gráficos
+		</div>
+		<divdivass="card-body"> 
+			<div class="row">
+				<div class="col-md-12 col-xl-6">
+					<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>reporteVentas/" style="color: #3366BB;">
+						<div class="stati card mb-3">
+							<div class="card-header">
+								<i class="fas fa-chart-bar mr-1"></i>
+								Reporte Ventas: <?php echo date("Y"); ?>
+							</div>
+							<canvas id="graphVentas" width="100%"></canvas>
+						</div>
+					</a>
+				</div>
+					
+				<div class="col-md-12 col-xl-6">
+					<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>reporteCompras/" style="color: #3366BB;">
+						<div class="stati card mb-4">
+							<div class="card-header">
+								<i class="fas fa-chart-bar mr-1"></i>
+								Reporte de Compras: <?php echo date("Y"); ?>
+							</div>
+							<div class="card-body"><canvas id="graphCompras" width="100%"></canvas></div>
+						</div>
+					</a>
+				</div>
+				
+				<div class="col-md-12">
+					<div class="stati card mb-4">
+						<div class="card-header">
+							<i class="fas fa-chart-bar mr-1"></i>
+							Top 5 Productos Más Vendidos en 3 Meses
+						</div>
+						<div class="card-body">
+							<canvas id="graphTopProductosporAno" width="100%" height="30%"></canvas>
+						</div>
+					</div>
+				</div>					
 
+			</div>             
+		</div>
+	</div>	
+
+	<div class="row">
+		<div class="col-md-12 col-xl-12">
+			<a href="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8'); ?>secuencia/" style="color: #3366BB;">
+				<div class="card-header">
+					<i class="fas fa-sliders-h mr-1"></i>
+					Documentos Fiscales
+				</div>
+				<div class="card-body"> 
+					<div class="table-responsive">
+						<table id="dataTableSecuenciaDashboard" class="table table-striped table-condensed table-hover" style="width:100%">
+							<thead>
+								<tr>
+									<th>Empresa</th>
+									<th>Documento</th>
+									<th>Rango Inicio</th>
+									<th>Rango Fin</th>	
+									<th>Actual</th>										
+									<th>Fecha Expiración</th>					
+								</tr>
+							</thead>
+						</table>  
+					</div>                   
+				</div>
+				<div class="card-footer small text-muted">
+				<?php
+					require_once "./core/mainModel.php";
+					
+					$insMainModel = new mainModel();
+					$entidad = "secuencia_facturacion";
+					
+					if($insMainModel->getlastUpdate($entidad)->num_rows > 0){
+						$consulta_last_update = $insMainModel->getlastUpdate($entidad)->fetch_assoc();
+						$fecha_registro = htmlspecialchars($consulta_last_update['fecha_registro'], ENT_QUOTES, 'UTF-8');
+						$hora = htmlspecialchars(date('g:i:s a', strtotime($fecha_registro)), ENT_QUOTES, 'UTF-8');
+						echo "Última Actualización ".htmlspecialchars($insMainModel->getTheDay($fecha_registro, $hora), ENT_QUOTES, 'UTF-8');
+					} else {
+						echo "No se encontraron registros ";
+					}				
+				?>
+				</div>				
+			</a>
+		</div>
+			
+	</div>	
 </div>
+<?php
+	require_once "./core/mainModel.php";
+	
+	$insMainModel = new mainModel();	
+	$insMainModel->guardar_historial_accesos("Ingreso al modulo Dashboard");
+?>
