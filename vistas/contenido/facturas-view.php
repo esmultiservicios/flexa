@@ -79,9 +79,9 @@
                             <div class="invoice-counter-title">
                                 <i class="fas fa-file-invoice"></i> Facturas Disponibles
                             </div>
-                            <div class="invoice-counter-value badge-warning" id="invoice-status">
+      <!--                       <div class="invoice-counter-value badge-warning" id="invoice-status">
                                 25
-                            </div>
+                            </div> -->
                             <div class="invoice-counter-alert alert-warning" id="mensajeFacturas">
                                 Pronto necesitará solicitar más facturas
                             </div>
