@@ -10,12 +10,34 @@
             $conexion = mainModel::connection();
             
             try {
-                // Desactivar autocommit para la transacción
                 $conexion->autocommit(false);
                 
-                // Sentencia preparada para seguridad
-                $stmt = $conexion->prepare("INSERT INTO cotizacion VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("iisiidssiiisss", 
+                $sql = "INSERT INTO cotizacion (
+                    cotizacion_id, 
+                    clientes_id, 
+                    number, 
+                    tipo_factura, 
+                    colaboradores_id, 
+                    importe, 
+                    notas, 
+                    fecha, 
+                    estado, 
+                    vigencia_cotizacion_id, 
+                    usuario, 
+                    empresa_id, 
+                    fecha_registro,
+                    fecha_dolar,
+                    tipo_entrega
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                
+                $stmt = $conexion->prepare($sql);
+                
+                if(!$stmt) {
+                    throw new Exception("Error preparando consulta: ".$conexion->error);
+                }
+                
+                $stmt->bind_param(
+                    "iisiidssiiissss", 
                     $datos['cotizacion_id'], 
                     $datos['clientes_id'], 
                     $datos['numero'], 
@@ -25,28 +47,26 @@
                     $datos['notas'], 
                     $datos['fecha'], 
                     $datos['estado'], 
-                    $datos['vigencia_quote'], 
+                    $datos['vigencia_cotizacion_id'], 
                     $datos['usuario'], 
-                    $datos['empresa'], 
+                    $datos['empresa_id'], 
                     $datos['fecha_registro'],
-                    $datos['fecha_dolar']
+                    $datos['fecha_dolar'],
+                    $datos['tipo_entrega']                    
                 );
                 
-                $ejecutado = $stmt->execute();
-                
-                if(!$ejecutado) {
-                    throw new Exception($stmt->error);
+                if(!$stmt->execute()) {
+                    throw new Exception("Error ejecutando consulta: ".$stmt->error);
                 }
                 
-                // Confirmar la transacción
                 $conexion->commit();
-                
                 return true;
                 
             } catch(Exception $e) {
-                // Revertir la transacción en caso de error
                 $conexion->rollback();
-                return false;
+                // Registrar el error completo
+                error_log("ERROR EN agregar_cotizacion_modelo: ".$e->getMessage());
+                return $e->getMessage(); // Devuelve el mensaje de error en lugar de false
             }
         }
         

@@ -2106,4 +2106,95 @@ body:has(.prueba-sistema):has(.modo_soporte) #layoutSidenav_content {
     }
 }
 
+.quote-container {
+    display: flex;
+    gap: 20px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin-bottom: 25px;
+}
 
+.quote-section {
+    flex: 1;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.quote-header {
+    background: #f8f9fa;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.quote-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #495057;
+    letter-spacing: 0.3px;
+}
+
+.icon {
+    color: #6c757d;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.quote-data {
+    padding: 12px 15px;
+}
+
+.data-row {
+    display: flex;
+    margin-bottom: 8px;
+    align-items: center;
+    min-height: 32px;
+}
+
+.data-label {
+    width: 100px;
+    font-size: 13px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.data-value {
+    flex: 1;
+    font-size: 13px;
+    color: #212529;
+    padding: 4px 0;
+}
+
+.data-input, .data-select {
+    flex: 1;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 13px;
+    height: 32px;
+    background: #fff;
+    color: #212529;
+}
+
+.data-input:focus, .data-select:focus {
+    border-color: #4dabf7;
+    box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
+    outline: none;
+}
+
+/* Estilo específico para el date input */
+input[type="date"].data-input {
+    padding: 4px 8px;
+}
+
+/* Ajuste para select */
+.data-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 14px;
+}

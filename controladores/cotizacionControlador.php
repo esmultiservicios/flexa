@@ -63,6 +63,8 @@
             // Validar vigencia
             $vigencia_quote = isset($_POST['vigencia_quote']) ? ($_POST['vigencia_quote'] == "" ? 0 : $_POST['vigencia_quote']) : 0;
             
+            $tipo_entrega = $_POST['tipo_entrega'];
+            
             if($clientes_id == "" || $colaborador_id == ""){
                 return mainModel::showNotification([
                     "type" => "error",
@@ -101,7 +103,8 @@
                 "fecha_registro" => $fecha_registro,
                 "empresa" => $empresa_id,
                 "vigencia_quote" => $vigencia_quote,					
-                "fecha_dolar" => $fecha_dolar
+                "fecha_dolar" => $fecha_dolar,
+                "tipo_entrega" => $tipo_entrega
             ];
             
             $query = cotizacionModelo::agregar_cotizacion_modelo($datos);

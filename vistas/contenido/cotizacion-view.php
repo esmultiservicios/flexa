@@ -8,25 +8,75 @@
             <div class="card-body">
                 <form class="FormularioAjax" id="quoteForm" action="<?php echo htmlspecialchars(SERVERURL, ENT_QUOTES, 'UTF-8');?>ajax/addCotizacionAjax.php"
                     method="POST" data-form="save" autocomplete="off" enctype="multipart/form-data">
-                    <div class="form-group row customer-bill-box-left">
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <div class="bill-header-row">
-                                <span id="rtn-customers-quote"></span>
-                                <span id="client-customers-quote"></span>
+
+                    <div class="quote-container">
+    
+                        <!-- Sección Cliente -->
+                        <div class="quote-section">
+                            <div class="quote-header">
+                                <i class="fas fa-user-tie icon"></i>
+                                <h3>INFORMACIÓN DEL CLIENTE</h3>
                             </div>
-                            <div class="bill-row"> <!-- Si necesitas otra fila para Vendedor -->
-                                <span id="vendedor-customers-quote"></span>
+                            <div class="quote-data">
+                                <div class="data-row">
+                                    <span class="data-label">RTN:</span>
+                                    <span id="rtn-customers-quote" class="data-value">990999909</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="data-label">Cliente:</span>
+                                    <span id="client-customers-quote" class="data-value">Consumidor Final</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="data-label">Vendedor:</span>
+                                    <span id="vendedor-customers-quote" class="data-value"></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-group row customer-bill-box-right">
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <span id="fecha-customers-quote"></span>
+
+                        <!-- Sección Entrega -->
+                        <div class="quote-section">
+                            <div class="quote-header">
+                                <i class="fas fa-truck icon"></i>
+                                <h3>DATOS DE ENTREGA</h3>
+                            </div>
+                            <div class="quote-data">
+                                <div class="data-row">
+                                    <span class="data-label">Tipo entrega:</span>
+                                    <input type="text" id="tipo_entrega" name="tipo_entrega" class="data-input">
+                                </div>
+                                <div class="data-row">
+                                    <span class="data-label">Vigencia:</span>
+                                    <select id="vigencia_quote" name="vigencia_quote" class="data-select">
+                                        <option value="">Sin Vigencia</option>
+                                    </select>
+                                </div>
+                                <div class="data-row">
+                                    <span class="data-label">Fecha $:</span>
+                                    <input type="date" id="fecha_dolar" name="fecha_dolar" class="data-input">
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
-                            <span id="hora-customers-quote"></span>
+
+                        <!-- Sección Fecha/Hora -->
+                        <div class="quote-section">
+                            <div class="quote-header">
+                                <i class="far fa-clock icon"></i>
+                                <h3>FECHA Y HORA</h3>
+                            </div>
+                            <div class="quote-data">
+                                <div class="data-row">
+                                    <span class="data-label">Fecha:</span>
+                                    <span id="fecha-customers-quote" class="data-value">5/8/2025</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="data-label">Hora:</span>
+                                    <span id="hora-customers-quote" class="data-value">18:00:15</span>
+                                </div>
+                            </div>
                         </div>
+                        
                     </div>
+
                     <div class="bill">
                         <div class="form-group row">
                             <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
@@ -233,41 +283,7 @@
                                         <p id="charNum_notasQuote">2000 Caracteres</p>
                                     </div>
                                 </div>
-                                <div class="form-group row">
-                                    <div class="card-body">
-                                        <div class="form-group mx-sm-3 mb-1">
-                                            <div class="input-group">
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text">
-                                                        <div class="sb-nav-link-icon"></div>Vigencia Cotización
-                                                    </span>
-                                                </div>
-                                                <select id="vigencia_quote" name="vigencia_quote" class="custom-select"
-                                                    data-toggle="tooltip" data-placement="top"
-                                                    title="Vigencia Cotización">
-                                                    <option value="">Seleccione</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                                <div class="form-group row">
-                                    <div class="card-body">
-                                        <div class="form-group mx-sm-3 mb-1">
-                                            <div class="input-group">
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text">
-                                                        <div class="sb-nav-link-icon"></div>Fecha Cambio Dolar
-                                                    </span>
-                                                </div>
-                                                <input type="date" class="form-control" id="fecha_dolar"
-                                                    name="fecha_dolar" value="<?php echo date('Y-m-d');?>">
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
+     
                                 <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4" style="display: none;">
                                     <div class="row">
                                         <div class="col-sm-3 form-inline">
